@@ -7,8 +7,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class BizConnectApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(BizConnectApplication.class,
-                args);
+        SpringApplication.run(BizConnectApplication.class, args);
     }
 
 }

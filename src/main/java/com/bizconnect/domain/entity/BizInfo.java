@@ -1,4 +1,4 @@
-package com.bizconnect.domain;
+package com.bizconnect.domain.entity;
 
 import lombok.Getter;
 import lombok.Setter;

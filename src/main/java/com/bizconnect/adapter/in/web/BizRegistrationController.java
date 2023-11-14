@@ -1,21 +1,20 @@
 package com.bizconnect.adapter.in.web;
 
-import com.bizconnect.application.dto.BizConnectParams;
-import com.bizconnect.application.usecase.impl.BizConnectService;
-import lombok.NoArgsConstructor;
+import com.bizconnect.adapter.Repository.BizInfoRepository;
+import com.bizconnect.application.port.BizInfoDataPort;
+import com.bizconnect.domain.entity.BizInfo;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequiredArgsConstructor
-public class BizRegistrationController {
+public class BizRegistrationController implements BizInfoDataPort {
 
-    private final BizConnectService bizConnectService;
+    private BizInfoRepository bizInfoRepository;
 
-    @PostMapping("")
-    void registration(BizConnectParams bizConnectParams){
-        bizConnectService.registrationBizInfo(bizConnectParams);
+    @Override
+    public void saveInfo(BizInfo bizInfo) {
+        bizInfoRepository.save(bizInfo);
     }
 }
 
