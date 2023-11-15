@@ -9,8 +9,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class BizRegistrationService implements BizRegistrationUseCase {
-
-
     private final BizRequestAggregate bizRequestAggregate;
 
     @Autowired
@@ -29,6 +27,5 @@ public class BizRegistrationService implements BizRegistrationUseCase {
     public BizInfo getMerchantInfo(String mallId, String bizId) {
         return bizRequestAggregate.selectBizInfo(mallId, bizId);
         // 조회 결과에 대한 처리 로직
-        return null;
     }
 }

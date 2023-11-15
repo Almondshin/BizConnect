@@ -1,20 +1,34 @@
 package com.bizconnect.adapter.in.web;
 
-import com.bizconnect.adapter.Repository.BizInfoRepository;
-import com.bizconnect.application.port.BizInfoDataPort;
+import com.bizconnect.application.usecase.BizRegistrationUseCase;
 import com.bizconnect.domain.entity.BizInfo;
-import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
 @RestController
-@RequiredArgsConstructor
-public class BizRegistrationController implements BizInfoDataPort {
+@RequestMapping("/api/merchants")
+public class BizRegistrationController {
 
-    private BizInfoRepository bizInfoRepository;
+    private final BizRegistrationUseCase bizRegistrationUseCase;
 
-    @Override
-    public void saveInfo(BizInfo bizInfo) {
-        bizInfoRepository.save(bizInfo);
+    @Autowired
+    public BizRegistrationController(BizRegistrationUseCase bizRegistrationUseCase) {
+        this.bizRegistrationUseCase = bizRegistrationUseCase;
+    }
+
+    @PostMapping("/register")
+    public ResponseEntity<?> registerMerchant(@RequestBody BizInfo bizInfo) {
+        bizRegistrationUseCase.registerMerchant(bizInfo);
+        return ResponseEntity.ok().build();
+    }
+
+    @GetMapping("/{mallId}/{bizId}")
+    public ResponseEntity<BizInfo> getMerchantInfo(@PathVariable String mallId, @PathVariable String bizId) {
+        BizInfo bizInfo = bizRegistrationUseCase.getMerchantInfo(mallId, bizId);
+        return ResponseEntity.ok(bizInfo);
     }
 }
 

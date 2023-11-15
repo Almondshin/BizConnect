@@ -15,7 +15,6 @@ public enum Price {
     MONTHLY_PREMIUM("","월정액 프리미엄 요금제");
 
 
-
     private String code;
     private String value;
 
