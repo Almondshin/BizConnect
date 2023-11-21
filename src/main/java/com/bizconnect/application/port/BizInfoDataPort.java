@@ -1,10 +1,10 @@
 package com.bizconnect.application.port;
 
-import com.bizconnect.domain.entity.BizInfo;
+import com.bizconnect.domain.entity.AdditionalBizInfo;
 
 
 public interface BizInfoDataPort{
-    void saveInfo(BizInfo bizInfo);
+    void saveInfo(AdditionalBizInfo additionalBizInfo);
 
 
 }

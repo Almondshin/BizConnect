@@ -1,6 +1,6 @@
 package com.bizconnect.domain.aggregate;
 
-import com.bizconnect.domain.entity.BizInfo;
+import com.bizconnect.domain.entity.AdditionalBizInfo;
 import com.bizconnect.domain.util.MailSender;
 import org.springframework.stereotype.Service;
 
@@ -8,28 +8,28 @@ import java.util.function.Consumer;
 
 @Service
 public class BizRequestAggregate {
-    private BizInfo bizInfo;
+    private AdditionalBizInfo additionalBizInfo;
 
     // 메일 전송 이벤트 핸들러
-    private Consumer<BizInfo> mailEventHandler = new MailSender();
+    private Consumer<AdditionalBizInfo> mailEventHandler = new MailSender();
 
-    public BizRequestAggregate(Consumer<BizInfo> mailEventHandler) {
+    public BizRequestAggregate(Consumer<AdditionalBizInfo> mailEventHandler) {
         this.mailEventHandler = mailEventHandler;
     }
 
-    public void registerBiz(BizInfo newBizInfo) {
-        validateBizInfo(newBizInfo);
-        this.bizInfo = newBizInfo;
+    public void registerBiz(AdditionalBizInfo newAdditionalBizInfo) {
+        validateBizInfo(newAdditionalBizInfo);
+        this.additionalBizInfo = newAdditionalBizInfo;
         // 추가적인 비즈니스 로직
 
         // 메일 전송 이벤트 발생
         if (mailEventHandler != null) {
-            mailEventHandler.accept(newBizInfo);
+            mailEventHandler.accept(newAdditionalBizInfo);
         }
     }
 
 
-    public BizInfo selectBizInfo(String mallId, String bizId){
+    public AdditionalBizInfo selectBizInfo(String mallId, String bizId){
 
         if (bizId == null || bizId.isEmpty()) {
             throw new IllegalArgumentException("Business ID must not be null or empty.");
@@ -40,11 +40,11 @@ public class BizRequestAggregate {
         }
 
         // 조회 로직 구현 (예: 데이터베이스에서 해당 ID로 조회)
-        return this.bizInfo;
+        return this.additionalBizInfo;
     }
 
-    private void validateBizInfo(BizInfo bizInfo) {
-        if (bizInfo == null || bizInfo.getBizId() == null || bizInfo.getBizId().isEmpty()) {
+    private void validateBizInfo(AdditionalBizInfo additionalBizInfo) {
+        if (additionalBizInfo == null || additionalBizInfo.getBizId() == null || additionalBizInfo.getBizId().isEmpty()) {
             throw new IllegalArgumentException("Invalid BizInfo provided.");
         }
     }

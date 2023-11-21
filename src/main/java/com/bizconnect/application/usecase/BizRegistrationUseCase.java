@@ -1,11 +1,10 @@
 package com.bizconnect.application.usecase;
 
-import com.bizconnect.application.dto.BizConnectParams;
-import com.bizconnect.domain.entity.BizInfo;
+import com.bizconnect.domain.entity.AdditionalBizInfo;
 
 public interface BizRegistrationUseCase {
-    void registerMerchant(BizInfo bizInfo);
-    BizInfo getMerchantInfo(String mallId, String bizId);
+    void registerMerchant(AdditionalBizInfo additionalBizInfo);
+    AdditionalBizInfo getMerchantInfo(String mallId, String bizId);
 
 }
 

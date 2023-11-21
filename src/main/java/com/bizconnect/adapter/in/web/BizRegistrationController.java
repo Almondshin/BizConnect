@@ -1,7 +1,7 @@
 package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.application.usecase.BizRegistrationUseCase;
-import com.bizconnect.domain.entity.BizInfo;
+import com.bizconnect.domain.entity.AdditionalBizInfo;
 import org.springframework.web.bind.annotation.RestController;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,15 +20,15 @@ public class BizRegistrationController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerMerchant(@RequestBody BizInfo bizInfo) {
-        bizRegistrationUseCase.registerMerchant(bizInfo);
+    public ResponseEntity<?> registerMerchant(@RequestBody AdditionalBizInfo additionalBizInfo) {
+        bizRegistrationUseCase.registerMerchant(additionalBizInfo);
         return ResponseEntity.ok().build();
     }
 
     @GetMapping("/{mallId}/{bizId}")
-    public ResponseEntity<BizInfo> getMerchantInfo(@PathVariable String mallId, @PathVariable String bizId) {
-        BizInfo bizInfo = bizRegistrationUseCase.getMerchantInfo(mallId, bizId);
-        return ResponseEntity.ok(bizInfo);
+    public ResponseEntity<AdditionalBizInfo> getMerchantInfo(@PathVariable String mallId, @PathVariable String bizId) {
+        AdditionalBizInfo additionalBizInfo = bizRegistrationUseCase.getMerchantInfo(mallId, bizId);
+        return ResponseEntity.ok(additionalBizInfo);
     }
 }
 

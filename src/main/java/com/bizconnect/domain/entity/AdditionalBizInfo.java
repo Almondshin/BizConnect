@@ -11,8 +11,8 @@ import javax.persistence.Table;
 @Getter
 @Setter
 @Entity
-@Table(name = "BIZ_INFO")
-public class BizInfo {
+@Table(name = "Additional_BIZ_INFO")
+public class AdditionalBizInfo {
 
     @Id
     @Column(name = "BIZ_ID")

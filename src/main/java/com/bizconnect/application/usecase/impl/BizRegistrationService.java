@@ -2,7 +2,7 @@ package com.bizconnect.application.usecase.impl;
 
 import com.bizconnect.application.usecase.BizRegistrationUseCase;
 import com.bizconnect.domain.aggregate.BizRequestAggregate;
-import com.bizconnect.domain.entity.BizInfo;
+import com.bizconnect.domain.entity.AdditionalBizInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -18,13 +18,13 @@ public class BizRegistrationService implements BizRegistrationUseCase {
 
     @Override
     @Transactional
-    public void registerMerchant(BizInfo bizInfo) {
-        bizRequestAggregate.registerBiz(bizInfo);
+    public void registerMerchant(AdditionalBizInfo additionalBizInfo) {
+        bizRequestAggregate.registerBiz(additionalBizInfo);
     }
 
     @Override
     @Transactional
-    public BizInfo getMerchantInfo(String mallId, String bizId) {
+    public AdditionalBizInfo getMerchantInfo(String mallId, String bizId) {
         return bizRequestAggregate.selectBizInfo(mallId, bizId);
         // 조회 결과에 대한 처리 로직
     }
