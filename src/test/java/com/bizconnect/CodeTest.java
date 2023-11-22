@@ -5,6 +5,9 @@ public class CodeTest {
     int index, maxLen;
 
     public static void main(String[] args) {
+
+        int[][] a1 = new int[][]{{0, 1, 0}, {1, 1, 1}, {1, 1, 0}, {0, 1, 1}};
+
         CodeTest ct = new CodeTest();
         System.out.println(ct.longestPalindrome("tatttefetettte"));
     }

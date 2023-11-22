@@ -15,25 +15,27 @@ import javax.persistence.Table;
 public class AdditionalBizInfo {
 
     @Id
-    @Column(name = "BIZ_ID")
-    private String bizId;
-
-    @Column(name = "MALL_ID")
-    private String mallId;
-
-    @Column(name = "CEO_NAME")
-    private String ceoName;
-
-    @Column(name = "BIZ_NUMBER")
+    private String clientId;
+    private String clientName;
+    private String companyName;
+    private String businessType;
     private String bizNumber;
-
-    @Column(name = "EMAIL")
-    private String email;
-
-    @Column(name = "PHONE_NUMBER")
+    private String ceoName;
     private String phoneNumber;
-
-    @Column(name = "ADDRESS")
     private String address;
+    private String email;
+    private String siteId;
+    private String siteName;
+    private String siteCode;
+    private String ktCpCd;
+    private String telcoSiteUrl;
+    private String pcSiteUrl;
+    private String mobileSiteUrl;
+    private String serviceType;
+
+    // 정산담당자 정보 (현재 임시테이블에서만 사용)
+    private String settleManagerName;
+    private String settleManagerEmail;
+    private String settleManagerPhoneNumber;
 
 }
