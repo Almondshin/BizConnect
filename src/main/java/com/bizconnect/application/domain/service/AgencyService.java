@@ -3,7 +3,9 @@ package com.bizconnect.application.domain.service;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import org.checkerframework.checker.units.qual.A;
+import org.springframework.stereotype.Service;
 
+@Service
 public class AgencyService implements AgencyUseCase {
     @Override
     public boolean checkAgencyId(String agencyId, String mallId) {

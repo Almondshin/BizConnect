@@ -1,5 +1,7 @@
 package com.bizconnect.application.port.out;
 
-public interface AgencyDataPort {
+import com.bizconnect.application.domain.model.Agency;
 
+public interface AgencyDataPort {
+    void checkAgency(String agencyId, String mallId);
 }

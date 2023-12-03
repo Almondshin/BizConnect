@@ -15,10 +15,8 @@ public class AgencyController {
         this.agencyUseCase = agencyUseCase;
     }
 
-
     @PostMapping("/register")
     public ResponseEntity<?> registerMerchant(@RequestBody String agencyId, String mallId) {
-
         agencyUseCase.checkAgencyId(agencyId, mallId);
         return ResponseEntity.ok().build();
     }
