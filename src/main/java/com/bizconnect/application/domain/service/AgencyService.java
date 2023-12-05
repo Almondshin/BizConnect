@@ -37,8 +37,9 @@ public class AgencyService implements AgencyUseCase {
     }
 
     @Override
-    public void checkAgencyId(Agency agency) {
+    public Agency checkAgencyId(Agency agency) {
         agencyDataPort.checkAgency(agency);
+        return agency;
     }
 
 }

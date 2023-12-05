@@ -18,14 +18,27 @@ public class AgencyController {
         this.agencyUseCase = agencyUseCase;
     }
 
-
-
     @PostMapping("/getAgencySiteStatus")
-    public ResponseEntity<?> registerMerchant(Agency agency) {
-
+    public ResponseEntity<?> registerMerchant(@RequestBody Agency agency) {
         System.out.println("agencyId : " + agency.getAgencyId());
         System.out.println("mallId : " + agency.getMallId());
-        agencyUseCase.checkAgencyId(new Agency(agency.getAgencyId(), agency.getMallId())); // Agency 객체를 생성하여 유효성 검증
-        return ResponseEntity.ok().build();
+
+        try {
+            Agency result = agencyUseCase.checkAgencyId(new Agency(agency.getAgencyId(), agency.getMallId()));
+
+            if (result == null) {
+                // 조건에 따른 처리
+                return ResponseEntity.ok().body("조건에 맞지 않는 요청");
+            }
+
+            // 성공적인 처리
+            return ResponseEntity.ok().body("성공적인 처리 결과");
+
+        } catch (IllegalArgumentException e) {
+            System.err.println("Error during checking AgencyId or MallId: " + e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
+
+
 }
