@@ -11,6 +11,6 @@
     <title>Title</title>
 </head>
 <body>
-결제요청
+가입
 </body>
 </html>

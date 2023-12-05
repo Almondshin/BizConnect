@@ -6,6 +6,7 @@ import lombok.Getter;
 public class Agency {
     private String agencyId;
     private String mallId;
+    private static final String regex = "^[a-zA-Z0-9]+$";
 
     public Agency(String agencyId, String mallId) {
         if (!isValidAgencyId(agencyId) || !isValidMallId(mallId)) {
@@ -16,13 +17,11 @@ public class Agency {
     }
 
     private boolean isValidAgencyId(String agencyId) {
-        String regex = "^[a-zA-Z0-9]+$";
         return agencyId != null && !agencyId.isEmpty() && agencyId.matches(regex);
     }
 
     private boolean isValidMallId(String mallId) {
-        // 유효성 검증 로직 (mallId에 대한)
-        return mallId != null && !mallId.isEmpty();
+        return mallId != null && !mallId.isEmpty() && mallId.matches(regex);
     }
 
 }

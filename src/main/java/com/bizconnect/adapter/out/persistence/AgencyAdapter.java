@@ -4,6 +4,8 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
 
+import java.util.Optional;
+
 @Service
 public class AgencyAdapter implements AgencyDataPort {
 
@@ -14,22 +16,26 @@ public class AgencyAdapter implements AgencyDataPort {
     }
 
     @Override
-    public AgencyJpaEntity checkAgency(Agency agency) {
+    public Agency checkAgency(Agency agency) {
         AgencyJpaEntity entity = convertToEntity(agency);
-        // 여기서 entity를 사용하여 데이터베이스 조회
+        Optional<AgencyJpaEntity> foundEntity = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
 
-        System.out.println("entity.getAgencyId() : " + entity.getAgencyId());
-        System.out.println("entity.getMallId() : " + entity.getMallId());
-
-        System.out.println("findByAgencyIdAndMallId : " + agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId()));
-        return agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
+        // Entity를 도메인 객체로 변환
+        return foundEntity.map(this::convertToDomain).orElse(null);
     }
 
     private AgencyJpaEntity convertToEntity(Agency agency) {
+        // AgencyJpaEntity 변환 로직
         AgencyJpaEntity entity = new AgencyJpaEntity();
         entity.setAgencyId(agency.getAgencyId());
         entity.setMallId(agency.getMallId());
         // 추가 필드 매핑
         return entity;
+    }
+
+    private Agency convertToDomain(AgencyJpaEntity entity) {
+        // AgencyJpaEntity를 Agency로 변환하는 로직
+        return new Agency(entity.getAgencyId(), entity.getMallId());
+        // 필요에 따라 추가 필드 매핑
     }
 }

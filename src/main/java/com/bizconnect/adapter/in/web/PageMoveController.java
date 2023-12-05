@@ -11,4 +11,14 @@ public class PageMoveController {
     public String hello(Model model){
         return "index";
     }
+
+    @RequestMapping("/requestPage")
+    public String requestPage(Model model){
+        return "request";
+    }
+
+    @RequestMapping("/registryPage")
+    public String registryPage(Model model){
+        return "registry";
+    }
 }

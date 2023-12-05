@@ -12,6 +12,7 @@
 <html>
 <head>
     <title>첫 화면이올시다</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
         function submitForm(event) {
             event.preventDefault();
@@ -19,24 +20,35 @@
             const agencyId = document.getElementById('agencyId').value;
             const mallId = document.getElementById('mallId').value;
 
-            fetch('/getAgencySiteStatus', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ agencyId: agencyId, mallId: mallId })
-            })
-                .then(response => {
-                    if (response.ok) {
-                        alert('Registration successful');
-                        window.location.href = '/successPage'; // 성공 시 이동할 페이지 URL
-                    } else {
-                        response.text().then(text => alert('Error: ' + text));
+            $.ajax({
+                url: '/getAgencySiteStatus',
+                type: 'POST',
+                contentType: 'application/json',
+                data: JSON.stringify({ agencyId: agencyId, mallId: mallId }),
+                statusCode: {
+                    200: function (){
+                        alert("성공")
+                        window.location.href = '/requestPage'; // 성공 시 이동할 페이지 URL
+                    },
+                    204: function() {
+                        alert('No content available');
+                        window.location.href = '/registryPage'; // noContent일 때 이동할 페이지 URL
+                    },
+                    400: function() {
+                        alert('Bad request error');
+                        // 에러에 대한 추가적인 처리가 필요한 경우 여기에 작성
                     }
-                })
-                .catch(error => alert('Error: ' + error));
+                },
+                success: function(response) {
+                    alert('Registration successful: ' + response);
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + xhr.responseText);
+                }
+            });
         }
     </script>
+
 </head>
 <body>
 <form onsubmit="submitForm(event)">

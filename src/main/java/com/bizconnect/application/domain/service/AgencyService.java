@@ -1,5 +1,6 @@
 package com.bizconnect.application.domain.service;
 
+import com.bizconnect.adapter.out.persistence.AgencyJpaEntity;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.out.AgencyDataPort;
@@ -38,8 +39,7 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public Agency checkAgencyId(Agency agency) {
-        agencyDataPort.checkAgency(agency);
-        return agency;
+        return agencyDataPort.checkAgency(agency);
     }
 
 }
