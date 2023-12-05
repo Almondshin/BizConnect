@@ -2,7 +2,9 @@ package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import lombok.Getter;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -15,6 +17,8 @@ public class AgencyController {
     public AgencyController(AgencyUseCase agencyUseCase) {
         this.agencyUseCase = agencyUseCase;
     }
+
+
 
     @PostMapping("/register")
     public ResponseEntity<?> registerMerchant(@RequestBody String agencyId, String mallId) {

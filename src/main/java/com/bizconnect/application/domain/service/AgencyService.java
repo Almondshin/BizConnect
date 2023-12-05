@@ -1,18 +1,19 @@
 package com.bizconnect.application.domain.service;
 
-import com.bizconnect.adapter.out.persistence.AgencyRepository;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
 
 @Service
 public class AgencyService implements AgencyUseCase {
 
-    private final AgencyRepository agencyRepository;
+    private final AgencyDataPort agencyDataPort;
 
-    public AgencyService(AgencyRepository agencyRepository) {
-        this.agencyRepository = agencyRepository;
+    public AgencyService(AgencyDataPort agencyDataPort) {
+        this.agencyDataPort = agencyDataPort;
     }
+
 
     @Override
     public void registerAgency(Agency agency) {
@@ -37,7 +38,11 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void checkAgencyId(Agency agency) {
-        // Agency ID 유효성 검증 로직 구현
+        agencyDataPort.checkAgency(agency);
     }
+
 }
+
+
+
 

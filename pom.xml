@@ -23,6 +23,19 @@
             <artifactId>spring-boot-starter-web</artifactId>
         </dependency>
 
+        <!--jasper-->
+        <dependency>
+            <groupId>org.apache.tomcat.embed</groupId>
+            <artifactId>tomcat-embed-jasper</artifactId>
+            <scope>provided</scope>
+        </dependency>
+
+        <!--jstl-->
+        <dependency>
+            <groupId>javax.servlet</groupId>
+            <artifactId>jstl</artifactId>
+        </dependency>
+
         <!--JPA-->
         <dependency>
             <groupId>org.springframework.boot</groupId>
@@ -39,6 +52,7 @@
         <dependency>
             <groupId>org.mariadb.jdbc</groupId>
             <artifactId>mariadb-java-client</artifactId>
+            <version>3.1.4</version>
         </dependency>
 
         <!--H2-->
@@ -47,6 +61,7 @@
             <artifactId>h2</artifactId>
             <scope>runtime</scope>
         </dependency>
+
 
         <!--Thymeleaf Template-->
         <dependency>
