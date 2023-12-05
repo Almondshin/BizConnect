@@ -20,9 +20,12 @@ public class AgencyController {
 
 
 
-    @PostMapping("/register")
-    public ResponseEntity<?> registerMerchant(@RequestBody String agencyId, String mallId) {
-        agencyUseCase.checkAgencyId(new Agency(agencyId, mallId)); // Agency 객체를 생성하여 유효성 검증
+    @PostMapping("/getAgencySiteStatus")
+    public ResponseEntity<?> registerMerchant(Agency agency) {
+
+        System.out.println("agencyId : " + agency.getAgencyId());
+        System.out.println("mallId : " + agency.getMallId());
+        agencyUseCase.checkAgencyId(new Agency(agency.getAgencyId(), agency.getMallId())); // Agency 객체를 생성하여 유효성 검증
         return ResponseEntity.ok().build();
     }
 }

@@ -5,5 +5,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.repository.query.Param;
 
 public interface AgencyRepository extends JpaRepository<AgencyJpaEntity,String> {
-    Agency findByAgencyIdAndMallId(@Param("agencyId") String agencyId, @Param("mallId") String mallId);
+    AgencyJpaEntity findByAgencyIdAndMallId(String agencyId, String mallId);
 }

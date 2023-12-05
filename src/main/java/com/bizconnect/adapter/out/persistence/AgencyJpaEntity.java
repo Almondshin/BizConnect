@@ -8,9 +8,9 @@ import javax.persistence.Id;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "Agency")
+@Table(name = "AGENCY_TEST")
 @Data
-class AgencyJpaEntity {
+public class AgencyJpaEntity {
 
 	@Id
 	@Column(name = "MALL_ID")
@@ -23,7 +23,7 @@ class AgencyJpaEntity {
 	@Column(name = "COMPANY_NAME")
 	private String companyName;
 	@Column(name = "BUSINESS_TYPE")
-	private int businessType;
+	private String businessType;
 	@Column(name = "BIZ_NUMBER")
 	private String bizNumber;
 	@Column(name = "CEO_NAME")
