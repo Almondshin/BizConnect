@@ -1,5 +1,6 @@
 package com.bizconnect.adapter.out.persistence;
 
+import com.bizconnect.application.domain.exceptions.CheckedMallIdException;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -23,8 +24,8 @@ public class AgencyAdapter implements AgencyDataPort {
         Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
         if(foundEntity.isEmpty() && foundMallId.isPresent()){
             try {
-                throw new AlreadyBoundException("ID already registered!");
-            } catch (AlreadyBoundException e) {
+                throw new CheckedMallIdException("ID already registered!");
+            } catch (CheckedMallIdException e) {
                 throw new RuntimeException(e);
             }
         }

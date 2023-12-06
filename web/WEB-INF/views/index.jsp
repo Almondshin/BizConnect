@@ -27,20 +27,20 @@
                 data: JSON.stringify({ agencyId: agencyId, mallId: mallId }),
                 success: function(response) {
                 },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + xhr.responseText);
+                error: function(xhr, textStatus, errorThrown) {
+                        // var errorResponse = JSON.parse(xhr.responseText);
+                        // alert(errorResponse.message);
+                        alert(xhr.responseText);
+                        console.log(xhr.responseText)
                 },
                 statusCode: {
                     200: function (){
-                        alert("성공")
                         window.location.href = '/requestPage'; // 성공 시 이동할 페이지 URL
                     },
                     204: function() {
-                        alert('No content available');
                         window.location.href = '/registryPage'; // noContent일 때 이동할 페이지 URL
                     },
                     400: function() {
-                        alert('Bad request error');
                         // 에러에 대한 추가적인 처리가 필요한 경우 여기에 작성
                     }
                 }
