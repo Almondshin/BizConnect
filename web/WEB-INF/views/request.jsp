@@ -11,6 +11,9 @@
     <title>Title</title>
 </head>
 <body>
-결제요청
+<h1>결제요청</h1>
+sessionAgencyId : ${sessionAgencyId}<br>
+sessionMallId : ${sessionMallId}
+
 </body>
 </html>

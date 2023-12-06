@@ -4,6 +4,7 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
 
+import java.rmi.AlreadyBoundException;
 import java.util.Optional;
 
 @Service
@@ -19,6 +20,14 @@ public class AgencyAdapter implements AgencyDataPort {
     public Agency checkAgency(Agency agency) {
         AgencyJpaEntity entity = convertToEntity(agency);
         Optional<AgencyJpaEntity> foundEntity = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
+        Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
+        if(foundEntity.isEmpty() && foundMallId.isPresent()){
+            try {
+                throw new AlreadyBoundException("ID already registered!");
+            } catch (AlreadyBoundException e) {
+                throw new RuntimeException(e);
+            }
+        }
 
         // Entity를 도메인 객체로 변환
         return foundEntity.map(this::convertToDomain).orElse(null);

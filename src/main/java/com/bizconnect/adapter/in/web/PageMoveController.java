@@ -1,6 +1,7 @@
 package com.bizconnect.adapter.in.web;
 
 
+import com.bizconnect.application.domain.enums.EnumAgency;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -9,6 +10,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 public class PageMoveController {
     @RequestMapping("/")
     public String hello(Model model){
+        EnumAgency[] enumAgencies = EnumAgency.values();
+        model.addAttribute("enumAgencies" ,enumAgencies);
         return "index";
     }
 
@@ -19,6 +22,7 @@ public class PageMoveController {
 
     @RequestMapping("/registryPage")
     public String registryPage(Model model){
+
         return "registry";
     }
 }

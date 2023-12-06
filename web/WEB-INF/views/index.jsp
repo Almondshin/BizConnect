@@ -25,6 +25,11 @@
                 type: 'POST',
                 contentType: 'application/json',
                 data: JSON.stringify({ agencyId: agencyId, mallId: mallId }),
+                success: function(response) {
+                },
+                error: function(xhr, status, error) {
+                    alert('Error: ' + xhr.responseText);
+                },
                 statusCode: {
                     200: function (){
                         alert("성공")
@@ -38,12 +43,6 @@
                         alert('Bad request error');
                         // 에러에 대한 추가적인 처리가 필요한 경우 여기에 작성
                     }
-                },
-                success: function(response) {
-                    alert('Registration successful: ' + response);
-                },
-                error: function(xhr, status, error) {
-                    alert('Error: ' + xhr.responseText);
                 }
             });
         }
@@ -52,10 +51,15 @@
 </head>
 <body>
 <form onsubmit="submitForm(event)">
-    <label for="agencyId">Agency ID:</label>
-    <input type="text" id="agencyId" name="agencyId"><br><br>
+    <label for="agencyId">Agency ID:</label><br>
+    <select name="agencyId" id="agencyId" style="width: 20%;" data-searchable="default">
+        <option value=''>전 체</option>
+        <c:forEach var="agencyId" items="${enumAgencies}" varStatus="status">
+            <option value="${agencyId.code}">${agencyId.code}(${agencyId.value})</option>
+        </c:forEach>
+    </select><br><br>
 
-    <label for="mallId">Mall ID:</label>
+    <label for="mallId">Mall ID:</label><br>
     <input type="text" id="mallId" name="mallId"><br><br>
 
     <input type="submit" value="Submit">
