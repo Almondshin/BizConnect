@@ -9,7 +9,7 @@ public class Client {
     /* 이용기관 정보 */
     private String clientId;
     private String companyName;
-    private int businessType;
+    private String businessType;
     private String bizNumber;
     private String ceoName;
     private String phoneNumber;

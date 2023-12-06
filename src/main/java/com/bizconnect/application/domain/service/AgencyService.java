@@ -2,6 +2,9 @@ package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.out.persistence.AgencyJpaEntity;
 import com.bizconnect.application.domain.model.Agency;
+import com.bizconnect.application.domain.model.Client;
+import com.bizconnect.application.domain.model.RegistrationDTO;
+import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -17,8 +20,8 @@ public class AgencyService implements AgencyUseCase {
 
 
     @Override
-    public void registerAgency(Agency agency) {
-        // 제휴사 등록 로직 구현
+    public void registerAgency(RegistrationDTO registrationDTO) {
+        agencyDataPort.registerAgency(registrationDTO);
     }
 
     @Override

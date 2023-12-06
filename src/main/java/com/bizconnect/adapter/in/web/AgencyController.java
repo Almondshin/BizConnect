@@ -1,14 +1,11 @@
 package com.bizconnect.adapter.in.web;
 
-import com.bizconnect.application.domain.exceptions.ApiError;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.RegistrationRequest;
+import com.bizconnect.application.domain.model.RegistrationDTO;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.in.AgencyUseCase;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -38,17 +35,20 @@ public class AgencyController {
     }
 
     @PostMapping("/registerMerchant")
-    public ResponseEntity<?> registerMerchant(@RequestBody RegistrationRequest registrationRequest , HttpServletRequest request){
+    public ResponseEntity<?> registerMerchant(@RequestBody RegistrationDTO registrationDTO, HttpServletRequest request){
 
-        Agency agency = registrationRequest.getAgency();
-        Client client = registrationRequest.getClient();
-        SettleManager settleManager = registrationRequest.getSettleManager();
+        Agency agency = registrationDTO.getAgency();
+        Client client = registrationDTO.getClient();
+        SettleManager settleManager = registrationDTO.getSettleManager();
 
-        System.out.println("agency : " + agency);
+        System.out.println("agency : " + agency.getAgencyId() + " " + agency.getMallId());
         System.out.println("client : " + client);
         System.out.println("settleManager : " +settleManager);
 
-        System.out.println("생성요청~");
+
+        agencyUseCase.registerAgency(registrationDTO);
+
+
         return ResponseEntity.ok().build(); // 데이터가 있을 때 200 반환
     }
 
