@@ -11,5 +11,7 @@ public interface AgencyDataPort {
 
     RegistrationDTO registerAgency(RegistrationDTO registrationDTO);
 
+    Client getMallIdDetails(String mallId);
+
 }
 

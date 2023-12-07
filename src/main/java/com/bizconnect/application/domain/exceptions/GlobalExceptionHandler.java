@@ -15,5 +15,12 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ApiError> IllegalArgumentException(IllegalArgumentException ex) {
+        String message = "Error: " + ex.getMessage();
+        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, message);
+        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    }
+
     // 다른 예외 처리기들 ...
 }

@@ -35,10 +35,10 @@ public class AgencyService implements AgencyUseCase {
     }
 
     @Override
-    public Agency getAgencyDetails(String agencyId) {
-        // 제휴사 상세 정보 조회 로직 구현
-        return null;
+    public Client getMallIdDetails(String mallId) {
+        return  agencyDataPort.getMallIdDetails(mallId);
     }
+
 
     @Override
     public Agency checkAgencyId(Agency agency) {

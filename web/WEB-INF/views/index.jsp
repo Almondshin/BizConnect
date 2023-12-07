@@ -28,10 +28,9 @@
                 success: function(response) {
                 },
                 error: function(xhr, textStatus, errorThrown) {
-                        // var errorResponse = JSON.parse(xhr.responseText);
-                        // alert(errorResponse.message);
-                        alert(xhr.responseText);
-                        console.log(xhr.responseText)
+                        var errorResponse = JSON.parse(xhr.responseText);
+                        alert(errorResponse.message);
+                        console.log(xhr.responseText);
                 },
                 statusCode: {
                     200: function (){

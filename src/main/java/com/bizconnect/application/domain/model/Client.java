@@ -16,4 +16,16 @@ public class Client {
     private String address;
     private String companySite;
     private String email;
+
+    public Client(String clientId, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email) {
+        this.clientId = clientId;
+        this.companyName = companyName;
+        this.businessType = businessType;
+        this.bizNumber = bizNumber;
+        this.ceoName = ceoName;
+        this.phoneNumber = phoneNumber;
+        this.address = address;
+        this.companySite = companySite;
+        this.email = email;
+    }
 }

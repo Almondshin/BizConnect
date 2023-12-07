@@ -14,9 +14,11 @@ import java.util.Optional;
 public class AgencyAdapter implements AgencyDataPort {
 
     private final AgencyRepository agencyRepository;
+    private final ClientRepository clientRepository;
 
-    public AgencyAdapter(AgencyRepository agencyRepository) {
+    public AgencyAdapter(AgencyRepository agencyRepository, ClientRepository clientRepository) {
         this.agencyRepository = agencyRepository;
+        this.clientRepository = clientRepository;
     }
 
     @Override
@@ -24,9 +26,9 @@ public class AgencyAdapter implements AgencyDataPort {
 
         AgencyJpaEntity entity = convertToEntity(agency);
 
-        Optional<AgencyJpaEntity> foundEntity = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
+        Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
         Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
-        if(foundEntity.isEmpty() && foundMallId.isPresent()){
+        if(foundAgency.isEmpty() && foundMallId.isPresent()){
             try {
                 throw new CheckedMallIdException("ID already registered!");
             } catch (CheckedMallIdException e) {
@@ -35,7 +37,7 @@ public class AgencyAdapter implements AgencyDataPort {
         }
 
         // Entity를 도메인 객체로 변환
-        return foundEntity.map(this::convertToDomain).orElse(null);
+        return foundAgency.map(this::convertToDomain).orElse(null);
     }
 
     @Override
@@ -43,6 +45,13 @@ public class AgencyAdapter implements AgencyDataPort {
         AgencyJpaEntity entity = convertToEntity(registrationDTO);
         agencyRepository.save(entity);
         return registrationDTO;
+    }
+
+    @Override
+    public Client getMallIdDetails(String mallId) {
+        Optional<AgencyJpaEntity> foundMallId = clientRepository.findByMallId(mallId);
+        System.out.println(foundMallId);
+        return foundMallId.map(this::convertToClientDomain).orElse(null);
     }
 
     private AgencyJpaEntity convertToEntity(Agency agency) {
@@ -85,6 +94,19 @@ public class AgencyAdapter implements AgencyDataPort {
     private Agency convertToDomain(AgencyJpaEntity entity) {
         // AgencyJpaEntity를 Agency로 변환하는 로직
         return new Agency(entity.getAgencyId(), entity.getMallId());
-        // 필요에 따라 추가 필드 매핑
+
+    }
+
+    private Client convertToClientDomain(AgencyJpaEntity entity) {
+        // AgencyJpaEntity를 Client로 변환하는 로직
+        return new Client(entity.getClientId(),
+                entity.getCompanyName(),
+                entity.getBusinessType(),
+                entity.getBizNumber(),
+                entity.getCeoName(),
+                entity.getPhoneNumber(),
+                entity.getAddress(),
+                entity.getCompanySite(),
+                entity.getEmail());
     }
 }
