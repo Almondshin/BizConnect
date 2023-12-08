@@ -1,5 +1,6 @@
 package com.bizconnect.application.domain.model;
 
+import com.bizconnect.application.domain.exceptions.IllegalAgencyIdMallIdException;
 import lombok.Getter;
 
 @Getter
@@ -10,7 +11,12 @@ public class Agency {
 
     public Agency(String agencyId, String mallId) {
         if (!isValidAgencyId(agencyId) || !isValidMallId(mallId)) {
-            throw new IllegalArgumentException("Invalid agencyId or mallId: Data format is not correct.");
+            try {
+//                throw new IllegalAgencyIdMallIdException("Invalid agencyId or mallId: Data format is not correct.");
+                throw new IllegalAgencyIdMallIdException("데이터 형식이 올바르지 않습니다.");
+            } catch (IllegalAgencyIdMallIdException e) {
+                throw new RuntimeException(e);
+            }
         }
         this.agencyId = agencyId;
         this.mallId = mallId;

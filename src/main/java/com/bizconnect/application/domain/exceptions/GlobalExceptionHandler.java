@@ -1,5 +1,7 @@
 package com.bizconnect.application.domain.exceptions;
 
+import com.bizconnect.application.domain.enums.EnumResultCode;
+import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -10,17 +12,15 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(CheckedMallIdException.class)
     public ResponseEntity<ApiError> checkedMallIdException(CheckedMallIdException ex) {
-        String message = "Error: " + ex.getMessage();
-        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, message);
+        ApiError apiError = new ApiError(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
-    @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ApiError> IllegalArgumentException(IllegalArgumentException ex) {
-        String message = "Error: " + ex.getMessage();
-        ApiError apiError = new ApiError(HttpStatus.BAD_REQUEST, message);
+    @ExceptionHandler(IllegalAgencyIdMallIdException.class)
+    public ResponseEntity<ApiError> IllegalAgencyIdMallIdException(IllegalAgencyIdMallIdException ex) {
+        ApiError apiError = new ApiError(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
         return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
     }
 
-    // 다른 예외 처리기들 ...
+
 }

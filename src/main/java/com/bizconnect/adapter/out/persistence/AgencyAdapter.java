@@ -28,7 +28,7 @@ public class AgencyAdapter implements AgencyDataPort {
 
         Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
         Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
-        if(foundAgency.isEmpty() && foundMallId.isPresent()){
+        if(foundMallId.isPresent()){
             try {
                 throw new CheckedMallIdException("ID already registered!");
             } catch (CheckedMallIdException e) {

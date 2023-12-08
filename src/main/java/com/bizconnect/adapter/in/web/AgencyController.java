@@ -8,11 +8,13 @@ import com.bizconnect.application.port.in.AgencyUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
+@RequestMapping(name = "/agency")
 public class AgencyController {
 
     private final AgencyUseCase agencyUseCase;
@@ -21,16 +23,12 @@ public class AgencyController {
         this.agencyUseCase = agencyUseCase;
     }
 
-    @PostMapping("/getAgencySiteStatus")
+    @PostMapping("/status")
     public ResponseEntity<?> checkAgency(HttpServletRequest request, @RequestBody Agency agency) {
         Agency result = agencyUseCase.checkAgencyId(agency);
         if (result == null) {
-            request.getSession().setAttribute("sessionAgencyId", agency.getAgencyId());
-            request.getSession().setAttribute("sessionMallId", agency.getMallId());
             return ResponseEntity.noContent().build(); // 데이터가 없을 때 204 반환
         }
-        request.getSession().setAttribute("sessionAgencyId", agency.getAgencyId());
-        request.getSession().setAttribute("sessionMallId", agency.getMallId());
         return ResponseEntity.ok().body(agency); // 데이터가 있을 때 200 반환
     }
 
