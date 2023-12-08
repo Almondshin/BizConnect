@@ -11,15 +11,16 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(CheckedMallIdException.class)
-    public ResponseEntity<ApiError> checkedMallIdException(CheckedMallIdException ex) {
-        ApiError apiError = new ApiError(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
-        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ResponseMessage> checkedMallIdException(CheckedMallIdException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
     }
 
+
     @ExceptionHandler(IllegalAgencyIdMallIdException.class)
-    public ResponseEntity<ApiError> IllegalAgencyIdMallIdException(IllegalAgencyIdMallIdException ex) {
-        ApiError apiError = new ApiError(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
-        return new ResponseEntity<>(apiError, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ResponseMessage> IllegalAgencyIdMallIdException(IllegalAgencyIdMallIdException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.FAIL.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
     }
 
 

@@ -1,5 +1,6 @@
 package com.bizconnect.adapter.out.persistence;
 
+import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
 import com.bizconnect.application.domain.exceptions.CheckedMallIdException;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
@@ -12,54 +13,35 @@ import java.util.Optional;
 
 @Service
 public class AgencyAdapter implements AgencyDataPort {
-
     private final AgencyRepository agencyRepository;
-    private final ClientRepository clientRepository;
 
-    public AgencyAdapter(AgencyRepository agencyRepository, ClientRepository clientRepository) {
+    public AgencyAdapter(AgencyRepository agencyRepository) {
         this.agencyRepository = agencyRepository;
-        this.clientRepository = clientRepository;
     }
 
     @Override
-    public Agency checkAgency(Agency agency) {
-
-        AgencyJpaEntity entity = convertToEntity(agency);
+    public void checkAgency(Agency agency) {
+        AgencyJpaEntity entity = agencyConvertToEntity(agency);
 
         Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
         Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
         if(foundMallId.isPresent()){
-            try {
-                throw new CheckedMallIdException("ID already registered!");
-            } catch (CheckedMallIdException e) {
-                throw new RuntimeException(e);
-            }
+            throw new CheckedMallIdException("이미 등록된 ID입니다.");
         }
-
         // Entity를 도메인 객체로 변환
-        return foundAgency.map(this::convertToDomain).orElse(null);
+        foundAgency.map(this::convertToDomain);
     }
 
     @Override
-    public RegistrationDTO registerAgency(RegistrationDTO registrationDTO) {
+    public void registerAgency(RegistrationDTO registrationDTO) {
         AgencyJpaEntity entity = convertToEntity(registrationDTO);
         agencyRepository.save(entity);
-        return registrationDTO;
     }
 
-    @Override
-    public Client getMallIdDetails(String mallId) {
-        Optional<AgencyJpaEntity> foundMallId = clientRepository.findByMallId(mallId);
-        System.out.println(foundMallId);
-        return foundMallId.map(this::convertToClientDomain).orElse(null);
-    }
-
-    private AgencyJpaEntity convertToEntity(Agency agency) {
-        // Agency 객체를 AgencyJpaEntity 객체로 변환하는 로직
+    private AgencyJpaEntity agencyConvertToEntity(Agency agency) {
         AgencyJpaEntity entity = new AgencyJpaEntity();
         entity.setAgencyId(agency.getAgencyId());
         entity.setMallId(agency.getMallId());
-
         return entity;
     }
 
@@ -94,19 +76,5 @@ public class AgencyAdapter implements AgencyDataPort {
     private Agency convertToDomain(AgencyJpaEntity entity) {
         // AgencyJpaEntity를 Agency로 변환하는 로직
         return new Agency(entity.getAgencyId(), entity.getMallId());
-
-    }
-
-    private Client convertToClientDomain(AgencyJpaEntity entity) {
-        // AgencyJpaEntity를 Client로 변환하는 로직
-        return new Client(entity.getClientId(),
-                entity.getCompanyName(),
-                entity.getBusinessType(),
-                entity.getBizNumber(),
-                entity.getCeoName(),
-                entity.getPhoneNumber(),
-                entity.getAddress(),
-                entity.getCompanySite(),
-                entity.getEmail());
     }
 }

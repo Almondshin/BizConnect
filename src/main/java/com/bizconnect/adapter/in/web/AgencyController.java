@@ -1,10 +1,14 @@
 package com.bizconnect.adapter.in.web;
 
+import com.bizconnect.application.domain.enums.EnumResultCode;
+import com.bizconnect.application.domain.enums.EnumSiteStatus;
+import com.bizconnect.application.domain.exceptions.ResponseMessage;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.RegistrationDTO;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -24,31 +28,16 @@ public class AgencyController {
     }
 
     @PostMapping("/status")
-    public ResponseEntity<?> checkAgency(HttpServletRequest request, @RequestBody Agency agency) {
-        Agency result = agencyUseCase.checkAgencyId(agency);
-        if (result == null) {
-            return ResponseEntity.noContent().build(); // 데이터가 없을 때 204 반환
-        }
-        return ResponseEntity.ok().body(agency); // 데이터가 있을 때 200 반환
+    public ResponseEntity<?> checkAgency(@RequestBody Agency agency) {
+        agencyUseCase.checkAgencyId(agency);
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.UNREGISTERED.getCode());
+        return ResponseEntity.ok(responseMessage);
     }
-
-    @PostMapping("/registerMerchant")
-    public ResponseEntity<?> registerMerchant(@RequestBody RegistrationDTO registrationDTO, HttpServletRequest request){
-
-        Agency agency = registrationDTO.getAgency();
-        Client client = registrationDTO.getClient();
-        SettleManager settleManager = registrationDTO.getSettleManager();
-
-        System.out.println("agency : " + agency.getAgencyId() + " " + agency.getMallId());
-        System.out.println("client : " + client);
-        System.out.println("settleManager : " +settleManager);
-
-
+    @PostMapping("/register")
+    public ResponseEntity<?> registerAgency(@RequestBody RegistrationDTO registrationDTO, HttpServletRequest request){
         agencyUseCase.registerAgency(registrationDTO);
-
-
-        return ResponseEntity.ok().build(); // 데이터가 있을 때 200 반환
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode());
+        return ResponseEntity.ok(responseMessage);
     }
-
 
 }
