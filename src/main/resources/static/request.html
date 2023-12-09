@@ -1,12 +1,5 @@
-<%--
-  Created by IntelliJ IDEA.
-  User: almondshin
-  Date: 2023-12-05
-  Time: 오후 2:41
-  To change this template use File | Settings | File Templates.
---%>
-<%@ page contentType="text/html;charset=UTF-8" language="java" %>
-<html>
+<!DOCTYPE html>
+<html lang="en">
 <head>
     <title>Title</title>
 </head>
@@ -168,12 +161,10 @@
             <c:when test="${not empty extra_charge}">
                 <tr>
                     <th width="15%" rowspan="2">총 결제금액 (VAT포함)</th>
-                    <td width="35%" class="al"><span class="ft_org_02"><b>${salesPrice}
-												원</b></span></td>
+                    <td width="35%" class="al"><span class="ft_org_02"><b>${salesPrice}원</b></span></td>
                 </tr>
                 <tr>
-                    <td width="35%" class="al"><span class="ft_org_02"><b>${extra_charge}(초과사용분)
-												+ ${origin_charge}(기본료) + VAT = ${salesPrice}</b></span></td>
+                    <td width="35%" class="al"><span class="ft_org_02"><b>${extra_charge}(초과사용분)+ ${origin_charge}(기본료) + VAT = ${salesPrice}</b></span></td>
                 </tr>
             </c:when>
             <c:otherwise>
