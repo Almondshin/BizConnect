@@ -7,7 +7,7 @@ import lombok.Getter;
 public class Agency {
     private String agencyId;
     private String mallId;
-    private static final String regex = "^[a-zA-Z0-9]+$";
+    private static final String REGEX = "^[a-zA-Z0-9]+$";
 
     public Agency(String agencyId, String mallId) {
         if (!isValidAgencyId(agencyId) || !isValidMallId(mallId)) {
@@ -23,11 +23,11 @@ public class Agency {
     }
 
     private boolean isValidAgencyId(String agencyId) {
-        return agencyId != null && !agencyId.isEmpty() && agencyId.matches(regex);
+        return agencyId != null && !agencyId.isEmpty() && agencyId.matches(REGEX);
     }
 
     private boolean isValidMallId(String mallId) {
-        return mallId != null && !mallId.isEmpty() && mallId.matches(regex);
+        return mallId != null && !mallId.isEmpty() && mallId.matches(REGEX);
     }
 
 }

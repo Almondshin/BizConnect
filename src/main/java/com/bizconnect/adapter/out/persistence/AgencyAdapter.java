@@ -1,10 +1,10 @@
 package com.bizconnect.adapter.out.persistence;
 
+import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
 import com.bizconnect.application.domain.exceptions.CheckedMallIdException;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.RegistrationDTO;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.out.AgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -33,8 +33,8 @@ public class AgencyAdapter implements AgencyDataPort {
     }
 
     @Override
-    public void registerAgency(RegistrationDTO registrationDTO) {
-        AgencyJpaEntity entity = convertToEntity(registrationDTO);
+    public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
+        AgencyJpaEntity entity = convertToEntity(agency, client, settleManager);
         agencyRepository.save(entity);
     }
 
@@ -45,32 +45,27 @@ public class AgencyAdapter implements AgencyDataPort {
         return entity;
     }
 
-    private AgencyJpaEntity convertToEntity(RegistrationDTO registrationRequest) {
-        // AgencyJpaEntity 변환 로직
-        Agency agency = registrationRequest.getAgency();
-        Client client = registrationRequest.getClient();
-        SettleManager settleManager = registrationRequest.getSettleManager();
+    private AgencyJpaEntity convertToEntity(Agency agency, Client client, SettleManager settleManager) {
+        AgencyJpaEntity agencyJpaEntity = new AgencyJpaEntity();
 
-        AgencyJpaEntity entity = new AgencyJpaEntity();
-        entity.setAgencyId(agency.getAgencyId());
-        entity.setMallId(agency.getMallId());
+        agencyJpaEntity.setAgencyId(agency.getAgencyId());
+        agencyJpaEntity.setMallId(agency.getMallId());
 
-        entity.setClientId(client.getClientId());
-        entity.setCompanyName(client.getCompanyName());
-        entity.setBusinessType(client.getBusinessType());
-        entity.setBizNumber(client.getBizNumber());
-        entity.setCeoName(client.getCeoName());
-        entity.setPhoneNumber(client.getPhoneNumber());
-        entity.setAddress(client.getAddress());
-        entity.setCompanySite(client.getCompanySite());
-        entity.setEmail(client.getEmail());
+        agencyJpaEntity.setClientId(client.getClientId());
+        agencyJpaEntity.setCompanyName(client.getCompanyName());
+        agencyJpaEntity.setBusinessType(client.getBusinessType());
+        agencyJpaEntity.setBizNumber(client.getBizNumber());
+        agencyJpaEntity.setCeoName(client.getCeoName());
+        agencyJpaEntity.setPhoneNumber(client.getPhoneNumber());
+        agencyJpaEntity.setAddress(client.getAddress());
+        agencyJpaEntity.setCompanySite(client.getCompanySite());
+        agencyJpaEntity.setEmail(client.getEmail());
 
-        entity.setSettleManagerName(settleManager.getSettleManagerName());
-        entity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
-        entity.setSettleManagerEmail(settleManager.getSettleManagerEmail());
+        agencyJpaEntity.setSettleManagerName(settleManager.getSettleManagerName());
+        agencyJpaEntity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
+        agencyJpaEntity.setSettleManagerEmail(settleManager.getSettleManagerEmail());
 
-        // 추가 필드 매핑
-        return entity;
+        return agencyJpaEntity;
     }
 
     private Agency convertToDomain(AgencyJpaEntity entity) {

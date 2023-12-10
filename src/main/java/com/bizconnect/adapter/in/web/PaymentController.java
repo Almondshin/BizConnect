@@ -2,7 +2,6 @@ package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.RegistrationDTO;
 import com.bizconnect.application.domain.model.SettleManager;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
