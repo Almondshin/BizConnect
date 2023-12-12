@@ -1,5 +1,6 @@
 package com.bizconnect.adapter.in.web;
 
+import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
@@ -14,16 +15,7 @@ import javax.servlet.http.HttpServletRequest;
 public class PaymentController {
 
     @PostMapping("/paymentRequest")
-    public ResponseEntity<?> paymentRequest(@RequestBody RegistrationDTO registrationDTO, HttpServletRequest request){
-
-        Agency agency = registrationDTO.getAgency();
-        Client client = registrationDTO.getClient();
-        SettleManager settleManager = registrationDTO.getSettleManager();
-
-        System.out.println("agency : " + agency.getAgencyId() + " " + agency.getMallId());
-        System.out.println("client : " + client);
-        System.out.println("settleManager : " +settleManager);
-
+    public ResponseEntity<?> paymentRequest(@RequestBody ClientDataModel clientDataModel, HttpServletRequest request){
 
         return ResponseEntity.ok().build(); // 데이터가 있을 때 200 반환
     }

@@ -28,28 +28,28 @@ public class AgencyService implements AgencyUseCase {
     }
 
     private Agency convertToAgency(ClientDataModel clientDataModel) {
-        return new Agency(clientDataModel.getClientAgencyId(), clientDataModel.getClientMallId());
+        return new Agency(clientDataModel.getAgencyId(), clientDataModel.getMallId());
     }
 
     private Client convertToClient(ClientDataModel clientDataModel) {
         return new Client(
-                clientDataModel.getClientIdentifier(),
-                clientDataModel.getClientCompanyName(),
-                clientDataModel.getClientBusinessType(),
-                clientDataModel.getClientBizNumber(),
-                clientDataModel.getClientCeoName(),
-                clientDataModel.getClientPhoneNumber(),
-                clientDataModel.getClientAddress(),
-                clientDataModel.getClientCompanySite(),
-                clientDataModel.getClientEmail()
+                clientDataModel.getClientId(),
+                clientDataModel.getCompanyName(),
+                clientDataModel.getBusinessType(),
+                clientDataModel.getBizNumber(),
+                clientDataModel.getCeoName(),
+                clientDataModel.getPhoneNumber(),
+                clientDataModel.getAddress(),
+                clientDataModel.getCompanySite(),
+                clientDataModel.getEmail()
         );
     }
 
     private SettleManager convertToSettleManager(ClientDataModel clientDataModel) {
         return new SettleManager(
-                clientDataModel.getClientSettleManagerName(),
-                clientDataModel.getClientSettleManagerPhoneNumber(),
-                clientDataModel.getClientSettleManagerEmail()
+                clientDataModel.getSettleManagerName(),
+                clientDataModel.getSettleManagerPhoneNumber(),
+                clientDataModel.getSettleManagerEmail()
         );
     }
 }

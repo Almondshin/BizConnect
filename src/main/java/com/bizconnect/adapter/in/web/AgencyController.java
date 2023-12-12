@@ -1,9 +1,9 @@
 package com.bizconnect.adapter.in.web;
 
+import com.bizconnect.adapter.in.enums.EnumResultCode;
+import com.bizconnect.adapter.in.enums.EnumSiteStatus;
+import com.bizconnect.adapter.in.exceptions.ClientResponseMessage;
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.application.domain.enums.EnumResultCode;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
-import com.bizconnect.application.domain.exceptions.ResponseMessage;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,14 +25,14 @@ public class AgencyController {
 
     @PostMapping("/status")
     public ResponseEntity<?> checkAgency(@RequestBody ClientDataModel clientDataModel) {
-        agencyUseCase.checkAgencyId(clientDataModel);
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.UNREGISTERED.getCode());
+        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getMallId()));
+        ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.UNREGISTERED.getCode(), clientDataModel.getMallId());
         return ResponseEntity.ok(responseMessage);
     }
     @PostMapping("/register")
     public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel, HttpServletRequest request){
         agencyUseCase.registerAgency(clientDataModel);
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode());
+        ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
         return ResponseEntity.ok(responseMessage);
     }
 

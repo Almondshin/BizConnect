@@ -1,8 +1,8 @@
 package com.bizconnect.adapter.out.persistence;
 
-import com.bizconnect.adapter.in.model.ClientDataModel;
+import com.bizconnect.adapter.in.enums.EnumResultCode;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
-import com.bizconnect.application.domain.exceptions.CheckedMallIdException;
+import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberException;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
@@ -26,7 +26,7 @@ public class AgencyAdapter implements AgencyDataPort {
         Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
         Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
         if(foundMallId.isPresent()){
-            throw new CheckedMallIdException("이미 등록된 ID입니다.");
+            throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getMallId());
         }
         // Entity를 도메인 객체로 변환
         foundAgency.map(this::convertToDomain);
