@@ -1,23 +1,32 @@
 package com.bizconnect.adapter.in.web;
 
-import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.application.domain.model.Agency;
-import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.SettleManager;
-import org.springframework.http.ResponseEntity;
+import com.bizconnect.adapter.in.model.PaymentDataModel;
+import com.bizconnect.application.port.in.PaymentUseCase;
+import net.sf.json.JSONObject;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.servlet.http.HttpServletRequest;
+import java.util.Map;
 
 @RestController
+@RequestMapping("/api/v1/hectoFinancial/init")
 public class PaymentController {
+    private final PaymentUseCase paymentUseCase;
 
-    @PostMapping("/paymentRequest")
-    public ResponseEntity<?> paymentRequest(@RequestBody ClientDataModel clientDataModel, HttpServletRequest request){
+    public PaymentController(PaymentUseCase paymentUseCase) {
+        this.paymentUseCase = paymentUseCase;
+    }
 
-        return ResponseEntity.ok().build(); // 데이터가 있을 때 200 반환
+    @PostMapping(value = "/encrypt", produces = "application/json;charset=utf-8")
+    public String requestEncryptParameters(@RequestBody PaymentDataModel paymentDataModel) {
+        System.out.println(paymentDataModel);
+        JSONObject rsp = new JSONObject();
+
+        rsp.put("hashCipher", paymentUseCase.aes256EncryptEcb(paymentDataModel));
+        rsp.put("encParams", paymentUseCase.encodeBase64(paymentDataModel));
+        return rsp.toString();
     }
 
 }

@@ -1,6 +1,5 @@
 package com.bizconnect.adapter.in.model;
 
-
 import com.bizconnect.adapter.in.enums.EnumResultCode;
 import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
 import lombok.Getter;

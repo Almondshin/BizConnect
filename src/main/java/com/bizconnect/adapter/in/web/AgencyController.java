@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
 
 @RestController
-@RequestMapping(name = "/agency")
+@RequestMapping("/agency")
 public class AgencyController {
 
     private final AgencyUseCase agencyUseCase;
@@ -30,7 +30,8 @@ public class AgencyController {
         return ResponseEntity.ok(responseMessage);
     }
     @PostMapping("/register")
-    public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel, HttpServletRequest request){
+    public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel){
+        System.out.println("client side : " + clientDataModel);
         agencyUseCase.registerAgency(clientDataModel);
         ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
         return ResponseEntity.ok(responseMessage);

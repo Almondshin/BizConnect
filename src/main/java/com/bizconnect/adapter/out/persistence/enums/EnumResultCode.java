@@ -1,10 +1,7 @@
-package com.bizconnect.application.domain.enums;
-
+package com.bizconnect.adapter.out.persistence.enums;
 
 public enum EnumResultCode {
-    SUCCESS("2000", "성공"),
-    FAIL("2099", "실패"),
-    NO_CONTENT("2098", "값이 비어있음");
+    DuplicateMember("3000", "이미 사용중인 아이디입니다.");
 
     private final String code;
     private final String value;

@@ -1,7 +1,7 @@
 package com.bizconnect.adapter.out.persistence.exceptions;
 
-import com.bizconnect.application.domain.enums.EnumResultCode;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
+import com.bizconnect.adapter.out.persistence.enums.EnumResultCode;
+import com.bizconnect.adapter.out.persistence.enums.EnumSiteStatus;
 import lombok.Getter;
 
 @Getter

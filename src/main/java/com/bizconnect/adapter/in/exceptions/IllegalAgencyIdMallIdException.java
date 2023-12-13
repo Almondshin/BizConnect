@@ -1,5 +1,4 @@
 package com.bizconnect.adapter.in.exceptions;
-
 import com.bizconnect.adapter.in.enums.EnumResultCode;
 import lombok.Getter;
 

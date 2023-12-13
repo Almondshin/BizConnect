@@ -3,10 +3,7 @@ package com.bizconnect.adapter.in.enums;
 
 public enum EnumResultCode {
     SUCCESS("2000", "성공"),
-    FAIL("2099", "실패"),
-    IllegalArgument("2097", "데이터형식이 올바르지 않습니다."),
-    DuplicateMember("2096", "이미 사용중인 아이디입니다."),
-    NO_CONTENT("2098", "값이 비어있음");
+    IllegalArgument("2900", "데이터형식이 올바르지 않습니다.");
 
     private final String code;
     private final String value;

@@ -17,7 +17,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/hectoFinancial/init")
 public class HFInitController {
     @Autowired
     Constant constant;

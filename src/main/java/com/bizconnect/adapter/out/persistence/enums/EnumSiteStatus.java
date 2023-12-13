@@ -1,4 +1,4 @@
-package com.bizconnect.application.domain.enums;
+package com.bizconnect.adapter.out.persistence.enums;
 
 public enum EnumSiteStatus {
     UNREGISTERED("U", "제휴사 미등록"),

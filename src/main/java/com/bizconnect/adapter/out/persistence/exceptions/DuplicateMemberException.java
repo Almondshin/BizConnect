@@ -1,6 +1,6 @@
 package com.bizconnect.adapter.out.persistence.exceptions;
 
-import com.bizconnect.adapter.in.enums.EnumResultCode;
+import com.bizconnect.adapter.out.persistence.enums.EnumResultCode;
 import lombok.Getter;
 
 @Getter
@@ -10,4 +10,5 @@ public class DuplicateMemberException extends RuntimeException{
         super(resultCode.getValue());
         this.mallId = mallId;
     }
+
 }

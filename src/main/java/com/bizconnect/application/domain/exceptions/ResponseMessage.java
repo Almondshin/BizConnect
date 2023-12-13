@@ -1,7 +1,5 @@
 package com.bizconnect.application.domain.exceptions;
 
-import com.bizconnect.application.domain.enums.EnumResultCode;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import lombok.Getter;
 
 @Getter

@@ -1,6 +1,6 @@
 package com.bizconnect.adapter.out.persistence;
 
-import com.bizconnect.adapter.in.enums.EnumResultCode;
+import com.bizconnect.adapter.out.persistence.enums.EnumResultCode;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
 import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberException;
 import com.bizconnect.application.domain.model.Agency;
@@ -34,8 +34,7 @@ public class AgencyAdapter implements AgencyDataPort {
 
     @Override
     public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
-        AgencyJpaEntity entity = convertToEntity(agency, client, settleManager);
-        agencyRepository.save(entity);
+        convertToEntity(agency, client, settleManager);
     }
 
     private AgencyJpaEntity agencyConvertToEntity(Agency agency) {

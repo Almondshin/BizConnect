@@ -4,151 +4,160 @@
     <title>가입</title>
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script>
-        function submitForm() {
+        function checkMallId() {
+            const agencyId = document.getElementById('agencyId').value;
+            const mallId = document.getElementById('mallId').value;
             $.ajax({
-                async: false,
-                url: '/register',
-                type: 'POST',
+                async      : false,
+                url        : '/agency/status',
+                type       : 'POST',
                 contentType: 'application/json',
-                data: JSON.stringify(
-                    {
-                        "agency": {
-                            agencyId: document.getElementById('agencyId').value,
-                            mallId: document.getElementById('mallId').value
-                        },
-                        "client": {
-                            clientId: document.getElementById('mallId').value,
-                            companyName: document.getElementById('companyName').value,
-                            businessType: document.getElementById('businessType').value,
-                            bizNumber: document.getElementById('bizNumber').value,
-                            ceoName: document.getElementById('ceoName').value,
-                            phoneNumber: document.getElementById('phoneNumber').value,
-                            address: document.getElementById('address').value,
-                            companySite: document.getElementById('companySite').value,
-                            email: document.getElementById('email').value
-                        },
-                        "settleManager": {
-                            settleManagerName: document.getElementById('settleManagerName').value,
-                            settleManagerPhoneNumber: document.getElementById('settleManagerPhoneNumber').value,
-                            settleManagerEmail: document.getElementById('settleManagerEmail').value
-                        }
-                    }),
-                success: function(response) {
+                data       : JSON.stringify({agencyId: agencyId, mallId: mallId}),
+                success    : function (response) {
+                    alert(JSON.stringify(response));
+                    console.log(response);
+                },
+                error      : function (xhr) {
+                    alert(xhr.responseText);
+                    console.log(xhr.responseText);
+                }
+            });
+        }
+
+        function submitForm() {
+            const agencyId = document.getElementById('agencyId').value;
+            const mallId = document.getElementById('mallId').value;
+            const clientId = document.getElementById('mallId').value;
+            const companyName = document.getElementById('companyName').value;
+            const businessType = document.getElementById('businessType').value;
+            const bizNumber = document.getElementById('bizNumber').value;
+            const ceoName = document.getElementById('ceoName').value;
+            const phoneNumber = document.getElementById('phoneNumber').value;
+            const address = document.getElementById('address').value;
+            const companySite = document.getElementById('companySite').value;
+            const email = document.getElementById('email').value;
+            const settleManagerName = document.getElementById('settleManagerName').value;
+            const settleManagerPhoneNumber = document.getElementById('settleManagerPhoneNumber').value;
+            const settleManagerEmail = document.getElementById('settleManagerEmail').value;
+
+            $.ajax({
+                async      : false,
+                url        : '/agency/register',
+                type       : 'POST',
+                contentType: 'application/json',
+                data       : JSON.stringify({
+                    agencyId                : agencyId,
+                    mallId                  : mallId,
+                    clientId                : clientId,
+                    companyName             : companyName,
+                    businessType            : businessType,
+                    bizNumber               : bizNumber,
+                    ceoName                 : ceoName,
+                    phoneNumber             : phoneNumber,
+                    address                 : address,
+                    companySite             : companySite,
+                    email                   : email,
+                    settleManagerName       : settleManagerName,
+                    settleManagerPhoneNumber: settleManagerPhoneNumber,
+                    settleManagerEmail      : settleManagerEmail
+                }),
+                success    : function (response) {
                     // 성공적인 응답 처리
                     alert(JSON.stringify(response));
                     location.href = "/request.html";
                     console.log(response);
                 },
-                error: function(xhr) {
+                error      : function (xhr) {
                     alert(xhr.responseText);
                     console.log(xhr.responseText);
                 }
             });
         }
 
-        function checkMallId() {
-            const agencyId = document.getElementById('agencyId').value;
-            const mallId = document.getElementById('mallId').value;
 
-            $.ajax({
-                async: false,
-                url: '/status',
-                type: 'POST',
-                contentType: 'application/json',
-                data: JSON.stringify({ agencyId: agencyId, mallId: mallId }),
-                success: function(response) {
-                    alert(JSON.stringify(response));
-                    console.log(response);
-                },
-                error: function(xhr) {
-                    alert(xhr.responseText);
-                    console.log(xhr.responseText);
-                }
-            });
-        }
     </script>
 </head>
 <body>
 <h1>가입</h1>
-<form >
-    <input type="hidden" name="clientId" id="clientId">
-    <table>
-        <tr>
-            <th>제휴사</th>
-            <td>
-                <select name="agencyId" id="agencyId" style="width: 100%;">
-                    <option value=''>전 체</option>
-                    <option value='SQUARES'>스퀘어스</option>
-                    <option value='CAFE24'>카페24</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th>상점Id</th>
-            <td><input name="mallId" id="mallId"></td>
-            <td><button onclick="checkMallId(); return false;">확인</button></td>
-        </tr>
-        <tr>
-            <th>회사명</th>
-            <td><input name="companyName" id="companyName"></td>
-        </tr>
-        <tr>
-            <th>사업자 구분</th>
-            <td>
-                <select name="businessType" id="businessType" style="width: 100%;">
-                    <option value=''>전 체</option>
-                    <option value='1'>공공기관</option>
-                    <option value='2'>개인</option>
-                    <option value='3'>법인</option>
-                    <option value='4'>연구소</option>
-                    <option value='5'>교육</option>
-                    <option value='6'>국방</option>
-                </select>
-            </td>
-        </tr>
-        <tr>
-            <th>사업자 등록번호 또는 기관번호</th>
-            <td><input name="bizNumber" id="bizNumber"></td>
-        </tr>
-        <tr>
-            <th>대표이사명</th>
-            <td><input name="ceoName" id="ceoName"></td>
-        </tr>
-        <tr>
-            <th>이용기관 전화번호</th>
-            <td><input name="phoneNumber" id="phoneNumber"></td>
-        </tr>
-        <tr>
-            <th>이용기관 회사주소</th>
-            <td><input name="address" id="address"></td>
-        </tr>
-        <tr>
-            <th>이용기관 홈페이지</th>
-            <td><input name="companySite" id="companySite"></td>
-        </tr>
-        <tr>
-            <th>이용기관 이메일</th>
-            <td><input name="email" id="email"></td>
-        </tr>
-        <tr>
-            <th>정산담당자 이름</th>
-            <td><input name="settleManagerName" id="settleManagerName"></td>
-        </tr>
-        <tr>
-            <th>정산담당자 전화번호</th>
-            <td><input name="settleManagerPhoneNumber" id="settleManagerPhoneNumber"></td>
-        </tr>
-        <tr>
-            <th>정산담당자 E-Mail</th>
-            <td><input name="settleManagerEmail" id="settleManagerEmail"></td>
-        </tr>
-        <tr>
-            <td>
-                <button type="submit" onclick="submitForm(); return false;">생성</button>
-            </td>
-        </tr>
-    </table>
-</form>
+<input type="hidden" name="clientId" id="clientId">
+<table>
+    <tr>
+        <th>제휴사</th>
+        <td>
+            <select name="agencyId" id="agencyId" style="width: 100%;">
+                <option value=''>전 체</option>
+                <option value='SQUARES'>스퀘어스</option>
+                <option value='CAFE24'>카페24</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>상점Id</th>
+        <td><input name="mallId" id="mallId"></td>
+        <td>
+            <button onclick="checkMallId(); return false;">확인</button>
+        </td>
+    </tr>
+    <tr>
+        <th>회사명</th>
+        <td><input name="companyName" id="companyName"></td>
+    </tr>
+    <tr>
+        <th>사업자 구분</th>
+        <td>
+            <select name="businessType" id="businessType" style="width: 100%;">
+                <option value=''>전 체</option>
+                <option value='1'>공공기관</option>
+                <option value='2'>개인</option>
+                <option value='3'>법인</option>
+                <option value='4'>연구소</option>
+                <option value='5'>교육</option>
+                <option value='6'>국방</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <th>사업자 등록번호 또는 기관번호</th>
+        <td><input name="bizNumber" id="bizNumber"></td>
+    </tr>
+    <tr>
+        <th>대표이사명</th>
+        <td><input name="ceoName" id="ceoName"></td>
+    </tr>
+    <tr>
+        <th>이용기관 전화번호</th>
+        <td><input name="phoneNumber" id="phoneNumber"></td>
+    </tr>
+    <tr>
+        <th>이용기관 회사주소</th>
+        <td><input name="address" id="address"></td>
+    </tr>
+    <tr>
+        <th>이용기관 홈페이지</th>
+        <td><input name="companySite" id="companySite"></td>
+    </tr>
+    <tr>
+        <th>이용기관 이메일</th>
+        <td><input name="email" id="email"></td>
+    </tr>
+    <tr>
+        <th>정산담당자 이름</th>
+        <td><input name="settleManagerName" id="settleManagerName"></td>
+    </tr>
+    <tr>
+        <th>정산담당자 전화번호</th>
+        <td><input name="settleManagerPhoneNumber" id="settleManagerPhoneNumber"></td>
+    </tr>
+    <tr>
+        <th>정산담당자 E-Mail</th>
+        <td><input name="settleManagerEmail" id="settleManagerEmail"></td>
+    </tr>
+    <tr>
+        <td>
+            <button onclick="submitForm(); return false;">생성</button>
+        </td>
+    </tr>
+</table>
 
 </body>
 </html>

@@ -2,194 +2,364 @@
 <html lang="en">
 <head>
     <title>Title</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        function result(data) {
+            $.ajax({
+                type       : "POST",
+                url        : "http://127.0.0.1:8080/api/v1/hectoFinancial/result/decrypt",
+                contentType: "application/json",
+                dataType   : "json",
+                data       : JSON.stringify({"data": data}),
+                success    : function (res) {
+                    console.log(res);
+                    if (res.method === "vbank") {
+                        $("#vbank_proc").find("#orgTrdNo").val(res.trdNo)
+                        $("#vbank_proc").find("#cnclAmt").val(res.trdAmt)
+                        $("#vbank_proc").find("#refundBankCd").val(res.fnCd)
+                        $("#vbank_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
+                    } else {
+                        $("#card_proc").find("#orgTrdNo").val(res.trdNo)
+                        $("#card_proc").find("#cnclAmt").val(res.trdAmt)
+                        $("#card_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
+                    }
+                }
+            })
+
+            // var xhr = new XMLHttpRequest();
+            // xhr.open("POST", "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt", false);
+            // xhr.setRequestHeader("Content-Type","application/json");
+            // xhr.send(JSON.stringify({data: data}))
+        }
+
+        function vbankCancel() {
+            var mchtId = $("#mchtId").val();
+            var orgTrdNo = $("#orgTrdNo").val();
+            var cnclAmt = $("#cnclAmt").val();
+            var refundBankCd = $("#refundBankCd").val();
+            var refundAcntNo = $("#refundAcntNo").val();
+            var refundDpstrNm = $("#refundDpstrNm").val();
+            var data = {
+                mchtId       : mchtId,
+                orgTrdNo     : orgTrdNo,
+                cnclAmt      : cnclAmt,
+                refundBankCd : refundBankCd,
+                refundAcntNo : refundAcntNo,
+                refundDpstrNm: refundDpstrNm
+            }
+            $.ajax({
+                type       : "POST",
+                url        : "http://127.0.0.1:8080/api/v1/hectoFinancial/VBank/cancel",
+                contentType: "application/json",
+                dataType   : "json",
+                data       : JSON.stringify(data),
+                success    : function (res) {
+                    $("#vbank_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
+                }
+            })
+        }
+
+        function cardCancel() {
+            var mchtId = $("#card_proc").find("#mchtId").val();
+            var orgTrdNo = $("#card_proc").find("#orgTrdNo").val();
+            var cnclAmt = $("#card_proc").find("#cnclAmt").val();
+            var data = {
+                mchtId  : mchtId,
+                orgTrdNo: orgTrdNo,
+                cnclAmt : cnclAmt,
+            }
+            $.ajax({
+                type       : "POST",
+                url        : "http://127.0.0.1:8080/api/v1/hectoFinancial/billKey/cancel",
+                contentType: "application/json",
+                dataType   : "json",
+                data       : JSON.stringify(data),
+                success    : function (res) {
+                    $("#card_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
+                }
+            })
+        }
+
+        function pay(type) {
+            var curr_date = new Date();
+            var year = curr_date.getFullYear().toString();
+            var month = ("0" + (curr_date.getMonth() + 1)).slice(-2).toString();
+            var day = ("0" + (curr_date.getDate())).slice(-2).toString();
+            var hours = ("0" + curr_date.getHours()).slice(-2).toString();
+            var mins = ("0" + curr_date.getMinutes()).slice(-2).toString();
+            var secs = ("0" + curr_date.getSeconds()).slice(-2).toString();
+            var random4 = ("000" + Math.random() * 10000).slice(-4).toString();
+
+            // var custIp    = "127.0.0.1" // 세팅 필요
+            var trdDt = year + month + day;
+            var trdTm = hours + mins + secs;
+            var mchtTrdNo = "PAYMENT" + year + month + day + hours + mins + secs + random4;//주문번호 세팅
+
+
+            var method = type;
+
+            var mchtId;
+            if (type === "card") {
+                mchtId = "nxca_jt_il"
+            }
+            // vbank
+            else {
+                mchtId = "nx_mid_il"
+            }
+
+            var trdAmt = "300"
+            var plainMchtCustNm = "홍길동"
+            var plainEmail = "HongGilDong@example.com"
+            var plainMchtCustId = "HongGilDong"
+            var mchtName = "세틀뱅크"
+            var mchtEName = "Settlebank"
+            var pmtPrdtNm = "테스트상품"
+
+            var data = {
+                mchtId              : mchtId,
+                method              : method,
+                mchtTrdNo           : mchtTrdNo,
+                trdDt               : trdDt,
+                trdTm               : trdTm,
+                plainTrdAmt         : trdAmt,
+                plainMchtCustNm     : plainMchtCustNm,
+                plainCphoneNo       : "",
+                plainEmail          : plainEmail,
+                plainMchtCustId     : plainMchtCustId,
+                plainTaxAmt         : "",
+                plainVatAmt         : "",
+                plainTaxFreeAmt     : "",
+                plainSvcAmt         : "",
+                plainClipCustNm     : "",
+                plainClipCustCi     : "",
+                plainClipCustPhoneNo: ""
+            }
+
+            $.ajax({
+                type       : "POST",
+                url        : "http://127.0.0.1:8080/api/v1/hectoFinancial/init/encrypt",
+                contentType: "application/json",
+                dataType   : "json",
+                // data: $("#STPG_payForm").serialize(),
+                data   : JSON.stringify(data),
+                success: function (rsp) {
+                    //암호화 된 파라미터 세팅
+                    // for (name in rsp.encParams) {
+                    //     $('#STPG_payForm [name=' + name + ']').val(rsp.encParams[name]);
+                    // }
+
+                    //가맹점 -> 세틀뱅크로 결제 요청
+                    SETTLE_PG.pay({
+                        env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
+                        mchtId    : mchtId,
+                        method    : method,
+                        trdDt     : trdDt,
+                        trdTm     : trdTm,
+                        mchtTrdNo : mchtTrdNo,
+                        mchtName  : mchtName,
+                        mchtEName : mchtEName,
+                        pmtPrdtNm : pmtPrdtNm,
+                        trdAmt    : rsp.encParams.trdAmt,
+                        mchtCustNm: rsp.encParams.mchtCustNm,
+                        notiUrl   : "http://127.0.0.1:8080/api/v1/hectoFinancial/result/noti",
+                        nextUrl   : "http://127.0.0.1:8080/api/v1/hectoFinancial/result/next",
+                        cancUrl   : "https://example.com/cancUrl",
+                        pktHash   : rsp.hashCipher,
+                        ui        : {
+                            type  : "popup",   //popup, iframe, self, blank
+                            width : "430",   //popup창의 너비
+                            height: "660"   //popup창의 높이
+                        }
+                    }, function (rsp) {
+                        //iframe인 경우 전달된 결제 완료 후 응답 파라미터 처리
+                        console.log(rsp);
+                    });
+                },
+                error  : function () {
+                    alert("에러 발생");
+                },
+            });
+        }
+    </script>
 </head>
 <body>
 <h1>결제요청</h1>
 
-<form action="/paymentRequest" method="POST">
-    <table class="info_tbl" summary="충전제 요금 안내표입니다.">
-        <caption>월정액 요금 선택</caption>
-        <tbody>
-        <tr>
-            <th width="7%" rowspan="2">선택</th>
-            <th width="21%" rowspan="2">상품종류</th>
-            <th width="36%" colspan="2">12개월</th>
-            <th width="18%" rowspan="2">건당 요금</th>
-            <th width="18%" rowspan="2">건당 초과 요금</th>
-        </tr>
-        <tr>
-            <th>요금</th>
-            <th>제공건수</th>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="0"></td>
-            <td class="ac">라이트</td>
-            <td class="ar">120,000 원</td>
-            <td class="ar">2,400 건</td>
-            <td class="ar">50 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="1"></td>
-            <td class="ac">베이직</td>
-            <td class="ar">588,000 원</td>
-            <td class="ar">12,000 건</td>
-            <td class="ar">49 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="2"></td>
-            <td class="ac">스탠다드</td>
-            <td class="ar">1,152,000 원</td>
-            <td class="ar">24,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="3"></td>
-            <td class="ac">프리미엄</td>
-            <td class="ar">1,728,000 원</td>
-            <td class="ar">36,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        </tbody>
-    </table>
-    <table class="info_tbl" summary="충전제 요금 안내표입니다.">
-        <tbody>
-        <tr>
-            <th width="7%" rowspan="2">선택</th>
-            <th width="21%" rowspan="2">상품종류</th>
-            <th width="36%" colspan="2">6개월</th>
-            <th width="18%" rowspan="2">건당 요금</th>
-            <th width="18%" rowspan="2">건당 초과 요금</th>
-        </tr>
-        <tr>
-            <th>요금</th>
-            <th>제공건수</th>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="4"></td>
-            <td class="ac">라이트</td>
-            <td class="ar">60,000 원</td>
-            <td class="ar">1,200 건</td>
-            <td class="ar">50 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="5"></td>
-            <td class="ac">베이직</td>
-            <td class="ar">294,000 원</td>
-            <td class="ar">6,000 건</td>
-            <td class="ar">49 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="6"></td>
-            <td class="ac">스탠다드</td>
-            <td class="ar">576,000 원</td>
-            <td class="ar">12,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="7"></td>
-            <td class="ac">프리미엄</td>
-            <td class="ar">864,000 원</td>
-            <td class="ar">18,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        </tbody>
-    </table>
+<table class="info_tbl" summary="충전제 요금 안내표입니다.">
+    <caption>월정액 요금 선택</caption>
+    <tbody>
+    <tr>
+        <th width="7%" rowspan="2">선택</th>
+        <th width="21%" rowspan="2">상품종류</th>
+        <th width="36%" colspan="2">12개월</th>
+        <th width="18%" rowspan="2">건당 요금</th>
+        <th width="18%" rowspan="2">건당 초과 요금</th>
+    </tr>
+    <tr>
+        <th>요금</th>
+        <th>제공건수</th>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="0"></td>
+        <td class="ac">라이트</td>
+        <td class="ar">120,000 원</td>
+        <td class="ar">2,400 건</td>
+        <td class="ar">50 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="1"></td>
+        <td class="ac">베이직</td>
+        <td class="ar">588,000 원</td>
+        <td class="ar">12,000 건</td>
+        <td class="ar">49 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="2"></td>
+        <td class="ac">스탠다드</td>
+        <td class="ar">1,152,000 원</td>
+        <td class="ar">24,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="3"></td>
+        <td class="ac">프리미엄</td>
+        <td class="ar">1,728,000 원</td>
+        <td class="ar">36,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    </tbody>
+</table>
+<table class="info_tbl" summary="충전제 요금 안내표입니다.">
+    <tbody>
+    <tr>
+        <th width="7%" rowspan="2">선택</th>
+        <th width="21%" rowspan="2">상품종류</th>
+        <th width="36%" colspan="2">6개월</th>
+        <th width="18%" rowspan="2">건당 요금</th>
+        <th width="18%" rowspan="2">건당 초과 요금</th>
+    </tr>
+    <tr>
+        <th>요금</th>
+        <th>제공건수</th>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="4"></td>
+        <td class="ac">라이트</td>
+        <td class="ar">60,000 원</td>
+        <td class="ar">1,200 건</td>
+        <td class="ar">50 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="5"></td>
+        <td class="ac">베이직</td>
+        <td class="ar">294,000 원</td>
+        <td class="ar">6,000 건</td>
+        <td class="ar">49 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="6"></td>
+        <td class="ac">스탠다드</td>
+        <td class="ar">576,000 원</td>
+        <td class="ar">12,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="7"></td>
+        <td class="ac">프리미엄</td>
+        <td class="ar">864,000 원</td>
+        <td class="ar">18,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    </tbody>
+</table>
 
 
-    <table class="info_tbl" summary="월정액 요금 안내표입니다.">
-        <caption>월정액 요금 선택</caption>
-        <tbody>
-        <tr>
-            <th width="7%" rowspan="2">선택</th>
-            <th width="21%" rowspan="2">상품종류</th>
-            <th width="36%" colspan="2">1개월</th>
-            <th width="18%" rowspan="2">건당 요금</th>
-            <th width="18%" rowspan="2">건당 초과 요금</th>
-        </tr>
-        <tr>
-            <th>요금</th>
-            <th>제공건수</th>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="8"></td>
-            <td class="ac">라이트</td>
-            <td class="ar">10,000 원</td>
-            <td class="ar">200 건</td>
-            <td class="ar">50 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="9"></td>
-            <td class="ac">베이직</td>
-            <td class="ar">49,000 원</td>
-            <td class="ar">1,000 건</td>
-            <td class="ar">49 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="10"></td>
-            <td class="ac">스탠다드</td>
-            <td class="ar">96,000 원</td>
-            <td class="ar">2,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        <tr>
-            <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="11"></td>
-            <td class="ac">프리미엄</td>
-            <td class="ar">144,000 원</td>
-            <td class="ar">3,000 건</td>
-            <td class="ar">48 원</td>
-            <td class="ar">50 원</td>
-        </tr>
-        </tbody>
-    </table>
+<table class="info_tbl" summary="월정액 요금 안내표입니다.">
+    <caption>월정액 요금 선택</caption>
+    <tbody>
+    <tr>
+        <th width="7%" rowspan="2">선택</th>
+        <th width="21%" rowspan="2">상품종류</th>
+        <th width="36%" colspan="2">1개월</th>
+        <th width="18%" rowspan="2">건당 요금</th>
+        <th width="18%" rowspan="2">건당 초과 요금</th>
+    </tr>
+    <tr>
+        <th>요금</th>
+        <th>제공건수</th>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel1" value="8"></td>
+        <td class="ac">라이트</td>
+        <td class="ar">10,000 원</td>
+        <td class="ar">200 건</td>
+        <td class="ar">50 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel2" value="9"></td>
+        <td class="ac">베이직</td>
+        <td class="ar">49,000 원</td>
+        <td class="ar">1,000 건</td>
+        <td class="ar">49 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel3" value="10"></td>
+        <td class="ac">스탠다드</td>
+        <td class="ar">96,000 원</td>
+        <td class="ar">2,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    <tr>
+        <td class="ac"><input type="radio" name="rate_sel" id="rate_sel4" value="11"></td>
+        <td class="ac">프리미엄</td>
+        <td class="ar">144,000 원</td>
+        <td class="ar">3,000 건</td>
+        <td class="ar">48 원</td>
+        <td class="ar">50 원</td>
+    </tr>
+    </tbody>
+</table>
 
 
-    <table class="info_tbl" summary="결제금액 확인 및 결제수단 선택표입니다.">
-        <caption>결제금액 확인 및 결제수단 선택</caption>
-        <tbody>
-        <c:choose>
-            <c:when test="${not empty extra_charge}">
-                <tr>
-                    <th width="15%" rowspan="2">총 결제금액 (VAT포함)</th>
-                    <td width="35%" class="al"><span class="ft_org_02"><b>${salesPrice}원</b></span></td>
-                </tr>
-                <tr>
-                    <td width="35%" class="al"><span class="ft_org_02"><b>${extra_charge}(초과사용분)+ ${origin_charge}(기본료) + VAT = ${salesPrice}</b></span></td>
-                </tr>
-            </c:when>
-            <c:otherwise>
-                <tr>
-                    <th width="15%">총 결제금액 (VAT포함)</th>
-                    <td width="35%" class="al"><span class="ft_org_02"><b>${salesPrice}
-												원</b></span></td>
-                </tr>
-            </c:otherwise>
-        </c:choose>
-        <tr>
-            <th width="15%">결제수단 선택</th>
-            <td width="35%" class="al"><input type="radio"
-                                              name="paymentKind" id="vAccount" value="2"
-                                              onchange="javascript:cashReceiptChange()"/> <label
-                    for="vAccount"><span class="pd_10"></span>무통장 입금</label> <span
-                    class="pd_20"></span> <input type="radio" name="paymentKind"
-                                                 id="creditCard" value="1"
-                                                 onchange="javascript:cashReceiptChange()" checked="checked"/>
-                <label for="creditCard"><span class="pd_10"></span>신용카드</label>
-            </td>
-        </tr>
-        </tbody>
-    </table>
+<table class="info_tbl" summary="결제금액 확인 및 결제수단 선택표입니다.">
+    <caption><b>결제금액 확인 및 결제수단 선택</b></caption>
+    <tbody>
+    <tr>
+        <th width="15%">총 결제금액 (VAT포함)</th>
+        <td width="35%" class="al"><b>${salesPrice}원</b></td>
+    </tr>
+    <!--            </c:otherwise>-->
+    <!--        </c:choose>-->
+    <tr>
+        <th width="15%">결제수단 선택</th>
+    </tr>
+    <tr>
+        <td width="35%" class="al">
+            <div style="display: inline-flex; flex-direction: column; height: 100%;">
+                <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
+                <textarea id="pay_result" cols="75" rows="30"></textarea>
+            </div>
+        </td>
+        <td width="35%" class="al">
+            <div style="display: inline-flex; flex-direction: column; height: 100%;">
+                <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
+                <textarea id="pay_result" cols="75" rows="30"></textarea>
+            </div>
+        </td>
+    </tr>
+    </tbody>
+</table>
 
-</form>
 </body>
 </html>

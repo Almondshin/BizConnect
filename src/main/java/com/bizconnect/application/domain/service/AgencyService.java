@@ -18,7 +18,9 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void registerAgency(ClientDataModel clientDataModel) {
+        System.out.println("before Data Port : " + clientDataModel);
         agencyDataPort.checkAgency(convertToAgency(clientDataModel));
+        System.out.println("check next ste ");
         agencyDataPort.registerAgency(convertToAgency(clientDataModel), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
     }
 
