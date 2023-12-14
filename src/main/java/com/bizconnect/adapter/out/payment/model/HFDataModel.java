@@ -59,4 +59,16 @@ public class HFDataModel {
     private String mixTrdAmt;
     private String payAmt;
 
+    public HFDataModel(String mchtTrdNo, String trdAmt, String outStatCd, String mchtId, String trdDtm) {
+        this.mchtTrdNo = mchtTrdNo;
+        this.trdAmt = trdAmt;
+        this.outStatCd = outStatCd;
+        this.mchtId = mchtId;
+        this.trdDtm = trdDtm;
+    }
+
+    public String getHashPlain(){
+        return this.outStatCd+this.trdDtm+this.mchtId+this.mchtTrdNo+this.trdAmt;
+    }
+
 }

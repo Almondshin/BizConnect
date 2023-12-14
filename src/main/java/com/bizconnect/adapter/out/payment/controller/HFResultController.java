@@ -29,7 +29,6 @@ public class HFResultController {
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리
     @PostMapping("/next")
     public void next(HttpServletRequest request, HttpServletResponse response, @RequestBody HFDataModel hfDataModel) throws IOException {
-        System.out.println("next 요청왔어요");
         String method = request.getParameter("method");
         String data = "";
         if (method.equals("card")) {
@@ -44,7 +43,6 @@ public class HFResultController {
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
     @PostMapping("/noti")
     public void noti(HttpServletRequest request, @RequestBody HFDataModel hfDataModel) {
-        System.out.println("noti 요청왔어요");
         /** 응답 파라미터 세팅 */
         String method = request.getParameter("method");
         if (method.equals("CA")) {

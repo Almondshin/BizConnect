@@ -47,7 +47,7 @@ public class HFResultService {
         return Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(RES_PARAMS).getBytes());
     }
 
-    public String nextVBankData(HFDataModel hfDataModel) throws IOException{
+    public String nextVBankData(HFDataModel hfDataModel) throws IOException {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
         RES_PARAMS.put("mchtTrdNo", hfDataModel.getMchtTrdNo());
         RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());
@@ -68,7 +68,7 @@ public class HFResultService {
         return Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(RES_PARAMS).getBytes());
     }
 
-    public String notiCAData(HFDataModel hfDataModel){
+    public String notiCAData(HFDataModel hfDataModel) {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
         RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());
         RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());
@@ -113,76 +113,29 @@ public class HFResultService {
         boolean resp = false;
         /** 해쉬 조합 필드
          *  결과코드 + 거래일시 + 상점아이디 + 가맹점거래번호 + 거래금액 + 라이센스키 */
-        String hashPlain = String.format("%s%s%s%s%s%s", RES_PARAMS.get("outStatCd"), RES_PARAMS.get("trdDtm"), RES_PARAMS.get("mchtId"), RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("trdAmt"), constant.LICENSE_KEY);
+        String hashPlain = new HFDataModel(
+                hfDataModel.getMchtTrdNo(),
+                hfDataModel.getTrdAmt(),
+                hfDataModel.getOutStatCd(),
+                hfDataModel.getMchtId(),
+                hfDataModel.getTrdDtm()
+        ).getHashPlain() + constant.LICENSE_KEY;
         String hashCipher = "";
 
         /** SHA256 해쉬 처리 */
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
-        }
-        catch (Exception e) {
-            logger.error("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 HASHING] Hashing Fail! : " +
-                    e.toString());
-        }
-        finally {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 HASHING] Plain Text[" +
-                    hashPlain +
-                    "] ---> Cipher Text[" +
-                    hashCipher +
-                    "]");
-        }
-        /**
-         hash데이타값이 맞는 지 확인 하는 루틴은 헥토파이낸셜에서 받은 데이타가 맞는지 확인하는 것이므로 꼭 사용하셔야 합니다
-         정상적인 결제 건임에도 불구하고 노티 페이지의 오류나 네트웍 문제 등으로 인한 hash 값의 오류가 발생할 수도 있습니다.
-         그러므로 hash 오류건에 대해서는 오류 발생시 원인을 파악하여 즉시 수정 및 대처해 주셔야 합니다.
-         그리고 정상적으로 데이터를 처리한 경우에도 헥토파이낸셜에서 응답을 받지 못한 경우는 결제결과가 중복해서 나갈 수 있으므로 관련한 처리도 고려되어야 합니다
-         */
-        if (hashCipher.equals(RES_PARAMS.get("pktHash"))) {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 Hash Check] hashCipher[" +
-                    hashCipher +
-                    "] pktHash[" +
-                    RES_PARAMS.get("pktHash") +
-                    "] equals?[TRUE]");
-            if ("0021".equals(RES_PARAMS.get("outStatCd"))) {
-                // resp = notiSuccess(noti); // 성공 처리
-            }
-            else {
-                resp = false;
-            }
-        }
-        else {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 Hash Check] hashCipher[" +
-                    hashCipher +
-                    "] pktHash[" +
-                    RES_PARAMS.get("pktHash") +
-                    "] equals?[FALSE]");
-            // resp = notiHashError(noti); // 실패 처리
+        } catch (Exception e) {
+            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+        } finally {
+            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
 
-        // OK, FAIL문자열은 헥토파이낸셜로 전송되어야 하는 값이므로 변경하거나 삭제하지마십시오.
-        if (resp) {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][Result] OK");
-            return "OK";
-        }
-        else {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][Result] FAIL");
-            return "FAIL";
-        }
+        return responseMessage(hashCipher,RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"),RES_PARAMS.get("outStatCd"));
     }
 
-    public String notiVAData(HFDataModel hfDataModel){
+
+    public String notiVAData(HFDataModel hfDataModel) {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
         RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());
         RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());
@@ -211,75 +164,64 @@ public class HFResultService {
         RES_PARAMS.put("mchtParam", hfDataModel.getMchtParam());
         RES_PARAMS.put("pktHash", hfDataModel.getPktHash());
 
-        boolean resp = false;
         /** 해쉬 조합 필드
          *  결과코드 + 거래일시 + 상점아이디 + 가맹점거래번호 + 거래금액 + 라이센스키 */
-        String hashPlain = String.format("%s%s%s%s%s%s", RES_PARAMS.get("outStatCd"), RES_PARAMS.get("trdDtm"), RES_PARAMS.get("mchtId"), RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("trdAmt"), constant.LICENSE_KEY);
+        String hashPlain = new HFDataModel(
+                hfDataModel.getMchtTrdNo(),
+                hfDataModel.getTrdAmt(),
+                hfDataModel.getOutStatCd(),
+                hfDataModel.getMchtId(),
+                hfDataModel.getTrdDtm()
+        ).getHashPlain() + constant.LICENSE_KEY;
         String hashCipher = "";
 
         /** SHA256 해쉬 처리 */
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+        } catch (Exception e) {
+            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+        } finally {
+            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
-        catch (Exception e) {
-            logger.error("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 HASHING] Hashing Fail! : " +
-                    e.toString());
-        }
-        finally {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 HASHING] Plain Text[" +
-                    hashPlain +
-                    "] ---> Cipher Text[" +
-                    hashCipher +
-                    "]");
-        }
+
+        return responseMessage(hashCipher,RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"),RES_PARAMS.get("outStatCd"));
+    }
+
+
+
+
+
+    private String responseMessage(String hashCipher,String mchtTrdNo, String pktHash, String outStatCd){
+        boolean resp = false;
         /**
          hash데이타값이 맞는 지 확인 하는 루틴은 헥토파이낸셜에서 받은 데이타가 맞는지 확인하는 것이므로 꼭 사용하셔야 합니다
          정상적인 결제 건임에도 불구하고 노티 페이지의 오류나 네트웍 문제 등으로 인한 hash 값의 오류가 발생할 수도 있습니다.
          그러므로 hash 오류건에 대해서는 오류 발생시 원인을 파악하여 즉시 수정 및 대처해 주셔야 합니다.
          그리고 정상적으로 데이터를 처리한 경우에도 헥토파이낸셜에서 응답을 받지 못한 경우는 결제결과가 중복해서 나갈 수 있으므로 관련한 처리도 고려되어야 합니다
          */
-        if (hashCipher.equals(RES_PARAMS.get("pktHash"))) {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 Hash Check] hashCipher[" +
-                    hashCipher +
-                    "] pktHash[" +
-                    RES_PARAMS.get("pktHash") +
-                    "] equals?[TRUE]");
-            if ("0021".equals(RES_PARAMS.get("outStatCd"))) {
+        if (hashCipher.equals(pktHash)) {
+            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
+            if ("0021".equals(outStatCd)) {
                 // resp = notiSuccess(noti); // 성공 처리
-            }
-            else {
+            } else {
                 resp = false;
             }
-        }
-        else {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][SHA256 Hash Check] hashCipher[" +
-                    hashCipher +
-                    "] pktHash[" +
-                    RES_PARAMS.get("pktHash") +
-                    "] equals?[FALSE]");
+        } else {
+            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
             // resp = notiHashError(noti); // 실패 처리
         }
 
         // OK, FAIL문자열은 헥토파이낸셜로 전송되어야 하는 값이므로 변경하거나 삭제하지마십시오.
         if (resp) {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][Result] OK");
+            logger.info("[" + mchtTrdNo + "][Result] OK");
             return "OK";
-        }
-        else {
-            logger.info("[" +
-                    RES_PARAMS.get("mchtTrdNo") +
-                    "][Result] FAIL");
+        } else {
+            logger.info("[" + mchtTrdNo + "][Result] FAIL");
             return "FAIL";
         }
     }
+
+
 }
+
+
