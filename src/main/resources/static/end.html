@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+result
+<script>
+    var params = new URLSearchParams(location.search);
+    var data   = params.get("data");
+    top.opener.result(data)
+    self.close();
+</script>
+</body>
+</html>

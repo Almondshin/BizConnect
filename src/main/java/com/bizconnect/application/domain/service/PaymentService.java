@@ -1,11 +1,9 @@
 package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.PaymentDataModel;
+import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
+import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.port.in.PaymentUseCase;
-import com.bizconnect.paymentmodule.config.hectofinancial.Constant;
-import com.bizconnect.paymentmodule.utils.EncryptUtil;
-import com.bizconnect.paymentmodule.utils.StringUtil;
-import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -15,8 +13,13 @@ import java.util.Map;
 
 @Service
 public class PaymentService implements PaymentUseCase {
-    Constant constant;
+
+    private  final Constant constant;
     Logger logger = LoggerFactory.getLogger("HFInitController");
+
+    public PaymentService(Constant constant) {
+        this.constant = constant;
+    }
 
     @Override
     public String aes256EncryptEcb(PaymentDataModel paymentDataModel) {
@@ -27,8 +30,10 @@ public class PaymentService implements PaymentUseCase {
                 paymentDataModel.getMchtTrdNo(),
                 paymentDataModel.getTrdDt(),
                 paymentDataModel.getTrdTm(),
-                paymentDataModel.getTaxAmt()
-        ) + licenseKey;
+                paymentDataModel.getPlainTrdAmt()
+        ).getHashPlain() + licenseKey;
+
+        System.out.println("hashPlain : " + hashPlain);
         String hashCipher = "";
         /** SHA256 해쉬 처리 */
         try {
@@ -46,6 +51,7 @@ public class PaymentService implements PaymentUseCase {
     public HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel) {
         String aesKey = constant.AES256_KEY;
         HashMap<String, String> params = convertToMap(paymentDataModel);
+        System.out.println("params : " + params);
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();
@@ -68,18 +74,18 @@ public class PaymentService implements PaymentUseCase {
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();
-        map.put("trdAmt", paymentDataModel.getTrdAmt());
-        map.put("mchtCustNm", paymentDataModel.getMchtCustId());
-        map.put("cphoneNo", paymentDataModel.getCphoneNo());
-        map.put("email", paymentDataModel.getEmail());
-        map.put("mchtCustId", paymentDataModel.getMchtCustNm());
-        map.put("taxAmt", paymentDataModel.getTaxAmt());
-        map.put("vatAmt", paymentDataModel.getTrdAmt());
-        map.put("taxFreeAmt", paymentDataModel.getTaxFreeAmt());
-        map.put("svcAmt", paymentDataModel.getSvcAmt());
-        map.put("clipCustNm", paymentDataModel.getClipCustNm());
-        map.put("clipCustCi", paymentDataModel.getClipCustCi());
-        map.put("clipCustPhoneNo", paymentDataModel.getClipCustPhoneNo());
+        map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
+        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustId());
+        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
+        map.put("email", paymentDataModel.getPlainEmail());
+        map.put("mchtCustId", paymentDataModel.getPlainMchtCustNm());
+        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
+        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
+        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
+        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
+        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
+        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
+        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
         return map;
     }
 

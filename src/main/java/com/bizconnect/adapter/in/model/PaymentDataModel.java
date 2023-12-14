@@ -1,9 +1,6 @@
 package com.bizconnect.adapter.in.model;
 
-import com.bizconnect.paymentmodule.config.hectofinancial.Constant;
 import lombok.Getter;
-
-import java.util.Map;
 
 @Getter
 public class PaymentDataModel {
@@ -12,46 +9,47 @@ public class PaymentDataModel {
     private String mchtTrdNo;
     private String trdDt;
     private String trdTm;
-    private String trdAmt;
-    private String mchtCustNm;
-    private String cphoneNo;
-    private String email;
-    private String mchtCustId;
-    private String taxAmt;
-    private String vatAmt;
-    private String taxFreeAmt;
-    private String svcAmt;
-    private String clipCustNm;
-    private String clipCustCi;
-    private String clipCustPhoneNo;
+    private String plainTrdAmt;
+    private String plainMchtCustNm;
+    private String plainCphoneNo;
+    private String plainEmail;
+    private String plainMchtCustId;
+    private String plainTaxAmt;
+    private String plainVatAmt;
+    private String plainTaxFreeAmt;
+    private String plainSvcAmt;
+    private String plainClipCustNm;
+    private String plainClipCustCi;
+    private String plainClipCustPhoneNo;
 
     public PaymentDataModel() {
     }
 
-    public PaymentDataModel(String mchtId, String method, String mchtTrdNo, String trdDt, String trdTm, String trdAmt) {
+    public PaymentDataModel(String mchtId, String method, String mchtTrdNo, String trdDt, String trdTm, String plainTrdAmt) {
         this.mchtId = mchtId;
         this.method = method;
         this.mchtTrdNo = mchtTrdNo;
         this.trdDt = trdDt;
         this.trdTm = trdTm;
-        this.trdAmt = trdAmt;
+        this.plainTrdAmt = plainTrdAmt;
     }
 
-    public PaymentDataModel(String trdAmt, String mchtCustNm, String cphoneNo, String email, String mchtCustId, String taxAmt, String vatAmt, String taxFreeAmt, String svcAmt, String clipCustNm, String clipCustCi, String clipCustPhoneNo) {
-        this.trdAmt = trdAmt;
-        this.mchtCustNm = mchtCustNm;
-        this.cphoneNo = cphoneNo;
-        this.email = email;
-        this.mchtCustId = mchtCustId;
-        this.taxAmt = taxAmt;
-        this.vatAmt = vatAmt;
-        this.taxFreeAmt = taxFreeAmt;
-        this.svcAmt = svcAmt;
-        this.clipCustNm = clipCustNm;
-        this.clipCustCi = clipCustCi;
-        this.clipCustPhoneNo = clipCustPhoneNo;
+    public PaymentDataModel(String plainTrdAmt, String plainMchtCustNm, String plainCphoneNo, String plainEmail, String plainMchtCustId, String plainTaxAmt, String plainVatAmt, String plainTaxFreeAmt, String plainSvcAmt, String plainClipCustNm, String plainClipCustCi, String plainClipCustPhoneNo) {
+        this.plainTrdAmt = plainTrdAmt;
+        this.plainMchtCustNm = plainMchtCustNm;
+        this.plainCphoneNo = plainCphoneNo;
+        this.plainEmail = plainEmail;
+        this.plainMchtCustId = plainMchtCustId;
+        this.plainTaxAmt = plainTaxAmt;
+        this.plainVatAmt = plainVatAmt;
+        this.plainTaxFreeAmt = plainTaxFreeAmt;
+        this.plainSvcAmt = plainSvcAmt;
+        this.plainClipCustNm = plainClipCustNm;
+        this.plainClipCustCi = plainClipCustCi;
+        this.plainClipCustPhoneNo = plainClipCustPhoneNo;
     }
 
-    public PaymentDataModel(Map<String, String> requestMap) {
+    public String getHashPlain() {
+        return this.mchtId+this.method+this.mchtTrdNo+this.trdDt+this.trdTm+this.plainTrdAmt;
     }
 }
