@@ -25,7 +25,6 @@ public class PaymentController {
         JSONObject rsp = new JSONObject();
 
         rsp.put("hashCipher", paymentUseCase.aes256EncryptEcb(paymentDataModel));
-
         System.out.println("paymentUseCase.aes256EncryptEcb(paymentDataModel) : " + paymentUseCase.aes256EncryptEcb(paymentDataModel));
         rsp.put("encParams", paymentUseCase.encodeBase64(paymentDataModel));
         System.out.println("paymentUseCase.encodeBase64(paymentDataModel) : " + paymentUseCase.encodeBase64(paymentDataModel));

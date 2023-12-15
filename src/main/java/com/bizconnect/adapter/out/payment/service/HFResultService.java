@@ -2,13 +2,16 @@ package com.bizconnect.adapter.out.payment.service;
 
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
+import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -16,10 +19,13 @@ import java.util.Map;
 @Service
 public class HFResultService {
     private final Constant constant;
+
+    private final ConnectHectoFinancialService connectHectoFinancialService;
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant) {
+    public HFResultService(Constant constant, ConnectHectoFinancialService connectHectoFinancialService) {
         this.constant = constant;
+        this.connectHectoFinancialService = connectHectoFinancialService;
     }
 
     public String nextCardData(HFDataModel hfDataModel) throws IOException {
@@ -131,7 +137,7 @@ public class HFResultService {
             logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
 
-        return responseMessage(hashCipher,RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"),RES_PARAMS.get("outStatCd"));
+        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"));
     }
 
 
@@ -184,14 +190,11 @@ public class HFResultService {
             logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
 
-        return responseMessage(hashCipher,RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"),RES_PARAMS.get("outStatCd"));
+        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"));
     }
 
 
-
-
-
-    private String responseMessage(String hashCipher,String mchtTrdNo, String pktHash, String outStatCd){
+    private String responseMessage(String hashCipher, String mchtTrdNo, String pktHash, String outStatCd) {
         boolean resp = false;
         /**
          hash데이타값이 맞는 지 확인 하는 루틴은 헥토파이낸셜에서 받은 데이타가 맞는지 확인하는 것이므로 꼭 사용하셔야 합니다
@@ -219,6 +222,46 @@ public class HFResultService {
             logger.info("[" + mchtTrdNo + "][Result] FAIL");
             return "FAIL";
         }
+    }
+
+
+    public Map<String, String> decryptData(HFResultDataModel resultDataModel) {
+        /** 응답 파라미터 세팅 */
+        Map<String, String> responseParams = new LinkedHashMap<>();
+        /** 설정 정보 저장 */
+        String aesKey = constant.AES256_KEY;
+
+        responseParams.put("mchtId", resultDataModel.getMchtId());            //상점아이디
+        responseParams.put("outStatCd", resultDataModel.getOutStatCd());         //결과코드
+        responseParams.put("outRsltCd", resultDataModel.getOutRsltCd());         //거절코드
+        responseParams.put("outRsltMsg", resultDataModel.getOutRsltMsg());        //결과메세지
+        responseParams.put("method", resultDataModel.getMethod());            //결제수단
+        responseParams.put("mchtTrdNo", resultDataModel.getMchtTrdNo());         //상점주문번호
+        responseParams.put("mchtCustId", resultDataModel.getMchtCustId());        //상점고객아이디
+        responseParams.put("trdNo", resultDataModel.getTrdNo());             //세틀뱅크 거래번호
+        responseParams.put("trdAmt", resultDataModel.getTrdAmt());            //거래금액
+        responseParams.put("mchtParam", resultDataModel.getMchtParam());         //상점 예약필드
+        responseParams.put("authDt", resultDataModel.getAuthDt());            //승인일시
+        responseParams.put("authNo", resultDataModel.getAuthNo());            //승인번호
+        responseParams.put("reqIssueDt", resultDataModel.getReqIssueDt());       //채번요청일시
+        responseParams.put("intMon", resultDataModel.getIntMon());            //할부개월수
+        responseParams.put("fnNm", resultDataModel.getFnNm());              //카드사명
+        responseParams.put("fnCd", resultDataModel.getFnCd());              //카드사코드
+        responseParams.put("pointTrdNo", resultDataModel.getPointTrdNo());        //포인트거래번호
+        responseParams.put("pointTrdAmt", resultDataModel.getPointTrdAmt());       //포인트거래금액
+        responseParams.put("cardTrdAmt", resultDataModel.getCardTrdAmt());        //신용카드결제금액
+        responseParams.put("vtlAcntNo", resultDataModel.getVtlAcntNo());         //가상계좌번호
+        responseParams.put("expireDt", resultDataModel.getExpireDt());          //입금기한
+        responseParams.put("cphoneNo", resultDataModel.getCphoneNo());          //휴대폰번호
+        responseParams.put("billKey", resultDataModel.getBillKey());           //자동결제키
+        responseParams.put("csrcAmt", resultDataModel.getCsrcAmt());           //현금영수증 발급 금액(네이버페이)
+
+        //AES256 복호화 필요 파라미터
+        String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "pointTrdAmt", "cardTrdAmt", "vtlAcntNo", "cphoneNo", "csrcAmt"};
+
+        connectHectoFinancialService.decryptParams(DECRYPT_PARAMS, responseParams, responseParams);
+
+        return responseParams;
     }
 
 

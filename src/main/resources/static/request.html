@@ -6,22 +6,22 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
     <script>
-        function result (data) {
+        function result(data) {
             $.ajax({
-                type: "POST",
-                url: "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt",
+                type       : "POST",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt",
                 contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify({"data": data}),
-                success: function (res) {
+                dataType   : "json",
+                data       : JSON.stringify({"data": data}),
+                success    : function (res) {
+                    console.log("함수 호출 당했어요~");
                     console.log(res);
                     if (res.method === "vbank") {
                         $("#vbank_proc").find("#orgTrdNo").val(res.trdNo)
                         $("#vbank_proc").find("#cnclAmt").val(res.trdAmt)
                         $("#vbank_proc").find("#refundBankCd").val(res.fnCd)
                         $("#vbank_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
-                    }
-                    else {
+                    } else {
                         $("#card_proc").find("#orgTrdNo").val(res.trdNo)
                         $("#card_proc").find("#cnclAmt").val(res.trdAmt)
                         $("#card_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
@@ -35,67 +35,67 @@
             // xhr.send(JSON.stringify({data: data}))
         }
 
-        function vbankCancel () {
-            var mchtId        = $("#mchtId").val();
-            var orgTrdNo      = $("#orgTrdNo").val();
-            var cnclAmt       = $("#cnclAmt").val();
-            var refundBankCd  = $("#refundBankCd").val();
-            var refundAcntNo  = $("#refundAcntNo").val();
+        function vbankCancel() {
+            var mchtId = $("#mchtId").val();
+            var orgTrdNo = $("#orgTrdNo").val();
+            var cnclAmt = $("#cnclAmt").val();
+            var refundBankCd = $("#refundBankCd").val();
+            var refundAcntNo = $("#refundAcntNo").val();
             var refundDpstrNm = $("#refundDpstrNm").val();
-            var data          = {
-                mchtId: mchtId,
-                orgTrdNo: orgTrdNo,
-                cnclAmt: cnclAmt,
-                refundBankCd: refundBankCd,
-                refundAcntNo: refundAcntNo,
+            var data = {
+                mchtId       : mchtId,
+                orgTrdNo     : orgTrdNo,
+                cnclAmt      : cnclAmt,
+                refundBankCd : refundBankCd,
+                refundAcntNo : refundAcntNo,
                 refundDpstrNm: refundDpstrNm
             }
             $.ajax({
-                type: "POST",
-                url: "http://127.0.0.1:9000/api/v1/hectoFinancial/VBank/cancel",
+                type       : "POST",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/VBank/cancel",
                 contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify(data),
-                success: function (res) {
+                dataType   : "json",
+                data       : JSON.stringify(data),
+                success    : function (res) {
                     $("#vbank_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
                 }
             })
         }
 
-        function cardCancel () {
-            var mchtId   = $("#card_proc").find("#mchtId").val();
+        function cardCancel() {
+            var mchtId = $("#card_proc").find("#mchtId").val();
             var orgTrdNo = $("#card_proc").find("#orgTrdNo").val();
-            var cnclAmt  = $("#card_proc").find("#cnclAmt").val();
-            var data     = {
-                mchtId: mchtId,
+            var cnclAmt = $("#card_proc").find("#cnclAmt").val();
+            var data = {
+                mchtId  : mchtId,
                 orgTrdNo: orgTrdNo,
-                cnclAmt: cnclAmt,
+                cnclAmt : cnclAmt,
             }
             $.ajax({
-                type: "POST",
-                url: "http://127.0.0.1:9000/api/v1/hectoFinancial/billKey/cancel",
+                type       : "POST",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/billKey/cancel",
                 contentType: "application/json",
-                dataType: "json",
-                data: JSON.stringify(data),
-                success: function (res) {
+                dataType   : "json",
+                data       : JSON.stringify(data),
+                success    : function (res) {
                     $("#card_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
                 }
             })
         }
 
-        function pay (type) {
+        function pay(type) {
             var curr_date = new Date();
-            var year      = curr_date.getFullYear().toString();
-            var month     = ("0" + (curr_date.getMonth() + 1)).slice(-2).toString();
-            var day       = ("0" + (curr_date.getDate())).slice(-2).toString();
-            var hours     = ("0" + curr_date.getHours()).slice(-2).toString();
-            var mins      = ("0" + curr_date.getMinutes()).slice(-2).toString();
-            var secs      = ("0" + curr_date.getSeconds()).slice(-2).toString();
-            var random4   = ("000" + Math.random() * 10000).slice(-4).toString();
+            var year = curr_date.getFullYear().toString();
+            var month = ("0" + (curr_date.getMonth() + 1)).slice(-2).toString();
+            var day = ("0" + (curr_date.getDate())).slice(-2).toString();
+            var hours = ("0" + curr_date.getHours()).slice(-2).toString();
+            var mins = ("0" + curr_date.getMinutes()).slice(-2).toString();
+            var secs = ("0" + curr_date.getSeconds()).slice(-2).toString();
+            var random4 = ("000" + Math.random() * 10000).slice(-4).toString();
 
             // var custIp    = "127.0.0.1" // 세팅 필요
-            var trdDt     = year + month + day;
-            var trdTm     = hours + mins + secs;
+            var trdDt = year + month + day;
+            var trdTm = hours + mins + secs;
             var mchtTrdNo = "PAYMENT" + year + month + day + hours + mins + secs + random4;//주문번호 세팅
 
 
@@ -110,75 +110,76 @@
                 mchtId = "nx_mid_il"
             }
 
-            var trdAmt          = "300"
+            var trdAmt = "300"
             var plainMchtCustNm = "홍길동"
-            var plainEmail      = "HongGilDong@example.com"
+            var plainEmail = "HongGilDong@example.com"
             var plainMchtCustId = "HongGilDong"
-            var mchtName        = "세틀뱅크"
-            var mchtEName       = "Settlebank"
-            var pmtPrdtNm       = "테스트상품"
+            var mchtName = "세틀뱅크"
+            var mchtEName = "Settlebank"
+            var pmtPrdtNm = "테스트상품"
 
             var data = {
-                mchtId: mchtId,
-                method: method,
-                mchtTrdNo: mchtTrdNo,
-                trdDt: trdDt,
-                trdTm: trdTm,
-                plainTrdAmt: trdAmt,
-                plainMchtCustNm: plainMchtCustNm,
-                plainCphoneNo: "",
-                plainEmail: plainEmail,
-                plainMchtCustId: plainMchtCustId,
-                plainTaxAmt: "",
-                plainVatAmt: "",
-                plainTaxFreeAmt: "",
-                plainSvcAmt: "",
-                plainClipCustNm: "",
-                plainClipCustCi: "",
+                mchtId              : mchtId,
+                method              : method,
+                mchtTrdNo           : mchtTrdNo,
+                trdDt               : trdDt,
+                trdTm               : trdTm,
+                plainTrdAmt         : trdAmt,
+                plainMchtCustNm     : plainMchtCustNm,
+                plainCphoneNo       : "",
+                plainEmail          : plainEmail,
+                plainMchtCustId     : plainMchtCustId,
+                plainTaxAmt         : "",
+                plainVatAmt         : "",
+                plainTaxFreeAmt     : "",
+                plainSvcAmt         : "",
+                plainClipCustNm     : "",
+                plainClipCustCi     : "",
                 plainClipCustPhoneNo: ""
             }
 
             $.ajax({
-                type: "POST",
-                url: "http://127.0.0.1:9000/api/v1/hectoFinancial/init/encrypt",
+                type       : "POST",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/init/encrypt",
                 contentType: "application/json",
-                dataType: "json",
+                dataType   : "json",
                 // data: $("#STPG_payForm").serialize(),
-                data: JSON.stringify(data),
+                data   : JSON.stringify(data),
                 success: function (rsp) {
                     //암호화 된 파라미터 세팅
                     // for (name in rsp.encParams) {
                     //     $('#STPG_payForm [name=' + name + ']').val(rsp.encParams[name]);
                     // }
-
+                    console.log("콘솔 메소드 확인용 : "+  method)
                     //가맹점 -> 세틀뱅크로 결제 요청
                     SETTLE_PG.pay({
-                        env: "https://tbnpg.settlebank.co.kr",   //결제서버 URL
-                        mchtId: mchtId,
-                        method: method,
-                        trdDt: trdDt,
-                        trdTm: trdTm,
-                        mchtTrdNo: mchtTrdNo,
-                        mchtName: mchtName,
-                        mchtEName: mchtEName,
-                        pmtPrdtNm: pmtPrdtNm,
-                        trdAmt: rsp.encParams.trdAmt,
+                        env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
+                        mchtId    : mchtId,
+                        method    : method,
+                        trdDt     : trdDt,
+                        trdTm     : trdTm,
+                        mchtTrdNo : mchtTrdNo,
+                        mchtName  : mchtName,
+                        mchtEName : mchtEName,
+                        pmtPrdtNm : pmtPrdtNm,
+                        trdAmt    : rsp.encParams.trdAmt,
                         mchtCustNm: rsp.encParams.mchtCustNm,
-                        notiUrl: "http://127.0.0.1:9000/api/v1/hectoFinancial/result/noti",
-                        nextUrl: "http://127.0.0.1:9000/api/v1/hectoFinancial/result/next",
-                        cancUrl: "https://example.com/cancUrl",
-                        pktHash: rsp.hashCipher,
-                        ui: {
-                            type: "popup",   //popup, iframe, self, blank
-                            width: "430",   //popup창의 너비
+                        notiUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/noti",
+                        nextUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/next",
+                        cancUrl   : "https://example.com/cancUrl",
+                        pktHash   : rsp.hashCipher,
+                        ui        : {
+                            type  : "popup",   //popup, iframe, self, blank
+                            width : "430",   //popup창의 너비
                             height: "660"   //popup창의 높이
                         }
                     }, function (rsp) {
                         //iframe인 경우 전달된 결제 완료 후 응답 파라미터 처리
+
                         console.log(rsp);
                     });
                 },
-                error: function () {
+                error  : function () {
                     alert("에러 발생");
                 },
             });
@@ -199,19 +200,26 @@
         <th width="15%">결제수단 선택</th>
     </tr>
     <tr>
-        <td width="35%" class="al">
-            <div style="display: inline-flex; flex-direction: column; height: 100%;">
-                <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
-                <textarea id="pay_result" cols="75" rows="30"></textarea>
-            </div>
-        </td>
-        <td width="35%" class="al">
-            <div style="display: inline-flex; flex-direction: column; height: 100%;">
-                <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
-                <textarea id="pay_result" cols="75" rows="30"></textarea>
+        <td>
+            <div style="display: flex; height: 500px" id="vbank_proc">
+                <div style="display: inline-flex; flex-direction: column; height: 100%;">
+                    <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
+                    <textarea id="pay_result" cols="75" rows="30"></textarea>
+                </div>
             </div>
         </td>
     </tr>
+    <tr>
+        <td>
+            <div style="display: flex; height: 500px" id="card_proc">
+                <div style="display: inline-flex; flex-direction: column; height: 100%;">
+                    <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
+                    <textarea id="pay_result" cols="75" rows="30"></textarea>
+                </div>
+            </div>
+        </td>
+    </tr>
+
     </tbody>
 </table>
 
