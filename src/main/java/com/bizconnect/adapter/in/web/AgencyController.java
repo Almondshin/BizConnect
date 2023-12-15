@@ -31,7 +31,9 @@ public class AgencyController {
     }
     @PostMapping("/register")
     public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel){
-        System.out.println("client side : " + clientDataModel);
+        if(clientDataModel.getBizNumber() == null || clientDataModel.getBizNumber().isEmpty()){
+            throw new NullPointerException();
+        }
         agencyUseCase.registerAgency(clientDataModel);
         ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
         return ResponseEntity.ok(responseMessage);
