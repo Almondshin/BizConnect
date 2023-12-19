@@ -19,6 +19,7 @@
             const select = document.getElementById('productTypeSelect');
             select.addEventListener('change', function () {
                 updateEndDate();
+                // updateOffer();
             });
         })
 
@@ -27,6 +28,7 @@
         const agencyId = searchParams.get('agencyId');
         const mallId = searchParams.get('mallId');
 
+        var basicOffer = [];
 
         $.ajax({
             type       : 'POST',
@@ -51,10 +53,10 @@
 
         function populateSelect(enumValues) {
             const select = document.getElementById('productTypeSelect');
-            const endDate = document.getElementById('endDate');
-
             enumValues.forEach(enumValue => {
                 const option = document.createElement('option');
+
+                basicOffer.push(enumValue.basicOffer);
                 option.value = enumValue.type;
                 option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
                 select.appendChild(option);
@@ -65,15 +67,18 @@
         function updateEndDate() {
             const select = document.getElementById('productTypeSelect');
             const selectedValue = select.value;
+
+            // console.log("selected value : " + select.value);
+            console.log("selected value : " + basicOffer[0]);
+
             const startDate = new Date(document.getElementById('startDate').value);
             let endDate = new Date(startDate);
 
             const durations = endDate.getDate() - startDate.getDate();
 
             if (durations <= 15){
-                if (selectedValue.includes('12m')) {
-                    endDate.setFullYear(endDate.getFullYear() + 1);
-                    endDate.setMonth(endDate.getMonth() + 1);
+                if (selectedValue.includes('lite_12m_2400')) {
+                    console.log("selected value : " + basicOffer)
                 } else if (selectedValue.includes('6m')) {
                     endDate.setMonth(endDate.getMonth() + 6 + 1);
                 } else if (selectedValue.includes('1m')){
@@ -90,7 +95,6 @@
             }
 
 
-
             // Set date to the 0th day of the next month to get the last day of the current month
             endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
 
@@ -101,6 +105,44 @@
             var formattedEndDate = year + '-' + month + '-' + date;
             document.getElementById('endDate').value = formattedEndDate;
         }
+
+        // function updateOffer(){
+        //     const select = document.getElementById('productTypeSelect');
+        //     const selectedValue = select.value;
+        //     const startDate = new Date(document.getElementById('startDate').value);
+        //     let offer = "";
+        //
+        //     const durations = endDate.getDate() - startDate.getDate();
+        //
+        //     if (durations <= 15){
+        //
+        //         switch (selectedValue){
+        //             case 'lite_12m_2400' : {
+        //                 offer = selectedValue
+        //             }
+        //         }
+        //
+        //     } else {
+        //         if (selectedValue.includes('12m')) {
+        //             endDate.setFullYear(endDate.getFullYear() + 1);
+        //         } else if (selectedValue.includes('6m')) {
+        //             endDate.setMonth(endDate.getMonth() + 6);
+        //         } else if (selectedValue.includes('1m')){
+        //             endDate.setMonth(endDate.getMonth() + 1);
+        //         }
+        //     }
+        //
+        //
+        //     // Set date to the 0th day of the next month to get the last day of the current month
+        //     endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+        //
+        //     var year = endDate.getFullYear();
+        //     var month = ('0' + (endDate.getMonth() + 1)).slice(-2);
+        //     var date = ('0' + endDate.getDate()).slice(-2);
+        //
+        //     var formattedEndDate = year + '-' + month + '-' + date;
+        //     document.getElementById('endDate').value = formattedEndDate;
+        // }
 
 
         function result(data) {
@@ -307,6 +349,11 @@
     <tr>
         <td>
             <input readonly="readonly" type="text" id="endDate" name="endDate" value="">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input readonly="readonly" type="text" id="offer" name="offer" value="">
         </td>
     </tr>
     <tr>
