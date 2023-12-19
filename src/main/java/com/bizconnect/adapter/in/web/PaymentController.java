@@ -21,14 +21,9 @@ public class PaymentController {
 
     @PostMapping(value = "/encrypt", produces = "application/json;charset=utf-8")
     public String requestEncryptParameters(@RequestBody PaymentDataModel paymentDataModel) {
-        System.out.println(paymentDataModel.getMchtId());
         JSONObject rsp = new JSONObject();
-
         rsp.put("hashCipher", paymentUseCase.aes256EncryptEcb(paymentDataModel));
-        System.out.println("paymentUseCase.aes256EncryptEcb(paymentDataModel) : " + paymentUseCase.aes256EncryptEcb(paymentDataModel));
         rsp.put("encParams", paymentUseCase.encodeBase64(paymentDataModel));
-        System.out.println("paymentUseCase.encodeBase64(paymentDataModel) : " + paymentUseCase.encodeBase64(paymentDataModel));
         return rsp.toString();
     }
-
 }

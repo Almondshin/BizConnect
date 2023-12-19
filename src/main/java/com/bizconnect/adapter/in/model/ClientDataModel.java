@@ -3,8 +3,12 @@ package com.bizconnect.adapter.in.model;
 import com.bizconnect.adapter.in.enums.EnumResultCode;
 import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
 import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 
 @Getter
+@Setter
+@ToString
 public class ClientDataModel {
     private String mallId;
     private String agencyId;
@@ -24,6 +28,9 @@ public class ClientDataModel {
     private String settleManagerEmail;
 
     private static final String AGENCY_MALL_ID_PATTERN = "^[a-zA-Z0-9]+$";
+
+    public ClientDataModel() {
+    }
 
     public ClientDataModel(String agencyId, String mallId) {
         if (!isValidAgencyId(agencyId) || !isValidMallId(mallId)) {

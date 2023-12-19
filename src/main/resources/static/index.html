@@ -3,8 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <title>Title</title>
-    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+    <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
     <script>
+        /*이용기관 등록 관련 JS*/
         function agencyStatus() {
             const agencyId = document.getElementById('agencyId').value;
             const mallId = document.getElementById('mallId').value;
@@ -71,6 +73,15 @@
                     console.log(xhr.responseText);
                 }
             });
+        }
+
+
+        /*결제 페이지 이동*/
+        function goProduct() {
+            const agencyId = document.getElementById('agencyId').value;
+            const mallId = document.getElementById('mallId').value;
+
+            window.location.href = "http://127.0.0.1:9000/request.html?agencyId="+agencyId+"&mallId="+mallId;
         }
 
     </script>
@@ -151,9 +162,23 @@
                 <th>정산담당자 E-Mail</th>
                 <td><input name="settleManagerEmail" id="settleManagerEmail"></td>
             </tr>
+
+
         </table>
     </div>
     <textarea id="agency_register_result" cols="50" rows="6"></textarea>
+
+    <table>
+        <tr>
+            <td>
+                <div style="display: flex; height: 30px" id="goProduct">
+                    <div style="display: inline-flex; flex-direction: column; height: 100%;">
+                        <button onclick="goProduct();" style="flex:auto">결제 페이지 이동</button>
+                    </div>
+                </div>
+            </td>
+        </tr>
+    </table>
 </div>
 
 </body>

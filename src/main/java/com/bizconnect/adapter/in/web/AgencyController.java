@@ -4,14 +4,20 @@ import com.bizconnect.adapter.in.enums.EnumResultCode;
 import com.bizconnect.adapter.in.enums.EnumSiteStatus;
 import com.bizconnect.adapter.in.exceptions.ClientResponseMessage;
 import com.bizconnect.adapter.in.model.ClientDataModel;
+import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import javax.websocket.server.PathParam;
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/agency")
@@ -39,4 +45,15 @@ public class AgencyController {
         return ResponseEntity.ok(responseMessage);
     }
 
+    @PostMapping("/payment/info")
+    public ResponseEntity<?> paymentSiteInfo(@RequestBody ClientDataModel clientDataModel){
+//        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getMallId()));
+        ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
+        List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
+
+        Map<String, Object> response = new HashMap<>();
+        response.put("responseMessage", responseMessage);
+        response.put("enumProductTypes", enumValues);
+        return ResponseEntity.ok(response);
+    }
 }

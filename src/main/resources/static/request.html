@@ -6,6 +6,103 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
     <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            var today = new Date();
+
+            var year = today.getFullYear(); // 년도
+            var month = ('0' + (today.getMonth() + 1)).slice(-2); // 월
+            var date = ('0' + today.getDate()).slice(-2); // 날짜
+
+            var formattedDate = year + '-' + month + '-' + date;
+            document.querySelector("#startDate").value = formattedDate;
+
+            const select = document.getElementById('productTypeSelect');
+            select.addEventListener('change', function () {
+                updateEndDate();
+            });
+        })
+
+
+        const searchParams = new URLSearchParams(window.location.search);
+        const agencyId = searchParams.get('agencyId');
+        const mallId = searchParams.get('mallId');
+
+
+        $.ajax({
+            type       : 'POST',
+            url        : "/agency/payment/info",
+            contentType: "application/json",
+            dataType   : "json",
+            data       : JSON.stringify({agencyId: agencyId, mallId: mallId}),
+            success    : function (response) {
+                $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
+                console.log(JSON.stringify(response));
+                if (response.enumProductTypes) {
+                    populateSelect(response.enumProductTypes);
+                } else {
+                    console.error('enumProductTypes is missing in the response');
+                }
+            },
+            error      : function (xhr) {
+                $("#paymentInfo").find("#paymentInfo_result").val(xhr.responseText);
+                console.log(xhr.responseText);
+            }
+        })
+
+        function populateSelect(enumValues) {
+            const select = document.getElementById('productTypeSelect');
+            const endDate = document.getElementById('endDate');
+
+            enumValues.forEach(enumValue => {
+                const option = document.createElement('option');
+                option.value = enumValue.type;
+                option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
+                select.appendChild(option);
+            });
+        }
+
+
+        function updateEndDate() {
+            const select = document.getElementById('productTypeSelect');
+            const selectedValue = select.value;
+            const startDate = new Date(document.getElementById('startDate').value);
+            let endDate = new Date(startDate);
+
+            const durations = endDate.getDate() - startDate.getDate();
+
+            if (durations <= 15){
+                if (selectedValue.includes('12m')) {
+                    endDate.setFullYear(endDate.getFullYear() + 1);
+                    endDate.setMonth(endDate.getMonth() + 1);
+                } else if (selectedValue.includes('6m')) {
+                    endDate.setMonth(endDate.getMonth() + 6 + 1);
+                } else if (selectedValue.includes('1m')){
+                    endDate.setMonth(endDate.getMonth() + 1 +1);
+                }
+            } else {
+                if (selectedValue.includes('12m')) {
+                    endDate.setFullYear(endDate.getFullYear() + 1);
+                } else if (selectedValue.includes('6m')) {
+                    endDate.setMonth(endDate.getMonth() + 6);
+                } else if (selectedValue.includes('1m')){
+                    endDate.setMonth(endDate.getMonth() + 1);
+                }
+            }
+
+
+
+            // Set date to the 0th day of the next month to get the last day of the current month
+            endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
+
+            var year = endDate.getFullYear();
+            var month = ('0' + (endDate.getMonth() + 1)).slice(-2);
+            var date = ('0' + endDate.getDate()).slice(-2);
+
+            var formattedEndDate = year + '-' + month + '-' + date;
+            document.getElementById('endDate').value = formattedEndDate;
+        }
+
+
         function result(data) {
             $.ajax({
                 type       : "POST",
@@ -14,7 +111,6 @@
                 dataType   : "json",
                 data       : JSON.stringify({"data": data}),
                 success    : function (res) {
-                    console.log("함수 호출 당했어요~");
                     console.log(res);
                     if (res.method === "vbank") {
                         $("#vbank_proc").find("#orgTrdNo").val(res.trdNo)
@@ -83,6 +179,7 @@
             })
         }
 
+
         function pay(type) {
             var curr_date = new Date();
             var year = curr_date.getFullYear().toString();
@@ -116,7 +213,10 @@
             var plainMchtCustId = "HongGilDong"
             var mchtName = "세틀뱅크"
             var mchtEName = "Settlebank"
-            var pmtPrdtNm = "테스트상품"
+            var pmtPrdtNm = $("input[name='rate_sel']:checked").val();
+            console.log(document.querySelector('input[name="rate_sel"]:checked').value);
+            console.log($("input[name='rate_sel']:checked").val());
+
 
             var data = {
                 mchtId              : mchtId,
@@ -150,7 +250,7 @@
                     // for (name in rsp.encParams) {
                     //     $('#STPG_payForm [name=' + name + ']').val(rsp.encParams[name]);
                     // }
-                    console.log("콘솔 메소드 확인용 : "+  method)
+                    console.log("콘솔 메소드 확인용 : " + method)
                     //가맹점 -> 세틀뱅크로 결제 요청
                     SETTLE_PG.pay({
                         env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
@@ -188,13 +288,26 @@
 </head>
 <body>
 <h1>결제요청</h1>
-
-<table class="info_tbl" summary="결제금액 확인 및 결제수단 선택표입니다.">
-    <caption><b>결제금액 확인 및 결제수단 선택</b></caption>
-    <tbody>
+<div id="paymentInfo">
+    <textarea id="paymentInfo_result" cols="75" rows="4"></textarea>
+</div>
+<table class="info_tbl" summary="충전제 요금 안내표입니다.">
     <tr>
-        <th width="15%">총 결제금액 (VAT포함)</th>
-        <td width="35%" class="al"><b>${salesPrice}원</b></td>
+        <td>
+            <select id="productTypeSelect">
+                <option value="-">기본</option>
+            </select>
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input type="text" id="startDate" name="startDate" value="">
+        </td>
+    </tr>
+    <tr>
+        <td>
+            <input readonly="readonly" type="text" id="endDate" name="endDate" value="">
+        </td>
     </tr>
     <tr>
         <th width="15%">결제수단 선택</th>
@@ -208,8 +321,6 @@
                 </div>
             </div>
         </td>
-    </tr>
-    <tr>
         <td>
             <div style="display: flex; height: 500px" id="card_proc">
                 <div style="display: inline-flex; flex-direction: column; height: 100%;">
@@ -219,9 +330,11 @@
             </div>
         </td>
     </tr>
-
-    </tbody>
 </table>
 
+
+<script>
+
+</script>
 </body>
 </html>

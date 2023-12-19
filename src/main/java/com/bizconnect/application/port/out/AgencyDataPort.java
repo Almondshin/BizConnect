@@ -5,8 +5,11 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 
+import java.util.Optional;
+
 public interface AgencyDataPort {
     void checkAgency(Agency agency);
     void registerAgency(Agency agency, Client client, SettleManager settleManager);
+    Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client, SettleManager settleManager);
 }
 
