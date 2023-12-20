@@ -8,15 +8,14 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var today = new Date();
-            today.setDate(today.getDate() - 9);
 
             var year = today.getFullYear(); // 년도
             var month = ('0' + (today.getMonth() + 1)).slice(-2); // 월
-            var date = ('0' + today.getDate()).slice(-2); // 날짜
+            // var date = ('0' + today.getDate()).slice(-2); // 날짜
+            var date = ('0' + today.getDate()).slice(-2) - 10; // 날짜
 
             var formattedDate = year + '-' + month + '-' + date;
             document.querySelector("#startDate").value = formattedDate;
-            document.querySelector("#endDate").value = formattedDate;
 
             const select = document.getElementById('productTypeSelect');
             select.addEventListener('change', function () {
@@ -41,10 +40,6 @@
                 console.log(JSON.stringify(response));
                 if (response.enumProductTypes) {
                     populateSelect(response.enumProductTypes);
-                    response.enumProductTypes.forEach(e => {
-                        productTypeList.push(e.type, e.name, e.price, e.basicOffer, e.month);
-                    })
-
                 } else {
                     console.error('enumProductTypes is missing in the response');
                 }
@@ -59,59 +54,30 @@
         var basicPriceList = [];
         var productTypeList = [];
 
-        // function populateSelect(enumValues) {
-        //     const select = document.getElementById('productTypeSelect');
-        //     enumValues.forEach(enumValue => {
-        //         const option = document.createElement('option');
-        //         productTypeList.push(enumValue.type,enumValue.name,enumValue.price, enumValue.basicOffer);
-        //         basicOfferList.push(enumValue.basicOffer);
-        //         basicPriceList.push(enumValue.price);
-        //         //
-        //         option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
-        //         option.value = enumValue.type;
-        //         option.name = option.textContent;
-        //
-        //         select.appendChild(option);
-        //     });
-        // }
+        function populateSelect(enumValues) {
+            const select = document.getElementById('productTypeSelect');
+            enumValues.forEach(enumValue => {
+                const option = document.createElement('option');
+                productTypeList.push(enumValue.type,enumValue.name,enumValue.price, enumValue.basicOffer);
+                basicOfferList.push(enumValue.basicOffer);
+                basicPriceList.push(enumValue.price);
+                //
+                option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
+                option.value = enumValue.type;
+                option.name = option.textContent;
 
-        function populateSelect(productTypes) {
-            const select = document.getElementById('productTypeSelect'); // select 요소를 선택합니다.
-
-            productTypes.forEach((product) => {
-                const option = document.createElement('option'); // 새 option 요소를 생성합니다.
-                option.textContent = `${product.name} - ${parseInt(product.price).toLocaleString()}원`; // 표시될 텍스트를 설정합니다.
-                option.value = product.type; // option의 value를 설정합니다.
-
-                // 필요하다면 추가 데이터를 속성으로 저장할 수 있습니다.
-                option.setAttribute('data-basic-offer', product.basicOffer);
-                option.setAttribute('data-month', product.month);
-                option.setAttribute('data-price', product.price);
-                option.setAttribute('data-name', product.name);
-                option.setAttribute('data-type', product.type);
-
-                select.appendChild(option); // 생성된 option을 select 요소에 추가합니다.
+                select.appendChild(option);
             });
         }
 
 
         function updateDataByProduct() {
             const select = document.getElementById('productTypeSelect');
-            const selectedOption = select.options[select.selectedIndex];
-
-            const dataBasicOffer = selectedOption.getAttribute('data-basic-offer');
-            const dataMonth = selectedOption.getAttribute('data-month');
-            const dataPrice = selectedOption.getAttribute('data-price');
-            const dataName = selectedOption.getAttribute('data-name');
-            const dataType = selectedOption.getAttribute('data-type');
-
-            console.log("selectedValue : " + dataName)
-
+            const selectedValue = select.value;
+            console.log("selectedValue : " + selectedValue)
             let offer;
             let price;
 
-            let baseOffer;
-            let basePrice;
 
             const startDate = new Date(document.getElementById('startDate').value);
             let endDate = new Date(startDate);
@@ -120,66 +86,142 @@
             const durations = lastDate - startDate.getDate();
 
 
-            if (dataType == null) {
-                baseOffer = 0
-                basePrice = 0
-            } else if (dataType.includes('lite')) {
-                baseOffer = parseInt(select.options[9].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[9].getAttribute('data-price'));
-            } else if (dataType.includes('basic')) {
-                baseOffer = parseInt(select.options[10].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[10].getAttribute('data-price'));
-            } else if (dataType.includes('standard')) {
-                baseOffer = parseInt(select.options[11].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[11].getAttribute('data-price'));
-            } else if (dataType.includes('premium')) {
-                baseOffer = parseInt(select.options[12].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[12].getAttribute('data-price'));
-            }
-
-
-            console.log("selectedOption : " + select.selectedIndex)
-            console.log("baseOffer : " + baseOffer)
-            console.log("basePrice : " + basePrice)
-            console.log("----------")
-            console.log("dataBasicOffer : " + dataBasicOffer)
-            console.log("dataMonth : " + dataMonth)
-            console.log("dataPrice : " + dataPrice)
-            console.log("dataName : " + dataName)
-            console.log("dataType : " + dataType)
-            console.log("baseOffer : " + baseOffer)
-            console.log("basePrice : " + basePrice)
-            console.log("durations : " + durations)
-            console.log("lastDate : " + lastDate)
-            console.log("----------")
-
-
             if (durations <= 15) {
-                offer = (baseOffer * dataMonth) + (baseOffer * durations / lastDate);
-                price = ((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1;
-                if (dataMonth === '12') {
-                    endDate.setFullYear(endDate.getFullYear() + 1);
-                    endDate.setMonth(endDate.getMonth() + 1);
-                } else if (dataMonth === '6') {
-                    endDate.setMonth(endDate.getMonth() + 6 + 1);
-                } else {
-                    endDate.setMonth(endDate.getMonth() + 1);
-                    price = ((basePrice * durations / lastDate) + basePrice) * 1.1;
+                switch (selectedValue) {
+                    case "lite_12m_2400" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[8]) * 12) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 11) * 1.1;
+                        break;
+                    case "basic_12m_12000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[9]) * 12) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 11) * 1.1;
+                        break;
+                    case "standard_12m_24000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[10]) * 12) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 11) * 1.1;
+                        break;
+                    case "premium_12m_36000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[11]) * 12) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 11) * 1.1;
+                        break;
+                    case "lite_6m_1200" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[8]) * 6) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 5) * 1.1;
+                        break;
+                    case "basic_6m_6000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[9]) * 6) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 5) * 1.1;
+                        break;
+                    case "standard_6m_12000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[10]) * 6) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 5) * 1.1;
+                        break;
+                    case "premium_6m_18000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[11]) * 6) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 5) * 1.1;
+                        break;
+                    case "lite_1m_200" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[8]) + parseInt(basicOfferList[8]) * durations / (lastDate);
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8]) * 1.1;
+                        break;
+                    case "basic_1m_1000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[9]) + parseInt(basicOfferList[9]) * durations / (lastDate);
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9]) * 1.1;
+                        break;
+                    case "standard_1m_2000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[10]) + parseInt(basicOfferList[10]) * durations / (lastDate);
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10]) * 1.1;
+                        break;
+                    case "premium_1m_3000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[11]) + parseInt(basicOfferList[11]) * durations / (lastDate);
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11]) * 1.1;
+                        break;
                 }
-
             } else {
-                offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / (lastDate - 1));
-                price = ((basePrice * durations / (lastDate - 1)) + (basePrice * (dataMonth - 1))) * 1.1;
-                if (dataMonth === '12') {
-                    endDate.setFullYear(endDate.getFullYear() + 1);
-                    endDate.setMonth(endDate.getMonth());
-                } else if (dataMonth === '6') {
-                    endDate.setMonth(endDate.getMonth() + 5);
-                } else {
-                    endDate.setMonth(endDate.getMonth());
-                    price = (basePrice * durations / (lastDate - 1)) * 1.1;
+                switch (selectedValue) {
+                    case "lite_12m_2400" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[8]) * 11) + (parseInt(basicOfferList[8]) * durations/(lastDate  ));
+                        price = ((basicPriceList[8] * durations/(lastDate  ))+ basicPriceList[8] * 11) * 1.1;
+                        break;
+                    case "basic_12m_12000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[9]) * 11) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate))+ basicPriceList[9]* 11) * 1.1;
+                        break;
+                    case "standard_12m_24000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[10]) * 11) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 11) * 1.1;
+                        break;
+                    case "premium_12m_36000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[11]) * 11) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 11) * 1.1;
+                        break;
+                    case "lite_6m_1200" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[8]) * 5) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 5) * 1.1;
+                        break;
+                    case "basic_6m_6000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[9]) * 5) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 5) * 1.1;
+                        break;
+                    case "standard_6m_12000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[10]) * 5) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 5) * 1.1;
+                        break;
+                    case "premium_6m_18000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[11]) * 5) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 5) * 1.1;
+                        break;
+                    case "lite_1m_200" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[8]) * durations / (lastDate);
+                        price = ((basicPriceList[8] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "basic_1m_1000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[9]) * durations / (lastDate);
+                        price = ((basicPriceList[9] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "standard_1m_2000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[10]) * durations / (lastDate);
+                        price = ((basicPriceList[10] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "premium_1m_3000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[11]) * durations / (lastDate);
+                        price = ((basicPriceList[11] * durations / (lastDate))) * 1.1;
+                        break;
                 }
             }
+
 
             // Set date to the 0th day of the next month to get the last day of the current month
             endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
@@ -405,11 +447,11 @@
     </tr>
     <tr>
         <th>제공 건수</th>
-        <td><input readonly="readonly" type="text" id="offer" name="offer" value="0"></td>
+        <td><input readonly="readonly" type="text" id="offer" name="offer" value=""></td>
     </tr>
     <tr>
         <th>결제 금액</th>
-        <td><input readonly="readonly" type="text" id="price" name="price" value="0"></td>
+        <td><input readonly="readonly" type="text" id="price" name="price" value=""></td>
     </tr>
     <tr>
         <td>
