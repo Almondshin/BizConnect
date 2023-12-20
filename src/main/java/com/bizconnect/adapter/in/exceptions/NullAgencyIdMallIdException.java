@@ -3,9 +3,9 @@ import com.bizconnect.adapter.in.enums.EnumResultCode;
 import lombok.Getter;
 
 @Getter
-public class IllegalAgencyIdMallIdException extends RuntimeException {
+public class NullAgencyIdMallIdException extends RuntimeException {
     private final String mallId;
-    public IllegalAgencyIdMallIdException(EnumResultCode resultCode, String mallId) {
+    public NullAgencyIdMallIdException(EnumResultCode resultCode, String mallId) {
         super(resultCode.getValue());
         this.mallId = mallId;
     }

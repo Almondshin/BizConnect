@@ -8,7 +8,7 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var today = new Date();
-            today.setDate(today.getDate() - 9);
+            // today.setDate(today.getDate() - 9);
 
             var year = today.getFullYear(); // 년도
             var month = ('0' + (today.getMonth() + 1)).slice(-2); // 월
@@ -55,25 +55,7 @@
             }
         })
 
-        var basicOfferList = [];
-        var basicPriceList = [];
         var productTypeList = [];
-
-        // function populateSelect(enumValues) {
-        //     const select = document.getElementById('productTypeSelect');
-        //     enumValues.forEach(enumValue => {
-        //         const option = document.createElement('option');
-        //         productTypeList.push(enumValue.type,enumValue.name,enumValue.price, enumValue.basicOffer);
-        //         basicOfferList.push(enumValue.basicOffer);
-        //         basicPriceList.push(enumValue.price);
-        //         //
-        //         option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
-        //         option.value = enumValue.type;
-        //         option.name = option.textContent;
-        //
-        //         select.appendChild(option);
-        //     });
-        // }
 
         function populateSelect(productTypes) {
             const select = document.getElementById('productTypeSelect'); // select 요소를 선택합니다.
@@ -99,13 +81,9 @@
             const select = document.getElementById('productTypeSelect');
             const selectedOption = select.options[select.selectedIndex];
 
-            const dataBasicOffer = selectedOption.getAttribute('data-basic-offer');
             const dataMonth = selectedOption.getAttribute('data-month');
-            const dataPrice = selectedOption.getAttribute('data-price');
-            const dataName = selectedOption.getAttribute('data-name');
             const dataType = selectedOption.getAttribute('data-type');
 
-            console.log("selectedValue : " + dataName)
 
             let offer;
             let price;
@@ -137,23 +115,6 @@
                 basePrice = parseInt(select.options[12].getAttribute('data-price'));
             }
 
-
-            console.log("selectedOption : " + select.selectedIndex)
-            console.log("baseOffer : " + baseOffer)
-            console.log("basePrice : " + basePrice)
-            console.log("----------")
-            console.log("dataBasicOffer : " + dataBasicOffer)
-            console.log("dataMonth : " + dataMonth)
-            console.log("dataPrice : " + dataPrice)
-            console.log("dataName : " + dataName)
-            console.log("dataType : " + dataType)
-            console.log("baseOffer : " + baseOffer)
-            console.log("basePrice : " + basePrice)
-            console.log("durations : " + durations)
-            console.log("lastDate : " + lastDate)
-            console.log("----------")
-
-
             if (durations <= 15) {
                 offer = (baseOffer * dataMonth) + (baseOffer * durations / lastDate);
                 price = ((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1;
@@ -166,7 +127,6 @@
                     endDate.setMonth(endDate.getMonth() + 1);
                     price = ((basePrice * durations / lastDate) + basePrice) * 1.1;
                 }
-
             } else {
                 offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / (lastDate - 1));
                 price = ((basePrice * durations / (lastDate - 1)) + (basePrice * (dataMonth - 1))) * 1.1;
@@ -299,18 +259,21 @@
                 mchtId = "nx_mid_il"
             }
 
-            const select = document.getElementById('productTypeSelect');
-            var selectedIndex = select.selectedIndex;
-            var selectedOption = select.options[selectedIndex].text;
+            const productTypeSelect = document.getElementById('productTypeSelect');
+            const selectedOption = productTypeSelect.options[productTypeSelect.selectedIndex];
+            const productName = selectedOption.getAttribute('data-name');
+
+            const startDate = document.getElementById('startDate').value;
+            const endDate = document.getElementById('endDate').value;
 
 
             var trdAmt = document.getElementById("price").value;
-            var plainMchtCustNm = "홍길동"
-            var plainEmail = "HongGilDong@example.com"
-            var plainMchtCustId = "HongGilDong"
-            var mchtName = "세틀뱅크"
-            var mchtEName = "Settlebank"
-            var pmtPrdtNm = selectedOption;
+            var plainMchtCustNm = ""
+            var plainEmail = ""
+            var plainMchtCustId = ""
+            var mchtName = "드림시큐리티"
+            var mchtEName = "dreamsecurity"
+            var pmtPrdtNm = productName +" (" + startDate + " - " + endDate + ")";
 
 
             var data = {

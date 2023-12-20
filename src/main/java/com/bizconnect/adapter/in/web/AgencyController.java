@@ -3,6 +3,7 @@ package com.bizconnect.adapter.in.web;
 import com.bizconnect.adapter.in.enums.EnumResultCode;
 import com.bizconnect.adapter.in.enums.EnumSiteStatus;
 import com.bizconnect.adapter.in.exceptions.ClientResponseMessage;
+import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.port.in.AgencyUseCase;
@@ -37,9 +38,6 @@ public class AgencyController {
     }
     @PostMapping("/register")
     public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel){
-        if(clientDataModel.getBizNumber() == null || clientDataModel.getBizNumber().isEmpty()){
-            throw new NullPointerException();
-        }
         agencyUseCase.registerAgency(clientDataModel);
         ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
         return ResponseEntity.ok(responseMessage);
@@ -47,7 +45,7 @@ public class AgencyController {
 
     @PostMapping("/payment/info")
     public ResponseEntity<?> paymentSiteInfo(@RequestBody ClientDataModel clientDataModel){
-//        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getMallId()));
+        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getMallId()));
         ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.PENDING.getCode(), clientDataModel.getMallId());
         List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
 

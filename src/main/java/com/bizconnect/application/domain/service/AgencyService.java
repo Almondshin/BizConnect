@@ -1,6 +1,10 @@
 package com.bizconnect.application.domain.service;
 
+import com.bizconnect.adapter.in.enums.EnumResultCode;
+import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
+import com.bizconnect.adapter.in.exceptions.NullAgencyIdMallIdException;
 import com.bizconnect.adapter.in.model.ClientDataModel;
+import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberException;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
@@ -24,7 +28,9 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void registerAgency(ClientDataModel clientDataModel) {
-        loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
+        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getMallId() == null || clientDataModel.getMallId().isEmpty()){
+            throw new NullAgencyIdMallIdException(EnumResultCode.NullPointArgument, null);
+        }
         saveAgencyDataPort.registerAgency(convertToAgency(clientDataModel), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
     }
 

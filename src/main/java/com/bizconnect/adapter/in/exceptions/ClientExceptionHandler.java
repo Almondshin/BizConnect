@@ -14,4 +14,10 @@ public class ClientExceptionHandler {
         ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.IllegalArgument.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode(), ex.getMallId());
         return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
     }
+
+    @ExceptionHandler(NullAgencyIdMallIdException.class)
+    public ResponseEntity<ClientResponseMessage> NullAgencyIdMallIdException(NullAgencyIdMallIdException ex) {
+        ClientResponseMessage responseMessage = new ClientResponseMessage(EnumResultCode.NullPointArgument.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode(), ex.getMallId());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
 }

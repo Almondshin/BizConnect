@@ -1,7 +1,10 @@
 package com.bizconnect.adapter.out.persistence.enums;
 
 public enum EnumResultCode {
-    DuplicateMember("3000", "이미 사용중인 아이디입니다.");
+    DuplicateMember("3000", "이미 사용중인 아이디입니다."),
+    NullPointer("2999", "값이 비어있습니다.");
+
+
 
     private final String code;
     private final String value;

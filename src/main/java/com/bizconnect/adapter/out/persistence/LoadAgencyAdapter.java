@@ -10,6 +10,7 @@ import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -22,6 +23,7 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     }
 
     @Override
+    @Transactional
     public void checkAgency(Agency agency) {
         AgencyJpaEntity entity = agencyConvertToEntity(agency);
 
@@ -35,11 +37,14 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     }
 
     @Override
+    @Transactional
     public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
-        convertToEntity(agency, client, settleManager);
+        agencyConvertToEntity(agency);
+        agencyRepository.save(convertToEntity(agency, client, settleManager));
     }
 
     @Override
+    @Transactional
     public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client, SettleManager settleManager) {
         AgencyJpaEntity entity = convertToEntity(agency, client, settleManager);
         Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());

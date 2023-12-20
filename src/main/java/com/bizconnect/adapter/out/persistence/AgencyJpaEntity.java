@@ -6,6 +6,7 @@ import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
+import javax.validation.constraints.NotBlank;
 
 @Entity
 @Table(name = "AGENCY_TEST")
@@ -15,26 +16,37 @@ public class AgencyJpaEntity {
 	@Id
 	@Column(name = "MALL_ID")
 	private String mallId;
-	@Column(name = "AGENCY_ID")
+
+	@NotBlank
+	@Column(name = "AGENCY_ID", nullable = false)
 	private String agencyId;
 
-	@Column(name = "CLIENT_ID")
+	@NotBlank
+	@Column(name = "CLIENT_ID", nullable = false)
 	private String clientId;
-	@Column(name = "COMPANY_NAME")
+	@NotBlank
+	@Column(name = "COMPANY_NAME", nullable = false)
 	private String companyName;
-	@Column(name = "BUSINESS_TYPE")
+	@NotBlank
+	@Column(name = "BUSINESS_TYPE", nullable = false)
 	private String businessType;
-	@Column(name = "BIZ_NUMBER")
+	@NotBlank
+	@Column(name = "BIZ_NUMBER", nullable = false)
 	private String bizNumber;
-	@Column(name = "CEO_NAME")
+	@NotBlank
+	@Column(name = "CEO_NAME", nullable = false)
 	private String ceoName;
-	@Column(name = "PHONE_NUMBER")
+	@NotBlank
+	@Column(name = "PHONE_NUMBER", nullable = false)
 	private String phoneNumber;
-	@Column(name = "ADDRESS")
+	@NotBlank
+	@Column(name = "ADDRESS", nullable = false)
 	private String address;
-	@Column(name = "COMPANY_SITE")
+	@NotBlank
+	@Column(name = "COMPANY_SITE", nullable = false)
 	private String companySite;
-	@Column(name = "EMAIL")
+	@NotBlank
+	@Column(name = "EMAIL", nullable = false)
 	private String email;
 
 	@Column(name = "SETTLE_MANAGER_NAME")
@@ -43,6 +55,4 @@ public class AgencyJpaEntity {
 	private String settleManagerPhoneNumber;
 	@Column(name = "SETTLE_MANAGER_EMAIL")
 	private String settleManagerEmail;
-
-
 }

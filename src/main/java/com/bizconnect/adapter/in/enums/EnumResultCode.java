@@ -3,7 +3,8 @@ package com.bizconnect.adapter.in.enums;
 
 public enum EnumResultCode {
     SUCCESS("2000", "성공"),
-    IllegalArgument("2900", "데이터형식이 올바르지 않습니다.");
+    IllegalArgument("2900", "데이터형식이 올바르지 않습니다."),
+    NullPointArgument("2999", "제휴사ID 또는 상점ID가 비어있습니다.");
 
     private final String code;
     private final String value;
