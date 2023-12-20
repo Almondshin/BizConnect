@@ -6,28 +6,31 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.port.in.AgencyUseCase;
-import com.bizconnect.application.port.out.AgencyDataPort;
+import com.bizconnect.application.port.out.LoadAgencyDataPort;
+import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Service
 public class AgencyService implements AgencyUseCase {
-    private final AgencyDataPort agencyDataPort;
+    private final LoadAgencyDataPort loadAgencyDataPort;
+    private final SaveAgencyDataPort saveAgencyDataPort;
 
-    public AgencyService(AgencyDataPort agencyDataPort) {
-        this.agencyDataPort = agencyDataPort;
+    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort) {
+        this.loadAgencyDataPort = loadAgencyDataPort;
+        this.saveAgencyDataPort = saveAgencyDataPort;
     }
 
     @Override
     public void registerAgency(ClientDataModel clientDataModel) {
-        agencyDataPort.checkAgency(convertToAgency(clientDataModel));
-        agencyDataPort.registerAgency(convertToAgency(clientDataModel), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
+        loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
+        saveAgencyDataPort.registerAgency(convertToAgency(clientDataModel), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
     }
 
     @Override
     public void checkAgencyId(ClientDataModel clientDataModel) {
-        agencyDataPort.checkAgency(convertToAgency(clientDataModel));
+        loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
     }
 
     @Override
@@ -35,7 +38,7 @@ public class AgencyService implements AgencyUseCase {
         Agency agency = convertToAgency(clientDataModel);
         Client client = convertToClient(clientDataModel);
         SettleManager settleManager = convertToSettleManager(clientDataModel);
-        return agencyDataPort.getAgencyInfo(agency,client,settleManager);
+        return loadAgencyDataPort.getAgencyInfo(agency,client,settleManager);
     }
 
     @Override
@@ -49,6 +52,7 @@ public class AgencyService implements AgencyUseCase {
             enumData.put("name", enumProductType.getName());
             enumData.put("price", String.valueOf(enumProductType.getPrice()));
             enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
+            enumData.put("month", String.valueOf(enumProductType.getMonth()));
             enumValues.add(enumData);
         }
         return enumValues;

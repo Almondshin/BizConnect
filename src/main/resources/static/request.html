@@ -8,18 +8,17 @@
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var today = new Date();
-
             var year = today.getFullYear(); // 년도
             var month = ('0' + (today.getMonth() + 1)).slice(-2); // 월
-            var date = ('0' + today.getDate()).slice(-2); // 날짜
+            // var date = ('0' + today.getDate()).slice(-2); // 날짜
+            var date = ('0' + today.getDate()).slice(-2) - 5; // 날짜
 
             var formattedDate = year + '-' + month + '-' + date;
             document.querySelector("#startDate").value = formattedDate;
 
             const select = document.getElementById('productTypeSelect');
             select.addEventListener('change', function () {
-                updateEndDate();
-                // updateOffer();
+                updateDataByProduct();
             });
         })
 
@@ -28,7 +27,6 @@
         const agencyId = searchParams.get('agencyId');
         const mallId = searchParams.get('mallId');
 
-        var basicOffer = [];
 
         $.ajax({
             type       : 'POST',
@@ -51,46 +49,175 @@
             }
         })
 
+        var basicOfferList = [];
+        var basicPriceList = [];
+        var productTypeList = [];
+
         function populateSelect(enumValues) {
             const select = document.getElementById('productTypeSelect');
             enumValues.forEach(enumValue => {
                 const option = document.createElement('option');
-
-                basicOffer.push(enumValue.basicOffer);
-                option.value = enumValue.type;
+                productTypeList.push(enumValue.type,enumValue.name,enumValue.price, enumValue.basicOffer);
+                basicOfferList.push(enumValue.basicOffer);
+                basicPriceList.push(enumValue.price);
+                //
                 option.textContent = `${enumValue.name} - ${parseInt(enumValue.price).toLocaleString()}원`;
+                option.value = enumValue.type;
+                option.name = option.textContent;
+
                 select.appendChild(option);
             });
         }
 
 
-        function updateEndDate() {
+        function updateDataByProduct() {
             const select = document.getElementById('productTypeSelect');
             const selectedValue = select.value;
+            console.log("selectedValue : " + selectedValue)
+            let offer;
+            let price;
 
-            // console.log("selected value : " + select.value);
-            console.log("selected value : " + basicOffer[0]);
 
             const startDate = new Date(document.getElementById('startDate').value);
             let endDate = new Date(startDate);
+            const lastDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0).getDate();
 
-            const durations = endDate.getDate() - startDate.getDate();
+            const durations = lastDate - startDate.getDate();
 
-            if (durations <= 15){
-                if (selectedValue.includes('lite_12m_2400')) {
-                    console.log("selected value : " + basicOffer)
-                } else if (selectedValue.includes('6m')) {
-                    endDate.setMonth(endDate.getMonth() + 6 + 1);
-                } else if (selectedValue.includes('1m')){
-                    endDate.setMonth(endDate.getMonth() + 1 +1);
+
+            if (durations <= 15) {
+                switch (selectedValue) {
+                    case "lite_12m_2400" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[8]) * 12) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 11) * 1.1;
+                        break;
+                    case "basic_12m_12000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[9]) * 12) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 11) * 1.1;
+                        break;
+                    case "standard_12m_24000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[10]) * 12) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 11) * 1.1;
+                        break;
+                    case "premium_12m_36000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth() + 1);
+                        offer = (parseInt(basicOfferList[11]) * 12) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 11) * 1.1;
+                        break;
+                    case "lite_6m_1200" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[8]) * 6) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 5) * 1.1;
+                        break;
+                    case "basic_6m_6000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[9]) * 6) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 5) * 1.1;
+                        break;
+                    case "standard_6m_12000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[10]) * 6) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 5) * 1.1;
+                        break;
+                    case "premium_6m_18000" :
+                        endDate.setMonth(endDate.getMonth() + 6 + 1);
+                        offer = (parseInt(basicOfferList[11]) * 6) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 5) * 1.1;
+                        break;
+                    case "lite_1m_200" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[8]) + parseInt(basicOfferList[8]) * durations / (lastDate);
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8]) * 1.1;
+                        break;
+                    case "basic_1m_1000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[9]) + parseInt(basicOfferList[9]) * durations / (lastDate);
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9]) * 1.1;
+                        break;
+                    case "standard_1m_2000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[10]) + parseInt(basicOfferList[10]) * durations / (lastDate);
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10]) * 1.1;
+                        break;
+                    case "premium_1m_3000" :
+                        endDate.setMonth(endDate.getMonth() + 1 + 1);
+                        offer = parseInt(basicOfferList[11]) + parseInt(basicOfferList[11]) * durations / (lastDate);
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11]) * 1.1;
+                        break;
                 }
             } else {
-                if (selectedValue.includes('12m')) {
-                    endDate.setFullYear(endDate.getFullYear() + 1);
-                } else if (selectedValue.includes('6m')) {
-                    endDate.setMonth(endDate.getMonth() + 6);
-                } else if (selectedValue.includes('1m')){
-                    endDate.setMonth(endDate.getMonth() + 1);
+                switch (selectedValue) {
+                    case "lite_12m_2400" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[8]) * 11) + (parseInt(basicOfferList[8]) * durations/(lastDate  ));
+                        price = ((basicPriceList[8] * durations/(lastDate  ))+ basicPriceList[8] * 11) * 1.1;
+                        break;
+                    case "basic_12m_12000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[9]) * 11) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate))+ basicPriceList[9]* 11) * 1.1;
+                        break;
+                    case "standard_12m_24000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[10]) * 11) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 11) * 1.1;
+                        break;
+                    case "premium_12m_36000" :
+                        endDate.setFullYear(endDate.getFullYear() + 1);
+                        endDate.setMonth(endDate.getMonth());
+                        offer = (parseInt(basicOfferList[11]) * 11) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 11) * 1.1;
+                        break;
+                    case "lite_6m_1200" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[8]) * 5) + (parseInt(basicOfferList[8]) * durations / (lastDate));
+                        price = ((basicPriceList[8] * durations / (lastDate)) + basicPriceList[8] * 5) * 1.1;
+                        break;
+                    case "basic_6m_6000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[9]) * 5) + (parseInt(basicOfferList[9]) * durations / (lastDate));
+                        price = ((basicPriceList[9] * durations / (lastDate)) + basicPriceList[9] * 5) * 1.1;
+                        break;
+                    case "standard_6m_12000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[10]) * 5) + (parseInt(basicOfferList[10]) * durations / (lastDate));
+                        price = ((basicPriceList[10] * durations / (lastDate)) + basicPriceList[10] * 5) * 1.1;
+                        break;
+                    case "premium_6m_18000" :
+                        endDate.setMonth(endDate.getMonth() + 5);
+                        offer = (parseInt(basicOfferList[11]) * 5) + (parseInt(basicOfferList[11]) * durations / (lastDate));
+                        price = ((basicPriceList[11] * durations / (lastDate)) + basicPriceList[11] * 5) * 1.1;
+                        break;
+                    case "lite_1m_200" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[8]) * durations / (lastDate);
+                        price = ((basicPriceList[8] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "basic_1m_1000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[9]) * durations / (lastDate);
+                        price = ((basicPriceList[9] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "standard_1m_2000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[10]) * durations / (lastDate);
+                        price = ((basicPriceList[10] * durations / (lastDate))) * 1.1;
+                        break;
+                    case "premium_1m_3000" :
+                        endDate.setMonth(endDate.getMonth());
+                        offer = parseInt(basicOfferList[11]) * durations / (lastDate);
+                        price = ((basicPriceList[11] * durations / (lastDate))) * 1.1;
+                        break;
                 }
             }
 
@@ -104,45 +231,9 @@
 
             var formattedEndDate = year + '-' + month + '-' + date;
             document.getElementById('endDate').value = formattedEndDate;
+            document.getElementById('offer').value = Math.floor(offer);
+            document.getElementById('price').value = Math.floor(price);
         }
-
-        // function updateOffer(){
-        //     const select = document.getElementById('productTypeSelect');
-        //     const selectedValue = select.value;
-        //     const startDate = new Date(document.getElementById('startDate').value);
-        //     let offer = "";
-        //
-        //     const durations = endDate.getDate() - startDate.getDate();
-        //
-        //     if (durations <= 15){
-        //
-        //         switch (selectedValue){
-        //             case 'lite_12m_2400' : {
-        //                 offer = selectedValue
-        //             }
-        //         }
-        //
-        //     } else {
-        //         if (selectedValue.includes('12m')) {
-        //             endDate.setFullYear(endDate.getFullYear() + 1);
-        //         } else if (selectedValue.includes('6m')) {
-        //             endDate.setMonth(endDate.getMonth() + 6);
-        //         } else if (selectedValue.includes('1m')){
-        //             endDate.setMonth(endDate.getMonth() + 1);
-        //         }
-        //     }
-        //
-        //
-        //     // Set date to the 0th day of the next month to get the last day of the current month
-        //     endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
-        //
-        //     var year = endDate.getFullYear();
-        //     var month = ('0' + (endDate.getMonth() + 1)).slice(-2);
-        //     var date = ('0' + endDate.getDate()).slice(-2);
-        //
-        //     var formattedEndDate = year + '-' + month + '-' + date;
-        //     document.getElementById('endDate').value = formattedEndDate;
-        // }
 
 
         function result(data) {
@@ -249,15 +340,18 @@
                 mchtId = "nx_mid_il"
             }
 
-            var trdAmt = "300"
+            const select = document.getElementById('productTypeSelect');
+            var selectedIndex = select.selectedIndex;
+            var selectedOption = select.options[selectedIndex].text;
+
+
+            var trdAmt = document.getElementById("price").value;
             var plainMchtCustNm = "홍길동"
             var plainEmail = "HongGilDong@example.com"
             var plainMchtCustId = "HongGilDong"
             var mchtName = "세틀뱅크"
             var mchtEName = "Settlebank"
-            var pmtPrdtNm = $("input[name='rate_sel']:checked").val();
-            console.log(document.querySelector('input[name="rate_sel"]:checked').value);
-            console.log($("input[name='rate_sel']:checked").val());
+            var pmtPrdtNm = selectedOption;
 
 
             var data = {
@@ -335,29 +429,28 @@
 </div>
 <table class="info_tbl" summary="충전제 요금 안내표입니다.">
     <tr>
+        <th>상품 선택</th>
         <td>
             <select id="productTypeSelect">
-                <option value="-">기본</option>
+                <option value="-" name="">기본</option>
             </select>
         </td>
     </tr>
     <tr>
-        <td>
-            <input type="text" id="startDate" name="startDate" value="">
-        </td>
+        <th>시작일</th>
+        <td><input readonly="readonly" type="text" id="startDate" name="startDate" value=""></td>
     </tr>
     <tr>
-        <td>
-            <input readonly="readonly" type="text" id="endDate" name="endDate" value="">
-        </td>
+        <th>종료일</th>
+        <td><input readonly="readonly" type="text" id="endDate" name="endDate" value=""></td>
     </tr>
     <tr>
-        <td>
-            <input readonly="readonly" type="text" id="offer" name="offer" value="">
-        </td>
+        <th>제공 건수</th>
+        <td><input readonly="readonly" type="text" id="offer" name="offer" value=""></td>
     </tr>
     <tr>
-        <th width="15%">결제수단 선택</th>
+        <th>결제 금액</th>
+        <td><input readonly="readonly" type="text" id="price" name="price" value=""></td>
     </tr>
     <tr>
         <td>

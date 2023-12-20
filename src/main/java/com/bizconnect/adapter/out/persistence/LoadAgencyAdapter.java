@@ -7,16 +7,17 @@ import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberExceptio
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
-import com.bizconnect.application.port.out.AgencyDataPort;
+import com.bizconnect.application.port.out.LoadAgencyDataPort;
+import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class AgencyAdapter implements AgencyDataPort {
+public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     private final AgencyRepository agencyRepository;
 
-    public AgencyAdapter(AgencyRepository agencyRepository) {
+    public LoadAgencyAdapter(AgencyRepository agencyRepository) {
         this.agencyRepository = agencyRepository;
     }
 
