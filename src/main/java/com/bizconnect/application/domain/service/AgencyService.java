@@ -1,14 +1,13 @@
 package com.bizconnect.application.domain.service;
 
-import com.bizconnect.adapter.in.enums.EnumResultCode;
-import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
-import com.bizconnect.adapter.in.exceptions.NullAgencyIdMallIdException;
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberException;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
+import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
@@ -28,15 +27,16 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void registerAgency(ClientDataModel clientDataModel) {
-        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getMallId() == null || clientDataModel.getMallId().isEmpty()){
-            throw new NullAgencyIdMallIdException(EnumResultCode.NullPointArgument, null);
+        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()){
+            throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
-        saveAgencyDataPort.registerAgency(convertToAgency(clientDataModel), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
+        ClientDataModel checkAgencyId = new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
+        saveAgencyDataPort.registerAgency(convertToAgency(checkAgencyId), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
     }
 
     @Override
-    public void checkAgencyId(ClientDataModel clientDataModel) {
-        loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
+    public boolean checkAgencyId(ClientDataModel clientDataModel) {
+        return loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
     }
 
     @Override
@@ -65,12 +65,11 @@ public class AgencyService implements AgencyUseCase {
     }
 
     private Agency convertToAgency(ClientDataModel clientDataModel) {
-        return new Agency(clientDataModel.getAgencyId(), clientDataModel.getMallId());
+        return new Agency(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
     }
 
     private Client convertToClient(ClientDataModel clientDataModel) {
         return new Client(
-                clientDataModel.getClientId(),
                 clientDataModel.getCompanyName(),
                 clientDataModel.getBusinessType(),
                 clientDataModel.getBizNumber(),

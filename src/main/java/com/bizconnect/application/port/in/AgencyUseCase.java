@@ -8,7 +8,7 @@ import java.util.Optional;
 
 public interface AgencyUseCase {
     void registerAgency(ClientDataModel clientDataModel); // 제휴사 등록
-    void checkAgencyId(ClientDataModel clientDataModel);  // Agency 객체를 전달받는 방식으로 변경
+    boolean checkAgencyId(ClientDataModel clientDataModel);  // Agency 객체를 전달받는 방식으로 변경
     Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel);  // Agency 정보
     List<Map<String, String>> getEnumValues();
 }

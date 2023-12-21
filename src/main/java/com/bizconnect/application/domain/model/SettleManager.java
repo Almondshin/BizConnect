@@ -6,9 +6,9 @@ import lombok.Setter;
 @Getter
 public class SettleManager {
     /* 정산 담당자*/
-    private String settleManagerName;
-    private String settleManagerPhoneNumber;
-    private String settleManagerEmail;
+    private final String settleManagerName;
+    private final String settleManagerPhoneNumber;
+    private final String settleManagerEmail;
 
     public SettleManager(String settleManagerName, String settleManagerPhoneNumber, String settleManagerEmail) {
         this.settleManagerName = settleManagerName;

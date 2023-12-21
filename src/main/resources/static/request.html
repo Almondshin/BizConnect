@@ -27,21 +27,21 @@
 
         const searchParams = new URLSearchParams(window.location.search);
         const agencyId = searchParams.get('agencyId');
-        const mallId = searchParams.get('mallId');
+        const siteId = searchParams.get('siteId');
 
 
         $.ajax({
             type       : 'POST',
-            url        : "/agency/payment/info",
+            url        : "/agency/payment/getPaymentInfo",
             contentType: "application/json",
             dataType   : "json",
-            data       : JSON.stringify({agencyId: agencyId, mallId: mallId}),
+            data       : JSON.stringify({agencyId: agencyId, siteId: siteId}),
             success    : function (response) {
                 $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 console.log(JSON.stringify(response));
-                if (response.enumProductTypes) {
-                    populateSelect(response.enumProductTypes);
-                    response.enumProductTypes.forEach(e => {
+                if (response.listSel) {
+                    populateSelect(response.listSel);
+                    response.listSel.forEach(e => {
                         productTypeList.push(e.type, e.name, e.price, e.basicOffer, e.month);
                     })
 

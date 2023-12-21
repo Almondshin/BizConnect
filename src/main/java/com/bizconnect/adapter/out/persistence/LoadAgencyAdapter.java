@@ -1,12 +1,14 @@
 package com.bizconnect.adapter.out.persistence;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.out.persistence.enums.EnumResultCode;
+import com.bizconnect.adapter.out.persistence.entity.AgencyJpaEntity;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
-import com.bizconnect.adapter.out.persistence.exceptions.DuplicateMemberException;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
+import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -24,37 +26,37 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
 
     @Override
     @Transactional
-    public void checkAgency(Agency agency) {
+    public boolean checkAgency(Agency agency) {
         AgencyJpaEntity entity = agencyConvertToEntity(agency);
-
-        Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
-        Optional<AgencyJpaEntity> foundMallId = agencyRepository.findByMallId(entity.getMallId());
-        if (foundMallId.isPresent()) {
-            throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getMallId());
-        }
-        // Entity를 도메인 객체로 변환
-        foundAgency.map(this::convertToAgency);
+        agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
+        return agencyRepository.findBySiteId(entity.getSiteId()).isEmpty();
     }
 
     @Override
     @Transactional
     public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
-        agencyConvertToEntity(agency);
+        AgencyJpaEntity entity = agencyConvertToEntity(agency);
+        Optional<AgencyJpaEntity> foundSiteId = agencyRepository.findBySiteId(entity.getSiteId());
+        // SiteId가 이미 존재하는 경우 DuplicateMemberException을 발생시킵니다.
+        if (foundSiteId.isPresent()) {
+            throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
+        }
         agencyRepository.save(convertToEntity(agency, client, settleManager));
     }
+
 
     @Override
     @Transactional
     public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client, SettleManager settleManager) {
         AgencyJpaEntity entity = convertToEntity(agency, client, settleManager);
-        Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndMallId(entity.getAgencyId(), entity.getMallId());
+        Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
         return foundAgency.map(this::convertToClientDomain);
     }
 
     private AgencyJpaEntity agencyConvertToEntity(Agency agency) {
         AgencyJpaEntity entity = new AgencyJpaEntity();
         entity.setAgencyId(agency.getAgencyId());
-        entity.setMallId(agency.getMallId());
+        entity.setSiteId(agency.getSiteId());
         return entity;
     }
 
@@ -62,9 +64,8 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
         AgencyJpaEntity agencyJpaEntity = new AgencyJpaEntity();
 
         agencyJpaEntity.setAgencyId(agency.getAgencyId());
-        agencyJpaEntity.setMallId(agency.getMallId());
+        agencyJpaEntity.setSiteId(agency.getSiteId());
 
-        agencyJpaEntity.setClientId(client.getClientId());
         agencyJpaEntity.setCompanyName(client.getCompanyName());
         agencyJpaEntity.setBusinessType(client.getBusinessType());
         agencyJpaEntity.setBizNumber(client.getBizNumber());
@@ -83,7 +84,7 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
 
     private Agency convertToAgency(AgencyJpaEntity entity) {
         // AgencyJpaEntity를 Agency로 변환하는 로직
-        return new Agency(entity.getAgencyId(), entity.getMallId());
+        return new Agency(entity.getAgencyId(), entity.getSiteId());
     }
 
     private ClientDataModel convertToClientDomain(AgencyJpaEntity entity) {
@@ -91,9 +92,8 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
         ClientDataModel clientDataModel = new ClientDataModel();
 
         clientDataModel.setAgencyId(entity.getAgencyId());
-        clientDataModel.setMallId(entity.getMallId());
+        clientDataModel.setSiteId(entity.getSiteId());
 
-        clientDataModel.setClientId(entity.getClientId());
         clientDataModel.setCompanyName(entity.getCompanyName());
         clientDataModel.setBusinessType(entity.getBusinessType());
         clientDataModel.setBizNumber(entity.getBizNumber());

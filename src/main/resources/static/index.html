@@ -9,13 +9,13 @@
         /*이용기관 등록 관련 JS*/
         function agencyStatus() {
             const agencyId = document.getElementById('agencyId').value;
-            const mallId = document.getElementById('mallId').value;
+            const siteId = document.getElementById('siteId').value;
             $.ajax({
                 async      : false,
                 url        : '/agency/status',
                 type       : 'POST',
                 contentType: 'application/json',
-                data       : JSON.stringify({agencyId: agencyId, mallId: mallId}),
+                data       : JSON.stringify({agencyId: agencyId, siteId: siteId}),
                 success    : function (response) {
                     $("#agency_register").find("#agency_register_result").val(JSON.stringify(response));
                     console.log(JSON.stringify(response));
@@ -29,8 +29,7 @@
 
         function agencyRegister() {
             const agencyId = document.getElementById('agencyId').value;
-            const mallId = document.getElementById('mallId').value;
-            const clientId = document.getElementById('mallId').value;
+            const siteId = document.getElementById('siteId').value;
             const companyName = document.getElementById('companyName').value;
             const businessType = document.getElementById('businessType').value;
             const bizNumber = document.getElementById('bizNumber').value;
@@ -39,19 +38,22 @@
             const address = document.getElementById('address').value;
             const companySite = document.getElementById('companySite').value;
             const email = document.getElementById('email').value;
+            const rateSel = document.getElementById('rateSel').value;
+            const startDate = document.getElementById('startDate').value;
+
+
             const settleManagerName = document.getElementById('settleManagerName').value;
             const settleManagerPhoneNumber = document.getElementById('settleManagerPhoneNumber').value;
             const settleManagerEmail = document.getElementById('settleManagerEmail').value;
 
             $.ajax({
                 async      : false,
-                url        : '/agency/register',
+                url        : '/agency/regSiteInfo',
                 type       : 'POST',
                 contentType: 'application/json',
                 data       : JSON.stringify({
                     agencyId                : agencyId,
-                    mallId                  : mallId,
-                    clientId                : clientId,
+                    siteId                  : siteId,
                     companyName             : companyName,
                     businessType            : businessType,
                     bizNumber               : bizNumber,
@@ -60,6 +62,8 @@
                     address                 : address,
                     companySite             : companySite,
                     email                   : email,
+                    rateSel                 : rateSel,
+                    startDate               : startDate,
                     settleManagerName       : settleManagerName,
                     settleManagerPhoneNumber: settleManagerPhoneNumber,
                     settleManagerEmail      : settleManagerEmail
@@ -79,9 +83,9 @@
         /*결제 페이지 이동*/
         function goProduct() {
             const agencyId = document.getElementById('agencyId').value;
-            const mallId = document.getElementById('mallId').value;
+            const siteId = document.getElementById('siteId').value;
 
-            window.location.href = "http://127.0.0.1:9000/request.html?agencyId="+agencyId+"&mallId="+mallId;
+            window.location.href = "http://127.0.0.1:9000/request.html?agencyId="+agencyId+"&siteId="+siteId;
         }
 
     </script>
@@ -91,14 +95,13 @@
 
 <div style="display: flex; height: 400px" id="agency_register">
     <div style="display: inline-flex; flex-direction: column; height: 100%;">
-        <button onclick="agencyStatus();" style="flex:auto">제휴사 이용기관 등록조회 (STEP 확인용)</button>
+<!--        <button onclick="agencyStatus();" style="flex:auto">제휴사 이용기관 등록조회 (STEP 확인용)</button>-->
         <button onclick="agencyRegister();" style="flex:auto">제휴사 이용기관 등록</button>
         <table>
             <tr>
                 <th>제휴사</th>
                 <td>
                     <select name="agencyId" id="agencyId" style="width: 100%;">
-                        <option value=''>전 체</option>
                         <option value='SQUARES'>스퀘어스</option>
                         <option value='CAFE24'>카페24</option>
                     </select>
@@ -106,7 +109,7 @@
             </tr>
             <tr>
                 <th>상점Id</th>
-                <td><input name="mallId" id="mallId"></td>
+                <td><input name="siteId" id="siteId"></td>
             </tr>
             <tr>
                 <th>회사명</th>
@@ -150,6 +153,18 @@
                 <th>이용기관 이메일</th>
                 <td><input name="email" id="email"></td>
             </tr>
+            <tr>
+                <th>상품 제휴사 선택시 상품코드</th>
+                <td><input name="rateSel" id="rateSel"></td>
+            </tr>
+            <tr>
+                <th>서비스시작날짜</th>
+                <td><input name="startDate" id="startDate"></td>
+            </tr>
+
+            <tr><td></td></tr>
+            <tr><td></td></tr>
+
             <tr>
                 <th>정산담당자 이름</th>
                 <td><input name="settleManagerName" id="settleManagerName"></td>

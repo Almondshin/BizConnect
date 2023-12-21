@@ -1,0 +1,65 @@
+package com.bizconnect.application.exceptions.exceptions;
+
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.validation.FieldError;
+import org.springframework.validation.ObjectError;
+import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.annotation.ControllerAdvice;
+import org.springframework.web.bind.annotation.ExceptionHandler;
+
+@ControllerAdvice
+public class GlobalExceptionHandler {
+    @ExceptionHandler(DuplicateMemberException.class)
+    public ResponseEntity<ResponseMessage> DuplicateMemberException(DuplicateMemberException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.DuplicateMember.getCode(), ex.getMessage(), EnumSiteStatus.UNREGISTERED.getCode(), ex.getSiteId());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(IllegalAgencyIdSiteIdException.class)
+    public ResponseEntity<ResponseMessage> IllegalAgencyIdSiteIdException(IllegalAgencyIdSiteIdException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.IllegalArgument.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode(), ex.getSiteId());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
+    @ExceptionHandler(NullAgencyIdSiteIdException.class)
+    public ResponseEntity<ResponseMessage> NullAgencyIdSiteIdException(NullAgencyIdSiteIdException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NullPointArgument.getCode(), ex.getMessage(), EnumSiteStatus.ACTIVE.getCode(), ex.getSiteId());
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ResponseEntity<ResponseMessage> handleValidationExceptions(MethodArgumentNotValidException ex) {
+        StringBuilder errorsStringBuilder = new StringBuilder();
+        String firstFieldName = null;
+
+        for (ObjectError error : ex.getBindingResult().getAllErrors()) {
+            if (error instanceof FieldError) {
+                FieldError fieldError = (FieldError) error;
+
+                if (firstFieldName == null) {
+                    firstFieldName = fieldError.getField(); // 첫 번째 필드 이름 저장
+                }
+
+                String fieldName = fieldError.getField();
+                String errorMessage = fieldError.getDefaultMessage();
+                errorsStringBuilder.append(fieldName).append(": ").append(errorMessage).append("; ");
+            }
+        }
+
+        String allErrorMessages = errorsStringBuilder.toString();
+
+        // PersistenceResponseMessage 객체 생성
+        ResponseMessage responseMessage = new ResponseMessage(
+                EnumResultCode.NullPointer.getCode(),
+                allErrorMessages, // 모든 필드의 오류 메시지 사용
+                EnumSiteStatus.UNREGISTERED.getCode(),
+                firstFieldName    // 첫 번째 필드 이름 사용
+        );
+
+        // 최종 응답 반환
+        return new ResponseEntity<>(responseMessage, HttpStatus.BAD_REQUEST);
+    }
+
+
+}

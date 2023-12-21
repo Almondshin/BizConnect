@@ -7,7 +7,6 @@ import lombok.Setter;
 @Setter
 public class Client {
     /* 이용기관 정보 */
-    private String clientId;
     private String companyName;
     private String businessType;
     private String bizNumber;
@@ -17,8 +16,7 @@ public class Client {
     private String companySite;
     private String email;
 
-    public Client(String clientId, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email) {
-        this.clientId = clientId;
+    public Client(String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email) {
         this.companyName = companyName;
         this.businessType = businessType;
         this.bizNumber = bizNumber;

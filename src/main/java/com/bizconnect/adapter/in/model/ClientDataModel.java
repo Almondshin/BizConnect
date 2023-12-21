@@ -1,7 +1,7 @@
 package com.bizconnect.adapter.in.model;
 
-import com.bizconnect.adapter.in.enums.EnumResultCode;
-import com.bizconnect.adapter.in.exceptions.IllegalAgencyIdMallIdException;
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
@@ -10,11 +10,9 @@ import lombok.ToString;
 @Setter
 @ToString
 public class ClientDataModel {
-    private String mallId;
     private String agencyId;
+    private String siteId;
 
-    private String clientId;
-    private String companyName;
     private String businessType;
     private String bizNumber;
     private String ceoName;
@@ -22,29 +20,33 @@ public class ClientDataModel {
     private String address;
     private String companySite;
     private String email;
+    private String rateSel;
+    private String startDate;
+
+    private String companyName;
 
     private String settleManagerName;
     private String settleManagerPhoneNumber;
     private String settleManagerEmail;
 
-    private static final String AGENCY_MALL_ID_PATTERN = "^[a-zA-Z0-9]+$";
+    private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9]+$";
 
     public ClientDataModel() {
     }
 
-    public ClientDataModel(String agencyId, String mallId) {
-        if (!isValidAgencyId(agencyId) || !isValidMallId(mallId)) {
-            throw new IllegalAgencyIdMallIdException(EnumResultCode.IllegalArgument, mallId);
+    public ClientDataModel(String agencyId, String siteId) {
+        if (!isValidAgencyId(agencyId) || !isValidSiteId(siteId)) {
+            throw new IllegalAgencyIdSiteIdException(EnumResultCode.IllegalArgument, siteId);
         }
-        this.mallId = mallId;
+        this.siteId = siteId;
         this.agencyId = agencyId;
     }
 
     private boolean isValidAgencyId(String agencyId) {
-        return agencyId != null && !agencyId.isEmpty() && agencyId.matches(AGENCY_MALL_ID_PATTERN);
+        return agencyId.matches(AGENCY_SITE_ID_PATTERN);
     }
 
-    private boolean isValidMallId(String mallId) {
-        return mallId != null && !mallId.isEmpty() && mallId.matches(AGENCY_MALL_ID_PATTERN);
+    private boolean isValidSiteId(String siteId) {
+        return  siteId.matches(AGENCY_SITE_ID_PATTERN);
     }
 }
