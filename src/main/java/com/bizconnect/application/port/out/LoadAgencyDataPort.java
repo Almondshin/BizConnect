@@ -8,7 +8,6 @@ import com.bizconnect.application.domain.model.SettleManager;
 import java.util.Optional;
 
 public interface LoadAgencyDataPort {
-    boolean checkAgency(Agency agency);
-    Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client, SettleManager settleManager);
+    Optional<ClientDataModel> getAgencyInfo(Agency agency);
 }
 

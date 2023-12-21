@@ -1,15 +1,18 @@
 package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
+import com.bizconnect.adapter.in.model.PaymentDataModel;
+import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
+import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
+import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
@@ -19,10 +22,12 @@ import java.util.*;
 public class AgencyService implements AgencyUseCase {
     private final LoadAgencyDataPort loadAgencyDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
+    private final LoadPaymentDataPort loadPaymentDataPort;
 
-    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort) {
+    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort, LoadPaymentDataPort loadPaymentDataPort) {
         this.loadAgencyDataPort = loadAgencyDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
+        this.loadPaymentDataPort = loadPaymentDataPort;
     }
 
     @Override
@@ -35,22 +40,11 @@ public class AgencyService implements AgencyUseCase {
     }
 
     @Override
-    public boolean checkAgencyId(ClientDataModel clientDataModel) {
+    public Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel) {
         if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()){
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
-        if(!loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel))) {
-            throw new NullAgencyIdSiteIdException(EnumResultCode.UnregisteredAgency, clientDataModel.getSiteId());
-        }
-        return loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
-    }
-
-    @Override
-    public Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel) {
-        Agency agency = convertToAgency(clientDataModel);
-        Client client = convertToClient(clientDataModel);
-        SettleManager settleManager = convertToSettleManager(clientDataModel);
-        return loadAgencyDataPort.getAgencyInfo(agency,client,settleManager);
+        return loadAgencyDataPort.getAgencyInfo(convertToAgency(clientDataModel));
     }
 
     @Override
@@ -70,12 +64,18 @@ public class AgencyService implements AgencyUseCase {
         return enumValues;
     }
 
+    @Override
+    public Optional<PaymentHistoryDataModel> getPaymentInfo(ClientDataModel clientDataModel) {
+        return loadPaymentDataPort.getPaymentHistory(converToPaymentHistory(clientDataModel));
+    }
+
     private Agency convertToAgency(ClientDataModel clientDataModel) {
         return new Agency(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
     }
 
     private Client convertToClient(ClientDataModel clientDataModel) {
         return new Client(
+                clientDataModel.getSiteName(),
                 clientDataModel.getCompanyName(),
                 clientDataModel.getBusinessType(),
                 clientDataModel.getBizNumber(),
@@ -83,7 +83,9 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getPhoneNumber(),
                 clientDataModel.getAddress(),
                 clientDataModel.getCompanySite(),
-                clientDataModel.getEmail()
+                clientDataModel.getEmail(),
+                clientDataModel.getRateSel(),
+                clientDataModel.getStartDate()
         );
     }
 
@@ -92,6 +94,18 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getSettleManagerName(),
                 clientDataModel.getSettleManagerPhoneNumber(),
                 clientDataModel.getSettleManagerEmail()
+        );
+    }
+
+    private PaymentHistory converToPaymentHistory(ClientDataModel clientDataModel){
+        return new PaymentHistory(
+                clientDataModel.getAgencyId(),
+                clientDataModel.getSiteId(),
+                clientDataModel.getStartDate(),
+                clientDataModel.getEndDate(),
+                clientDataModel.getSalesPrice(),
+                clientDataModel.getRateSel(),
+                clientDataModel.getMethod()
         );
     }
 }

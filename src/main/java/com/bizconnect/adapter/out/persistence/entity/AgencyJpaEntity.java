@@ -7,6 +7,8 @@ import javax.persistence.Entity;
 import javax.persistence.Id;
 import javax.persistence.Table;
 import javax.validation.constraints.NotBlank;
+import java.time.LocalDateTime;
+import java.util.Date;
 
 @Entity
 @Table(name = "AGENCY_TEST")
@@ -20,6 +22,9 @@ public class AgencyJpaEntity {
 	@NotBlank
 	@Column(name = "AGENCY_ID", nullable = false)
 	private String agencyId;
+
+	@Column(name = "SITE_NAME")
+	private String siteName;
 	@Column(name = "COMPANY_NAME")
 	private String companyName;
 	@Column(name = "BUSINESS_TYPE")
@@ -37,6 +42,10 @@ public class AgencyJpaEntity {
 	private String companySite;
 	@Column(name = "EMAIL")
 	private String email;
+	@Column(name = "RATE_SEL")
+	private String rateSel;
+	@Column(name = "START_DATE")
+	private Date startDate;
 
 	@Column(name = "SETTLE_MANAGER_NAME")
 	private String settleManagerName;

@@ -8,7 +8,7 @@ import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
+import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -17,18 +17,22 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.Optional;
 
 @Service
-public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
+public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     private final AgencyRepository agencyRepository;
 
-    public LoadAgencyAdapter(AgencyRepository agencyRepository) {
+    public AgencyAdapter(AgencyRepository agencyRepository) {
         this.agencyRepository = agencyRepository;
     }
 
     @Override
     @Transactional
-    public boolean checkAgency(Agency agency) {
+    public Optional<ClientDataModel> getAgencyInfo(Agency agency) {
         AgencyJpaEntity entity = agencyConvertToEntity(agency);
-        return agencyRepository.findBySiteId(entity.getSiteId()).isPresent();
+        Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
+        if (foundAgencyInfo.isEmpty()){
+            throw new NullAgencyIdSiteIdException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
+        }
+        return foundAgencyInfo.map(this::convertToClientDomain);
     }
 
     @Override
@@ -44,14 +48,6 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     }
 
 
-    @Override
-    @Transactional
-    public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client, SettleManager settleManager) {
-        AgencyJpaEntity entity = convertToEntity(agency, client, settleManager);
-        Optional<AgencyJpaEntity> foundAgency = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
-        return foundAgency.map(this::convertToClientDomain);
-    }
-
     private AgencyJpaEntity agencyConvertToEntity(Agency agency) {
         AgencyJpaEntity entity = new AgencyJpaEntity();
         entity.setAgencyId(agency.getAgencyId());
@@ -62,9 +58,11 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     private AgencyJpaEntity convertToEntity(Agency agency, Client client, SettleManager settleManager) {
         AgencyJpaEntity agencyJpaEntity = new AgencyJpaEntity();
 
+
         agencyJpaEntity.setAgencyId(agency.getAgencyId());
         agencyJpaEntity.setSiteId(agency.getSiteId());
 
+        agencyJpaEntity.setSiteName(client.getSiteName());
         agencyJpaEntity.setCompanyName(client.getCompanyName());
         agencyJpaEntity.setBusinessType(client.getBusinessType());
         agencyJpaEntity.setBizNumber(client.getBizNumber());
@@ -73,6 +71,8 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
         agencyJpaEntity.setAddress(client.getAddress());
         agencyJpaEntity.setCompanySite(client.getCompanySite());
         agencyJpaEntity.setEmail(client.getEmail());
+        agencyJpaEntity.setRateSel(client.getRateSel());
+        agencyJpaEntity.setStartDate(client.getStartDate());
 
         agencyJpaEntity.setSettleManagerName(settleManager.getSettleManagerName());
         agencyJpaEntity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
@@ -87,12 +87,12 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     }
 
     private ClientDataModel convertToClientDomain(AgencyJpaEntity entity) {
-
         ClientDataModel clientDataModel = new ClientDataModel();
 
         clientDataModel.setAgencyId(entity.getAgencyId());
         clientDataModel.setSiteId(entity.getSiteId());
 
+        clientDataModel.setSiteName(entity.getSiteName());
         clientDataModel.setCompanyName(entity.getCompanyName());
         clientDataModel.setBusinessType(entity.getBusinessType());
         clientDataModel.setBizNumber(entity.getBizNumber());
@@ -101,6 +101,8 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
         clientDataModel.setAddress(entity.getAddress());
         clientDataModel.setCompanySite(entity.getCompanySite());
         clientDataModel.setEmail(entity.getEmail());
+        clientDataModel.setRateSel(entity.getRateSel());
+        clientDataModel.setStartDate(entity.getStartDate());
 
         clientDataModel.setSettleManagerName(entity.getSettleManagerName());
         clientDataModel.setSettleManagerPhoneNumber(entity.getSettleManagerPhoneNumber());

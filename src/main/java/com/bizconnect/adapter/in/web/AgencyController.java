@@ -4,17 +4,29 @@ import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
+import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
+import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.exceptions.exceptions.ResponseMessage;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.catalina.util.ToStringUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import javax.crypto.Cipher;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
+import java.security.GeneralSecurityException;
+import java.security.NoSuchAlgorithmException;
+import java.text.SimpleDateFormat;
+import java.util.*;
 
 @RestController
 @RequestMapping("/agency")
@@ -32,8 +44,8 @@ public class AgencyController {
     제휴사 응답 데이터: 휴대폰본인확인 제휴사 등록정보 상태 전달
     */
     @PostMapping("/getSiteStatus")
-    public ResponseEntity<?> checkAgency(@RequestBody ClientDataModel clientDataModel) {
-        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
+    public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataModel clientDataModel) {
+//        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
         ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.UNREGISTERED.getCode(), clientDataModel.getSiteId());
         return ResponseEntity.ok(responseMessage);
     }
@@ -47,30 +59,83 @@ public class AgencyController {
     - 이용기관 ID는 기본적으로 사이트ID와 동일정보이나 사이트 및 이용기관 등록전에 이용기관ID는 변경을 통해 설정할 수 있다.
     */
     @PostMapping("/regSiteInfo")
-    public ResponseEntity<?> registerAgency(@RequestBody ClientDataModel clientDataModel) {
-        agencyUseCase.registerAgency(clientDataModel);
+    public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws IOException, GeneralSecurityException, DuplicateMemberException, NullAgencyIdSiteIdException, IllegalAgencyIdSiteIdException {
+
+        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
+        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
+
         Map<String, String> responseMessage = new HashMap<>();
+
+        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
+        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+
+        byte[] plainBytes = cipher.doFinal(Base64.getDecoder().decode(clientDataModel.getEncryptData()));
+
+        System.out.println(new String(plainBytes));
+        ObjectMapper objectMapper = new ObjectMapper();
+        ClientDataModel info = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+        System.out.println(info);
+        agencyUseCase.registerAgency(info);
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         return ResponseEntity.ok(responseMessage);
     }
 
-    @PostMapping("/payment/getPaymentInfo")
-    public ResponseEntity<?> paymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
-        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
-        System.out.println(agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId())));
+    @PostMapping("/getPaymentInfo")
+    public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
+        Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
 
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        //TODO
+        // service로 로직 옮기기
+
+        // EnumValues와 ResponseMessage 초기화
         List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
-
         Map<String, Object> response = new HashMap<>();
-        Map<String, String> responseMessage = new HashMap<>();
-        responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
-        responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
-        responseMessage.put("siteId", clientDataModel.getSiteId());
-        responseMessage.put("rateSel", "등록된 상품이 있을 경우 상품 정보 전달 필요 (임시테이블 또는 결제내역 조회)");
-        responseMessage.put("startDate", "시작일 조회 필요 (임시테이블 또는 결제내역 조회)");
-        response.put("responseMessage", responseMessage);
+
+        // info 객체가 비어있지 않은 경우, rateSel과 startDate 값을 추출하여 responseMessage에 넣음
+        if (info.isPresent()) {
+            ClientDataModel clientInfo = info.get();
+            System.out.println(clientInfo);
+            response.put("rateSel", clientInfo.getRateSel()); // rateSel 값을 설정
+            if (clientInfo.getStartDate() != null) {
+                response.put("startDate", sdf.format(clientInfo.getStartDate())); // startDate 값을 설정
+            } else {
+                response.put("startDate", null);
+            }
+        }
+        // responseMessage에 나머지 정보 추가
+        response.put("resultCode", EnumResultCode.SUCCESS.getCode());
+        response.put("resultMsg", EnumResultCode.SUCCESS.getValue());
+        response.put("siteId", clientDataModel.getSiteId());
         response.put("listSel", enumValues);
+
         return ResponseEntity.ok(response);
     }
+
+    @PostMapping("/setPaymentSiteInfo")
+    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
+
+        /*
+        {
+            "agencyId": "agency1",
+            "siteId": "test1234",
+            "startDate": "2023-12-01",
+            "endDate": "2023-12-31",
+            "salesPrice": "10000",
+            "rateSel": "lite_1m_200",
+            "method": "card"
+        }
+        */
+        agencyUseCase.getPaymentInfo(clientDataModel);
+
+        return ResponseEntity.ok(null);
+    }
+
 }

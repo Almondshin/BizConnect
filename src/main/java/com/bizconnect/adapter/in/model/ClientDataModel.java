@@ -6,6 +6,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @ToString
@@ -13,6 +15,8 @@ public class ClientDataModel {
     private String agencyId;
     private String siteId;
 
+    private String siteName;
+    private String companyName;
     private String businessType;
     private String bizNumber;
     private String ceoName;
@@ -21,13 +25,19 @@ public class ClientDataModel {
     private String companySite;
     private String email;
     private String rateSel;
-    private String startDate;
+    private Date startDate;
 
-    private String companyName;
+    private Date endDate;
+    private String salesPrice;
+    private String method;
 
     private String settleManagerName;
     private String settleManagerPhoneNumber;
     private String settleManagerEmail;
+
+    private String msgType;
+    private String encryptData;
+    private String verifyInfo;
 
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9]+$";
 
