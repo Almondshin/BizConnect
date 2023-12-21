@@ -28,8 +28,7 @@ public class LoadAgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort
     @Transactional
     public boolean checkAgency(Agency agency) {
         AgencyJpaEntity entity = agencyConvertToEntity(agency);
-        agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
-        return agencyRepository.findBySiteId(entity.getSiteId()).isEmpty();
+        return agencyRepository.findBySiteId(entity.getSiteId()).isPresent();
     }
 
     @Override

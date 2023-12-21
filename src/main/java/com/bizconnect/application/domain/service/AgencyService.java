@@ -36,6 +36,12 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public boolean checkAgencyId(ClientDataModel clientDataModel) {
+        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()){
+            throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
+        }
+        if(!loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel))) {
+            throw new NullAgencyIdSiteIdException(EnumResultCode.UnregisteredAgency, clientDataModel.getSiteId());
+        }
         return loadAgencyDataPort.checkAgency(convertToAgency(clientDataModel));
     }
 
