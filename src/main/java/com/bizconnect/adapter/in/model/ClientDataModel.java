@@ -52,6 +52,16 @@ public class ClientDataModel {
         this.agencyId = agencyId;
     }
 
+    public ClientDataModel(String agencyId, String siteId, String rateSel, Date startDate) {
+        if (!isValidAgencyId(agencyId) || !isValidSiteId(siteId)) {
+            throw new IllegalAgencyIdSiteIdException(EnumResultCode.IllegalArgument, siteId);
+        }
+        this.siteId = siteId;
+        this.agencyId = agencyId;
+        this.rateSel = rateSel;
+        this.startDate = startDate;
+    }
+
     private boolean isValidAgencyId(String agencyId) {
         return agencyId.matches(AGENCY_SITE_ID_PATTERN);
     }

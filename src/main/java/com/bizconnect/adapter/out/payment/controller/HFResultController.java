@@ -3,6 +3,7 @@ package com.bizconnect.adapter.out.payment.controller;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.service.HFResultService;
+import com.bizconnect.application.port.in.PaymentUseCase;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -21,9 +22,11 @@ import java.util.Map;
 @RequestMapping("/api/v1/hectoFinancial/result")
 public class HFResultController {
     private final HFResultService hfResultService;
+    private final PaymentUseCase paymentUseCase;
 
-    public HFResultController(HFResultService hfResultService) {
+    public HFResultController(HFResultService hfResultService, PaymentUseCase paymentUseCase) {
         this.hfResultService = hfResultService;
+        this.paymentUseCase = paymentUseCase;
     }
 
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리
@@ -51,9 +54,11 @@ public class HFResultController {
         String method = request.getParameter("method");
         if (method.equals("CA")) {
             hfResultService.notiCAData(notiCA);
+            System.out.println("notiCA : " + notiCA);
         }
         if (method.equals("VA")) {
             hfResultService.notiVAData(notiVA);
+            System.out.println("notiVA : " + notiVA);
         }
     }
 
@@ -61,13 +66,11 @@ public class HFResultController {
     public String result(HttpServletRequest request, @RequestBody Map<String, String> requestMap) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String encodeData = requestMap.get("data");
-        System.out.println("encodeData : " + encodeData);
 
         String decodeData = new String(Base64.getDecoder().decode(encodeData.getBytes()), StandardCharsets.UTF_8);
-        System.out.println("decodeData : " + decodeData);
+
         Map<String, String> resMap = objectMapper.readValue(decodeData, new TypeReference<>() {
         });
-        System.out.println("resMap : " + resMap);
 
 
         if (resMap == null) {

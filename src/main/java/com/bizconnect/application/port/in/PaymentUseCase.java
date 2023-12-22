@@ -7,8 +7,9 @@ import java.util.HashMap;
 
 public interface PaymentUseCase {
     String aes256EncryptEcb(PaymentDataModel paymentDataModel);
-
     HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel);
+
+    void insertPaymentData();
 
 }
 

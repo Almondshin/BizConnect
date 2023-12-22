@@ -1,0 +1,49 @@
+{
+  "groups": [
+    {
+      "name": "hectofinancial",
+      "type": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    }
+  ],
+  "properties": [
+    {
+      "name": "hectofinancial.a-e-s256-k-e-y",
+      "type": "java.lang.String",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    },
+    {
+      "name": "hectofinancial.c-o-n-n-t-i-m-e-o-u-t",
+      "type": "java.lang.Integer",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant",
+      "defaultValue": 0
+    },
+    {
+      "name": "hectofinancial.l-i-c-e-n-s-e-k-e-y",
+      "type": "java.lang.String",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    },
+    {
+      "name": "hectofinancial.p-g-c-a-n-c-e-l-m-i-d",
+      "type": "java.lang.String",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    },
+    {
+      "name": "hectofinancial.p-g-m-i-d",
+      "type": "java.lang.String",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    },
+    {
+      "name": "hectofinancial.r-e-a-d-t-i-m-e-o-u-t",
+      "type": "java.lang.Integer",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant",
+      "defaultValue": 0
+    },
+    {
+      "name": "hectofinancial.s-e-r-v-e-r-u-r-l",
+      "type": "java.lang.String",
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
+    }
+  ],
+  "hints": []
+}

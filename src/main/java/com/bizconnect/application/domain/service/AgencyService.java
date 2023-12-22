@@ -16,6 +16,8 @@ import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -32,7 +34,7 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public void registerAgency(ClientDataModel clientDataModel) {
-        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()){
+        if (clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()) {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
         ClientDataModel checkAgencyId = new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
@@ -41,10 +43,10 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel) {
-        if(clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()){
+        if (clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()) {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
-        return loadAgencyDataPort.getAgencyInfo(convertToAgency(clientDataModel));
+        return loadAgencyDataPort.getAgencyInfo(convertToAgency(clientDataModel), convertToClient(clientDataModel));
     }
 
     @Override
@@ -97,7 +99,7 @@ public class AgencyService implements AgencyUseCase {
         );
     }
 
-    private PaymentHistory converToPaymentHistory(ClientDataModel clientDataModel){
+    private PaymentHistory converToPaymentHistory(ClientDataModel clientDataModel) {
         return new PaymentHistory(
                 clientDataModel.getAgencyId(),
                 clientDataModel.getSiteId(),

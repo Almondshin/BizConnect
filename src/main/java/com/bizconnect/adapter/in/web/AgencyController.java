@@ -25,6 +25,7 @@ import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.security.NoSuchAlgorithmException;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -76,7 +77,6 @@ public class AgencyController {
 
         byte[] plainBytes = cipher.doFinal(Base64.getDecoder().decode(clientDataModel.getEncryptData()));
 
-        System.out.println(new String(plainBytes));
         ObjectMapper objectMapper = new ObjectMapper();
         ClientDataModel info = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
         System.out.println(info);
@@ -88,9 +88,9 @@ public class AgencyController {
 
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
-        Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
-
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        System.out.println(clientDataModel);
+        Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
 
         //TODO
         // service로 로직 옮기기
@@ -102,9 +102,11 @@ public class AgencyController {
         // info 객체가 비어있지 않은 경우, rateSel과 startDate 값을 추출하여 responseMessage에 넣음
         if (info.isPresent()) {
             ClientDataModel clientInfo = info.get();
-            System.out.println(clientInfo);
             response.put("rateSel", clientInfo.getRateSel()); // rateSel 값을 설정
-            if (clientInfo.getStartDate() != null) {
+
+            if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
+                response.put("startDate", sdf.format(clientDataModel.getStartDate()));
+            } else if (clientInfo.getStartDate() != null) {
                 response.put("startDate", sdf.format(clientInfo.getStartDate())); // startDate 값을 설정
             } else {
                 response.put("startDate", null);

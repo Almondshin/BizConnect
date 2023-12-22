@@ -15,7 +15,7 @@ import java.util.Map;
 public class PaymentService implements PaymentUseCase {
 
     private  final Constant constant;
-    Logger logger = LoggerFactory.getLogger("HFInitController");
+//    Logger logger = LoggerFactory.getLogger("HFInitController");
 
     public PaymentService(Constant constant) {
         this.constant = constant;
@@ -33,15 +33,16 @@ public class PaymentService implements PaymentUseCase {
                 paymentDataModel.getPlainTrdAmt()
         ).getHashPlain() + licenseKey;
 
-        System.out.println("hashPlain : " + hashPlain);
+        System.out.println("aes256EncryptEcb hashPlain : " + hashPlain);
         String hashCipher = "";
         /** SHA256 해쉬 처리 */
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
-            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+//            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
         } finally {
-            logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+//            logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
 
         return hashCipher;
@@ -51,7 +52,7 @@ public class PaymentService implements PaymentUseCase {
     public HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel) {
         String aesKey = constant.AES256_KEY;
         HashMap<String, String> params = convertToMap(paymentDataModel);
-        System.out.println("params : " + params);
+        System.out.println("encodeBase64 params : " + params);
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();
@@ -63,13 +64,20 @@ public class PaymentService implements PaymentUseCase {
                     String aesCipher = EncryptUtil.encodeBase64(aesCipherRaw);
 
                     params.put(key, aesCipher);//암호화된 데이터로 세팅
-                    logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
+//                    logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
+                    System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
         } catch (Exception e) {
-            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
+//            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
+            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
         }
         return params;
+    }
+
+    @Override
+    public void insertPaymentData() {
+
     }
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {

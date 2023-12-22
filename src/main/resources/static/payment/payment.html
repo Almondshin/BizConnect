@@ -27,6 +27,8 @@
         const searchParams = new URLSearchParams(window.location.search);
         const agencyId = searchParams.get('agencyId');
         const siteId = searchParams.get('siteId');
+        const startDate = searchParams.get('startDate');
+        const rateSel = searchParams.get('rateSel');
 
 
         $.ajax({
@@ -34,7 +36,7 @@
             url        : "/agency/getPaymentInfo",
             contentType: "application/json",
             dataType   : "json",
-            data       : JSON.stringify({agencyId: agencyId, siteId: siteId}),
+            data       : JSON.stringify({agencyId: agencyId, siteId: siteId, rateSel: rateSel, startDate: startDate }),
             success    : function (response) {
                 $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 console.log(JSON.stringify(response));
@@ -325,7 +327,7 @@
                         mchtCustNm: rsp.encParams.mchtCustNm,
                         notiUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/noti",
                         nextUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/next",
-                        cancUrl   : "https://example.com/cancUrl",
+                        cancUrl   : "http://example.com/cancUrl",
                         pktHash   : rsp.hashCipher,
                         ui        : {
                             type  : "popup",   //popup, iframe, self, blank

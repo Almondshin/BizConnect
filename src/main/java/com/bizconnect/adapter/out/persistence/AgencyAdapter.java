@@ -14,6 +14,7 @@ import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.text.SimpleDateFormat;
 import java.util.Optional;
 
 @Service
@@ -26,8 +27,8 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
 
     @Override
     @Transactional
-    public Optional<ClientDataModel> getAgencyInfo(Agency agency) {
-        AgencyJpaEntity entity = agencyConvertToEntity(agency);
+    public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client) {
+        AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
         Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
         if (foundAgencyInfo.isEmpty()){
             throw new NullAgencyIdSiteIdException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
@@ -38,7 +39,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Override
     @Transactional
     public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
-        AgencyJpaEntity entity = agencyConvertToEntity(agency);
+        AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
         Optional<AgencyJpaEntity> foundSiteId = agencyRepository.findBySiteId(entity.getSiteId());
         // SiteId가 이미 존재하는 경우 DuplicateMemberException을 발생시킵니다.
         if (foundSiteId.isPresent()) {
@@ -48,10 +49,12 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     }
 
 
-    private AgencyJpaEntity agencyConvertToEntity(Agency agency) {
+    private AgencyJpaEntity agencyAndClientConvertToEntity(Agency agency, Client client) {
         AgencyJpaEntity entity = new AgencyJpaEntity();
         entity.setAgencyId(agency.getAgencyId());
         entity.setSiteId(agency.getSiteId());
+        entity.setRateSel(client.getRateSel());
+        entity.setStartDate(client.getStartDate());
         return entity;
     }
 
@@ -81,13 +84,9 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         return agencyJpaEntity;
     }
 
-    private Agency convertToAgency(AgencyJpaEntity entity) {
-        // AgencyJpaEntity를 Agency로 변환하는 로직
-        return new Agency(entity.getAgencyId(), entity.getSiteId());
-    }
-
     private ClientDataModel convertToClientDomain(AgencyJpaEntity entity) {
         ClientDataModel clientDataModel = new ClientDataModel();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         clientDataModel.setAgencyId(entity.getAgencyId());
         clientDataModel.setSiteId(entity.getSiteId());

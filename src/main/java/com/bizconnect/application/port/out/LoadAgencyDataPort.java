@@ -8,6 +8,6 @@ import com.bizconnect.application.domain.model.SettleManager;
 import java.util.Optional;
 
 public interface LoadAgencyDataPort {
-    Optional<ClientDataModel> getAgencyInfo(Agency agency);
+    Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client);
 }
 
