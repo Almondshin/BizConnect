@@ -22,11 +22,9 @@ import java.util.Map;
 @RequestMapping("/api/v1/hectoFinancial/result")
 public class HFResultController {
     private final HFResultService hfResultService;
-    private final PaymentUseCase paymentUseCase;
 
-    public HFResultController(HFResultService hfResultService, PaymentUseCase paymentUseCase) {
+    public HFResultController(HFResultService hfResultService) {
         this.hfResultService = hfResultService;
-        this.paymentUseCase = paymentUseCase;
     }
 
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리

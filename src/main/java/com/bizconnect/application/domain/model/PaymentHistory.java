@@ -7,6 +7,7 @@ import java.util.Date;
 @Getter
 public class PaymentHistory {
     private String tradeNum;
+    private String hfTradeNum;
     private String agencyId;
     private String siteId;
 
@@ -16,7 +17,7 @@ public class PaymentHistory {
     private String offer;
     private int useCount;
 
-    private Date trDate;
+    private String trDate;
     private Date startDate;
     private Date endDate;
 
@@ -40,5 +41,17 @@ public class PaymentHistory {
         this.amount = salesPrice;
         this.rateSel = rateSel;
         this.paymentType = method;
+    }
+
+    public PaymentHistory(String tradeNum, String hfTradeNum, String paymentType,  String amount, String trDate, String rcptName, String vbankName, String vbankAccount, String vbankExpireDate) {
+        this.tradeNum = tradeNum;
+        this.hfTradeNum = hfTradeNum;
+        this.paymentType = paymentType;
+        this.amount = amount;
+        this.trDate = trDate;
+        this.rcptName = rcptName;
+        this.vbankName = vbankName;
+        this.vbankAccount = vbankAccount;
+        this.vbankExpireDate = vbankExpireDate;
     }
 }

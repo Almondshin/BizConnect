@@ -5,12 +5,13 @@ import com.bizconnect.adapter.out.persistence.entity.PaymentJpaEntity;
 import com.bizconnect.adapter.out.persistence.repository.PaymentHistoryRepository;
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.out.LoadPaymentDataPort;
+import com.bizconnect.application.port.out.SavePaymentDataPort;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
 
 @Service
-public class PaymentAdapter implements LoadPaymentDataPort {
+public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort {
 
     private final PaymentHistoryRepository paymentHistoryRepository;
 
@@ -32,6 +33,12 @@ public class PaymentAdapter implements LoadPaymentDataPort {
 
         return foundPaymentHistory.map(this::convertToPaymentHistoryDomain);
     }
+
+    @Override
+    public void insertPayment() {
+
+    }
+}
 
     private PaymentJpaEntity paymentHistoryConvertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();
@@ -68,5 +75,6 @@ public class PaymentAdapter implements LoadPaymentDataPort {
         paymentHistoryDataModel.setMemo(entity.getMemo());
         return paymentHistoryDataModel;
     }
-
 }
+
+

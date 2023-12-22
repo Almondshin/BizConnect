@@ -4,14 +4,12 @@ import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
-import com.fasterxml.jackson.core.type.TypeReference;
+import com.bizconnect.application.domain.model.PaymentHistory;
+import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -20,11 +18,14 @@ import java.util.Map;
 public class HFResultService {
     private final Constant constant;
 
+    private final SavePaymentDataPort savePaymentDataPort;
+
     private final ConnectHectoFinancialService connectHectoFinancialService;
 //    Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant, ConnectHectoFinancialService connectHectoFinancialService) {
+    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, ConnectHectoFinancialService connectHectoFinancialService) {
         this.constant = constant;
+        this.savePaymentDataPort = savePaymentDataPort;
         this.connectHectoFinancialService = connectHectoFinancialService;
     }
 
@@ -76,45 +77,45 @@ public class HFResultService {
 
     public String notiCAData(HFDataModel hfDataModel) {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
-        RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());
-        RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());
-        RES_PARAMS.put("method", hfDataModel.getMethod());
-        RES_PARAMS.put("bizType", hfDataModel.getBizType());
-        RES_PARAMS.put("mchtId", hfDataModel.getMchtId());
-        RES_PARAMS.put("mchtTrdNo", hfDataModel.getMchtTrdNo());
-        RES_PARAMS.put("mchtCustNm", hfDataModel.getMchtCustNm());
-        RES_PARAMS.put("mchtName", hfDataModel.getMchtName());
-        RES_PARAMS.put("pmtprdNm", hfDataModel.getPmtprdNm());
-        RES_PARAMS.put("trdDtm", hfDataModel.getTrdDtm());
-        RES_PARAMS.put("trdAmt", hfDataModel.getTrdAmt());
-        RES_PARAMS.put("billKey", hfDataModel.getBillKey());
-        RES_PARAMS.put("billKeyExpireDt", hfDataModel.getBillKeyExpireDt());
-        RES_PARAMS.put("bankCd", hfDataModel.getBankCd());
-        RES_PARAMS.put("bankNm", hfDataModel.getBankNm());
-        RES_PARAMS.put("cardCd", hfDataModel.getCardCd());
-        RES_PARAMS.put("cardNm", hfDataModel.getCardNm());
-        RES_PARAMS.put("telecomCd", hfDataModel.getTelecomCd());
-        RES_PARAMS.put("telecomNm", hfDataModel.getTelecomNm());
-        RES_PARAMS.put("vAcntNo", hfDataModel.getVAcntNo());
-        RES_PARAMS.put("expireDt", hfDataModel.getExpireDt());
-        RES_PARAMS.put("AcntPrintNm", hfDataModel.getAcntPrintNm());
-        RES_PARAMS.put("dpstrNm", hfDataModel.getDpstrNm());
-        RES_PARAMS.put("email", hfDataModel.getEmail());
-        RES_PARAMS.put("mchtCustId", hfDataModel.getMchtCustId());
-        RES_PARAMS.put("cardNo", hfDataModel.getCardNo());
-        RES_PARAMS.put("cardApprNo", hfDataModel.getCardApprNo());
-        RES_PARAMS.put("instmtMon", hfDataModel.getInstmtMon());
-        RES_PARAMS.put("instmtType", hfDataModel.getInstmtType());
-        RES_PARAMS.put("phoneNoEnc", hfDataModel.getPhoneNoEnc());
-        RES_PARAMS.put("orgTrdNo", hfDataModel.getOrgTrdNo());
-        RES_PARAMS.put("orgTrdDt", hfDataModel.getOrgTrdDt());
-        RES_PARAMS.put("mixTrdNo", hfDataModel.getMixTrdNo());
-        RES_PARAMS.put("mixTrdAmt", hfDataModel.getMixTrdAmt());
-        RES_PARAMS.put("payAmt", hfDataModel.getPayAmt());
-        RES_PARAMS.put("csrcIssNo", hfDataModel.getCsrcIssNo());
-        RES_PARAMS.put("cnclType", hfDataModel.getCnclType());
-        RES_PARAMS.put("mchtParam", hfDataModel.getMchtParam());
-        RES_PARAMS.put("pktHash", hfDataModel.getPktHash());
+        RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());					//거래상태
+        RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());							//거래번호
+        RES_PARAMS.put("method", hfDataModel.getMethod());							//결제수단 (카드CA, 가상계좌VA)
+        RES_PARAMS.put("bizType", hfDataModel.getBizType());						//업무구분
+        RES_PARAMS.put("mchtId", hfDataModel.getMchtId());							//상점아이디 (헥토파이낸셜에서 부여하는 아이디)
+        RES_PARAMS.put("mchtTrdNo", hfDataModel.getMchtTrdNo());					//상점주문번호 (상점에서 생성하는 거래번호)
+        RES_PARAMS.put("mchtCustNm", hfDataModel.getMchtCustNm());					//주문자명 (실제 결제자의 주문자명)
+        RES_PARAMS.put("mchtName", hfDataModel.getMchtName());						//상점 한글명
+        RES_PARAMS.put("pmtprdNm", hfDataModel.getPmtprdNm());						//상품명
+        RES_PARAMS.put("trdDtm", hfDataModel.getTrdDtm());							//거래일시
+        RES_PARAMS.put("trdAmt", hfDataModel.getTrdAmt());							//거래금액
+        RES_PARAMS.put("billKey", hfDataModel.getBillKey());						//자동결제 키 (빌키 이용 상점만 해당)
+        RES_PARAMS.put("billKeyExpireDt", hfDataModel.getBillKeyExpireDt());		//자동결제 키 유효기간
+        RES_PARAMS.put("bankCd", hfDataModel.getBankCd());							//은행코드
+        RES_PARAMS.put("bankNm", hfDataModel.getBankNm());							//은행명
+        RES_PARAMS.put("cardCd", hfDataModel.getCardCd());							//카드사 코드
+        RES_PARAMS.put("cardNm", hfDataModel.getCardNm());							//카드명
+        RES_PARAMS.put("telecomCd", hfDataModel.getTelecomCd());					//이통사코드
+        RES_PARAMS.put("telecomNm", hfDataModel.getTelecomNm());					//이통사명
+        RES_PARAMS.put("vAcntNo", hfDataModel.getVAcntNo());						//가상계좌번호
+        RES_PARAMS.put("expireDt", hfDataModel.getExpireDt());						//가상계좌 입금만료 일시
+        RES_PARAMS.put("AcntPrintNm", hfDataModel.getAcntPrintNm());				//통장인자명 (고객통장에 찍힐 인자명)
+        RES_PARAMS.put("dpstrNm", hfDataModel.getDpstrNm());						//입금자명 (가상계좌에 실제 입금한 사람 이름)
+        RES_PARAMS.put("email", hfDataModel.getEmail());							//상점고객email
+        RES_PARAMS.put("mchtCustId", hfDataModel.getMchtCustId());					//상점고객아이디
+        RES_PARAMS.put("cardNo", hfDataModel.getCardNo());							//카드번호
+        RES_PARAMS.put("cardApprNo", hfDataModel.getCardApprNo());					//카드승인번호
+        RES_PARAMS.put("instmtMon", hfDataModel.getInstmtMon());					//할부개월수
+        RES_PARAMS.put("instmtType", hfDataModel.getInstmtType());					//할부타입
+        RES_PARAMS.put("phoneNoEnc", hfDataModel.getPhoneNoEnc());					//휴대폰번호암호화
+        RES_PARAMS.put("orgTrdNo", hfDataModel.getOrgTrdNo());						//원거래번호
+        RES_PARAMS.put("orgTrdDt", hfDataModel.getOrgTrdDt());						//원거래일자
+        RES_PARAMS.put("mixTrdNo", hfDataModel.getMixTrdNo());						//복합결제 거래번호
+        RES_PARAMS.put("mixTrdAmt", hfDataModel.getMixTrdAmt());					//복합결제 금액
+        RES_PARAMS.put("payAmt", hfDataModel.getPayAmt());							//실 결제금액 (복합결제 금액을 제외한 결제금액)
+        RES_PARAMS.put("csrcIssNo", hfDataModel.getCsrcIssNo());					//현금영수증 승인번호
+        RES_PARAMS.put("cnclType", hfDataModel.getCnclType());						//취소거래 타입
+        RES_PARAMS.put("mchtParam", hfDataModel.getMchtParam());					//상점예약필드  (추가 정보 필드)
+        RES_PARAMS.put("pktHash", hfDataModel.getPktHash());						//해쉬값
 
         boolean resp = false;
         /** 해쉬 조합 필드
@@ -145,32 +146,32 @@ public class HFResultService {
 
     public String notiVAData(HFDataModel hfDataModel) {
         Map<String, String> RES_PARAMS = new LinkedHashMap<>();
-        RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());
-        RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());
-        RES_PARAMS.put("method", hfDataModel.getMethod());
-        RES_PARAMS.put("bizType", hfDataModel.getBizType());
-        RES_PARAMS.put("mchtId", hfDataModel.getMchtId());
-        RES_PARAMS.put("mchtTrdNo", hfDataModel.getMchtTrdNo());
-        RES_PARAMS.put("mchtCustNm", hfDataModel.getMchtCustNm());
-        RES_PARAMS.put("mchtName", hfDataModel.getMchtName());
-        RES_PARAMS.put("pmtprdNm", hfDataModel.getPmtprdNm());
-        RES_PARAMS.put("trdDtm", hfDataModel.getTrdDtm());
-        RES_PARAMS.put("trdAmt", hfDataModel.getTrdAmt());
-        RES_PARAMS.put("bankCd", hfDataModel.getBankCd());
-        RES_PARAMS.put("bankNm", hfDataModel.getBankNm());
-        RES_PARAMS.put("acntType", hfDataModel.getAcntType());
-        RES_PARAMS.put("vAcntNo", hfDataModel.getVAcntNo());
-        RES_PARAMS.put("expireDt", hfDataModel.getExpireDt());
-        RES_PARAMS.put("AcntPrintNm", hfDataModel.getAcntPrintNm());
-        RES_PARAMS.put("dpstrNm", hfDataModel.getDpstrNm());
-        RES_PARAMS.put("email", hfDataModel.getEmail());
-        RES_PARAMS.put("mchtCustId", hfDataModel.getMchtCustId());
-        RES_PARAMS.put("orgTrdNo", hfDataModel.getOrgTrdNo());
-        RES_PARAMS.put("orgTrdDt", hfDataModel.getOrgTrdDt());
-        RES_PARAMS.put("csrcIssNo", hfDataModel.getCsrcIssNo());
-        RES_PARAMS.put("cnclType", hfDataModel.getCnclType());
-        RES_PARAMS.put("mchtParam", hfDataModel.getMchtParam());
-        RES_PARAMS.put("pktHash", hfDataModel.getPktHash());
+        RES_PARAMS.put("outStatCd", hfDataModel.getOutStatCd());		//거래상태
+        RES_PARAMS.put("trdNo", hfDataModel.getTrdNo());				//거래번호
+        RES_PARAMS.put("method", hfDataModel.getMethod());				//결제수단 (카드CA, 가상계좌VA)
+        RES_PARAMS.put("bizType", hfDataModel.getBizType());			//업무구분	(???)
+        RES_PARAMS.put("mchtId", hfDataModel.getMchtId());				//상점아이디 (헥토파이낸셜에서 부여하는 아이디)
+        RES_PARAMS.put("mchtTrdNo", hfDataModel.getMchtTrdNo());		//상점주문번호 (상점에서 생성하는 거래번호)
+        RES_PARAMS.put("mchtCustNm", hfDataModel.getMchtCustNm());		//고객명
+        RES_PARAMS.put("mchtName", hfDataModel.getMchtName());			//상점한글명
+        RES_PARAMS.put("pmtprdNm", hfDataModel.getPmtprdNm());			//상품명
+        RES_PARAMS.put("trdDtm", hfDataModel.getTrdDtm());				//거래일시
+        RES_PARAMS.put("trdAmt", hfDataModel.getTrdAmt());				//거래금액
+        RES_PARAMS.put("bankCd", hfDataModel.getBankCd());				//은행코드 (금융기관 식별자 011, ...)
+        RES_PARAMS.put("bankNm", hfDataModel.getBankNm());				//은행명 (NH 농협, 신한)
+        RES_PARAMS.put("acntType", hfDataModel.getAcntType());			//계좌구분 ("1 : 기본(회전식), 2 : 고정식 ..." )
+        RES_PARAMS.put("vAcntNo", hfDataModel.getVAcntNo());			//가상계좌번호
+        RES_PARAMS.put("expireDt", hfDataModel.getExpireDt());			//가상계좌 입금만료 일시
+        RES_PARAMS.put("AcntPrintNm", hfDataModel.getAcntPrintNm());	//통장인자명 (고객통장에 찍힐 인자명)
+        RES_PARAMS.put("dpstrNm", hfDataModel.getDpstrNm());			//입금자명 (가상계좌에 실제 입금한 사람 이름)
+        RES_PARAMS.put("email", hfDataModel.getEmail());				//상점고객email
+        RES_PARAMS.put("mchtCustId", hfDataModel.getMchtCustId());		//상점고객아이디
+        RES_PARAMS.put("orgTrdNo", hfDataModel.getOrgTrdNo());			//원거래번호
+        RES_PARAMS.put("orgTrdDt", hfDataModel.getOrgTrdDt());			//원거래일자
+        RES_PARAMS.put("csrcIssNo", hfDataModel.getCsrcIssNo());		//현금영수증 승인번호
+        RES_PARAMS.put("cnclType", hfDataModel.getCnclType());			//취소거래타입
+        RES_PARAMS.put("mchtParam", hfDataModel.getMchtParam());		//상점예약필드 (추가 정보 필드)
+        RES_PARAMS.put("pktHash", hfDataModel.getPktHash());			//해쉬값
 
         /** 해쉬 조합 필드
          *  결과코드 + 거래일시 + 상점아이디 + 가맹점거래번호 + 거래금액 + 라이센스키 */
@@ -194,12 +195,29 @@ public class HFResultService {
             System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
         }
 
-        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"));
+        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"), RES_PARAMS);
     }
 
 
-    private String responseMessage(String hashCipher, String mchtTrdNo, String pktHash, String outStatCd) {
+    private String responseMessage(String hashCipher, String mchtTrdNo, String pktHash, String outStatCd, Map<String, String> responseParam) {
         boolean resp = false;
+        String rcptName = "";
+        if(!responseParam.get("AcntPrintNm").isEmpty()){
+            rcptName = responseParam.get("AcntPrintNm");
+        } else {
+            rcptName = "";
+        }
+        PaymentHistory paymentHistory = new PaymentHistory(
+                responseParam.get("mchtTrdNo"),
+                responseParam.get("trdNo"),
+                responseParam.get("method"),
+                responseParam.get("trdAmt"),
+                responseParam.get("trdTm"),
+                rcptName,
+                responseParam.get("bankNm"),
+                responseParam.get("vAcntNo"),
+                responseParam.get("expireDt")
+        );
         /**
          hash데이타값이 맞는 지 확인 하는 루틴은 헥토파이낸셜에서 받은 데이타가 맞는지 확인하는 것이므로 꼭 사용하셔야 합니다
          정상적인 결제 건임에도 불구하고 노티 페이지의 오류나 네트웍 문제 등으로 인한 hash 값의 오류가 발생할 수도 있습니다.
@@ -211,8 +229,19 @@ public class HFResultService {
             System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]"));
             if ("0021".equals(outStatCd)) {
                 // resp = notiSuccess(noti); // 성공 처리
-
-
+                responseParam.get("");
+                PaymentHistory paymentHistory = new PaymentHistory(
+                        responseParam.get("mchtTrdNo"),
+                        responseParam.get("trdNo"),
+                        responseParam.get("method"),
+                        responseParam.get("trdAmt"),
+                        responseParam.get("trdTm"),
+                        responseParam.get("AcntPrintNm"),
+                        responseParam.get("bankNm"),
+                        responseParam.get("vAcntNo"),
+                        responseParam.get("expireDt")
+                );
+                savePaymentDataPort.insertPayment();
             } else {
                 resp = false;
             }
