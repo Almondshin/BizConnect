@@ -35,10 +35,10 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     }
 
     @Override
-    public void insertPayment() {
-
+    public void insertPayment(PaymentHistory paymentHistory) {
+        PaymentJpaEntity entity = paymentHistoryConvertToEntity(paymentHistory);
+        paymentHistoryRepository.save(entity);
     }
-}
 
     private PaymentJpaEntity paymentHistoryConvertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();

@@ -43,6 +43,14 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
+    public PaymentHistory(String tradeNum, String hfTradeNum, String paymentType,  String amount, String trDate) {
+        this.tradeNum = tradeNum;
+        this.hfTradeNum = hfTradeNum;
+        this.paymentType = paymentType;
+        this.amount = amount;
+        this.trDate = trDate;
+    }
+
     public PaymentHistory(String tradeNum, String hfTradeNum, String paymentType,  String amount, String trDate, String rcptName, String vbankName, String vbankAccount, String vbankExpireDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;

@@ -9,6 +9,7 @@ import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.Cache;
 import java.io.IOException;
 import java.util.Base64;
 import java.util.LinkedHashMap;
@@ -140,7 +141,7 @@ public class HFResultService {
             System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
         }
 
-        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"));
+        return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"), RES_PARAMS);
     }
 
 
@@ -201,23 +202,7 @@ public class HFResultService {
 
     private String responseMessage(String hashCipher, String mchtTrdNo, String pktHash, String outStatCd, Map<String, String> responseParam) {
         boolean resp = false;
-        String rcptName = "";
-        if(!responseParam.get("AcntPrintNm").isEmpty()){
-            rcptName = responseParam.get("AcntPrintNm");
-        } else {
-            rcptName = "";
-        }
-        PaymentHistory paymentHistory = new PaymentHistory(
-                responseParam.get("mchtTrdNo"),
-                responseParam.get("trdNo"),
-                responseParam.get("method"),
-                responseParam.get("trdAmt"),
-                responseParam.get("trdTm"),
-                rcptName,
-                responseParam.get("bankNm"),
-                responseParam.get("vAcntNo"),
-                responseParam.get("expireDt")
-        );
+
         /**
          hash데이타값이 맞는 지 확인 하는 루틴은 헥토파이낸셜에서 받은 데이타가 맞는지 확인하는 것이므로 꼭 사용하셔야 합니다
          정상적인 결제 건임에도 불구하고 노티 페이지의 오류나 네트웍 문제 등으로 인한 hash 값의 오류가 발생할 수도 있습니다.
@@ -228,20 +213,34 @@ public class HFResultService {
 //            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
             System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]"));
             if ("0021".equals(outStatCd)) {
-                // resp = notiSuccess(noti); // 성공 처리
-                responseParam.get("");
-                PaymentHistory paymentHistory = new PaymentHistory(
-                        responseParam.get("mchtTrdNo"),
-                        responseParam.get("trdNo"),
-                        responseParam.get("method"),
-                        responseParam.get("trdAmt"),
-                        responseParam.get("trdTm"),
-                        responseParam.get("AcntPrintNm"),
-                        responseParam.get("bankNm"),
-                        responseParam.get("vAcntNo"),
-                        responseParam.get("expireDt")
-                );
-                savePaymentDataPort.insertPayment();
+                switch (responseParam.get("method")){
+                    case "CA" : {
+                        PaymentHistory paymentHistory = new PaymentHistory(
+                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
+                                responseParam.get("method"),        //결제수단
+                                responseParam.get("trdAmt"),        //결제금액
+                                responseParam.get("trdDtm")         //거래일
+                        );
+                        savePaymentDataPort.insertPayment(paymentHistory);
+                        break;
+                    }
+                    case "VA" : {
+                        PaymentHistory paymentHistory = new PaymentHistory(
+                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
+                                responseParam.get("method"),        //결제수단
+                                responseParam.get("trdAmt"),        //결제금액
+                                responseParam.get("trdDtm"),        //거래일
+                                responseParam.get("AcntPrintNm"),
+                                responseParam.get("bankNm"),
+                                responseParam.get("vAcntNo"),
+                                responseParam.get("expireDt")
+                        );
+                        savePaymentDataPort.insertPayment(paymentHistory);
+                        break;
+                    }
+                }
             } else {
                 resp = false;
             }
