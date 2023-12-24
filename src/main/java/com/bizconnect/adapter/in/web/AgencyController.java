@@ -86,28 +86,43 @@ public class AgencyController {
         return ResponseEntity.ok(responseMessage);
     }
 
+
+    /**
+     * 결제 정보 요청
+     *
+     * @param clientDataModel 필수 값 : AgencyId, SiteId , 옵션 값 : RateSel, StartDate
+     * @return resultCode, resultMsg, siteId, RateSel list,
+     */
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         System.out.println(clientDataModel);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
 
-        //TODO
-        // service로 로직 옮기기
-
         // EnumValues와 ResponseMessage 초기화
         List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
         Map<String, Object> response = new HashMap<>();
 
         // info 객체가 비어있지 않은 경우, rateSel과 startDate 값을 추출하여 responseMessage에 넣음
+        // RequestBody로 받은 파라미터 값을 우선 함.
         if (info.isPresent()) {
             ClientDataModel clientInfo = info.get();
-            response.put("rateSel", clientInfo.getRateSel()); // rateSel 값을 설정
+            if((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null){
+                response.put("rateSel", clientDataModel.getRateSel());
+            } else if (clientInfo.getRateSel() != null && clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty()){
+                response.put("rateSel", clientDataModel.getRateSel());
+            }else if (clientInfo.getRateSel() != null){
+                response.put("rateSel", clientInfo.getRateSel());
+            } else {
+                response.put("rateSel", null);
+            }
 
             if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
+                //TODO
+                // 과거일 전달 시 reject 기능 추가 필요
                 response.put("startDate", sdf.format(clientDataModel.getStartDate()));
             } else if (clientInfo.getStartDate() != null) {
-                response.put("startDate", sdf.format(clientInfo.getStartDate())); // startDate 값을 설정
+                response.put("startDate", sdf.format(clientInfo.getStartDate()));
             } else {
                 response.put("startDate", null);
             }
