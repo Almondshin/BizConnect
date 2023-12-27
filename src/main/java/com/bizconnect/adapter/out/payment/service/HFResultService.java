@@ -213,34 +213,34 @@ public class HFResultService {
 //            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
             System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]"));
             if ("0021".equals(outStatCd)) {
-                switch (responseParam.get("method")){
-                    case "CA" : {
-                        PaymentHistory paymentHistory = new PaymentHistory(
-                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
-                                responseParam.get("method"),        //결제수단
-                                responseParam.get("trdAmt"),        //결제금액
-                                responseParam.get("trdDtm")         //거래일
-                        );
-                        savePaymentDataPort.insertPayment(paymentHistory);
-                        break;
-                    }
-                    case "VA" : {
-                        PaymentHistory paymentHistory = new PaymentHistory(
-                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
-                                responseParam.get("method"),        //결제수단
-                                responseParam.get("trdAmt"),        //결제금액
-                                responseParam.get("trdDtm"),        //거래일
-                                responseParam.get("AcntPrintNm"),
-                                responseParam.get("bankNm"),
-                                responseParam.get("vAcntNo"),
-                                responseParam.get("expireDt")
-                        );
-                        savePaymentDataPort.insertPayment(paymentHistory);
-                        break;
-                    }
-                }
+//                switch (responseParam.get("method")){
+//                    case "CA" : {
+//                        PaymentHistory paymentHistory = new PaymentHistory(
+//                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+//                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
+//                                responseParam.get("method"),        //결제수단
+//                                responseParam.get("trdAmt"),        //결제금액
+//                                responseParam.get("trdDtm")         //거래일
+//                        );
+//                        savePaymentDataPort.insertPayment(paymentHistory);
+//                        break;
+//                    }
+//                    case "VA" : {
+//                        PaymentHistory paymentHistory = new PaymentHistory(
+//                                responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+//                                responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
+//                                responseParam.get("method"),        //결제수단
+//                                responseParam.get("trdAmt"),        //결제금액
+//                                responseParam.get("trdDtm"),        //거래일
+//                                responseParam.get("AcntPrintNm"),
+//                                responseParam.get("bankNm"),
+//                                responseParam.get("vAcntNo"),
+//                                responseParam.get("expireDt")
+//                        );
+//                        savePaymentDataPort.insertPayment(paymentHistory);
+//                        break;
+//                    }
+//                }
             } else {
                 resp = false;
             }
@@ -295,10 +295,14 @@ public class HFResultService {
         responseParams.put("csrcAmt", resultDataModel.getCsrcAmt());           //현금영수증 발급 금액(네이버페이)
 
         //AES256 복호화 필요 파라미터
-        String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "pointTrdAmt", "cardTrdAmt", "vtlAcntNo", "cphoneNo", "csrcAmt"};
+//        String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "pointTrdAmt", "cardTrdAmt", "vtlAcntNo", "cphoneNo", "csrcAmt"};
+        String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "vtlAcntNo"};
 
+
+//        savePaymentDataPort.insertPayment();
         connectHectoFinancialService.decryptParams(DECRYPT_PARAMS, responseParams, responseParams);
 
+        System.out.println("responseParams " + responseParams);
         return responseParams;
     }
 

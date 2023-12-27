@@ -9,6 +9,7 @@ public class PaymentDataModel {
     private String mchtTrdNo;
     private String trdDt;
     private String trdTm;
+    private String mchtParam;
     private String plainTrdAmt;
     private String plainMchtCustNm;
     private String plainCphoneNo;

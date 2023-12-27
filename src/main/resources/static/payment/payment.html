@@ -40,6 +40,10 @@
             success    : function (response) {
                 $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 console.log(JSON.stringify(response));
+                if (response.startDate != null) {
+                    document.querySelector("#startDate").value = response.startDate;
+                }
+
                 if (response.listSel) {
                     populateSelect(response.listSel);
                     response.listSel.forEach(e => {
@@ -51,10 +55,6 @@
                     }
                 } else {
                     console.error('enumProductTypes is missing in the response');
-                }
-
-                if (response.startDate != null) {
-                    document.querySelector("#startDate").value = response.startDate;
                 }
             },
             error      : function (xhr) {
@@ -288,10 +288,11 @@
             var trdAmt = document.getElementById("price").value;
             var plainMchtCustNm = ""
             var plainEmail = ""
-            var plainMchtCustId = ""
+            var plainMchtCustId = "";
             var mchtName = "드림시큐리티"
             var mchtEName = "dreamsecurity"
             var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
+            var mchtParam = "agencyId="+agencyId+"&siteId="+siteId + "&startDate=" + startDate + "&endDate="+endDate;
 
 
             var data = {
@@ -300,6 +301,7 @@
                 mchtTrdNo           : mchtTrdNo,
                 trdDt               : trdDt,
                 trdTm               : trdTm,
+                mchtParam           : mchtParam,
                 plainTrdAmt         : trdAmt,
                 plainMchtCustNm     : plainMchtCustNm,
                 plainCphoneNo       : "",
@@ -337,6 +339,7 @@
                         mchtTrdNo : mchtTrdNo,
                         mchtName  : mchtName,
                         mchtEName : mchtEName,
+                        mchtParam : mchtParam,
                         pmtPrdtNm : pmtPrdtNm,
                         trdAmt    : rsp.encParams.trdAmt,
                         mchtCustNm: rsp.encParams.mchtCustNm,

@@ -1,10 +1,12 @@
 package com.bizconnect.application.domain.model;
 
 import lombok.Getter;
+import lombok.ToString;
 
 import java.util.Date;
 
 @Getter
+@ToString
 public class PaymentHistory {
     private String tradeNum;
     private String hfTradeNum;
@@ -25,6 +27,7 @@ public class PaymentHistory {
     private String paymentStatus;
 
     private String vbankName;
+    private String vbankCode;
     private String vbankAccount;
     private String vbankExpireDate;
 
@@ -43,23 +46,36 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String paymentType,  String amount, String trDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType,  String amount, String trDate, Date startDate, Date endDate, String paymentStatus, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
+        this.agencyId = agencyId;
+        this.siteId = siteId;
         this.paymentType = paymentType;
         this.amount = amount;
         this.trDate = trDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.paymentStatus = paymentStatus;
+        this.regDate = regDate;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String paymentType,  String amount, String trDate, String rcptName, String vbankName, String vbankAccount, String vbankExpireDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType,  String amount, String trDate, String rcptName, String paymentStatus, String vbankName, String vbankCode, String vbankAccount, String vbankExpireDate, Date startDate, Date endDate, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
+        this.agencyId = agencyId;
+        this.siteId = siteId;
         this.paymentType = paymentType;
         this.amount = amount;
         this.trDate = trDate;
         this.rcptName = rcptName;
+        this.paymentStatus = paymentStatus;
         this.vbankName = vbankName;
+        this.vbankCode = vbankCode;
         this.vbankAccount = vbankAccount;
         this.vbankExpireDate = vbankExpireDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.regDate = regDate;
     }
 }

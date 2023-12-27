@@ -20,6 +20,7 @@ import javax.crypto.Cipher;
 import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
+import javax.persistence.Cache;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
@@ -96,7 +97,7 @@ public class AgencyController {
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        System.out.println(clientDataModel);
+        System.out.println("from client side [clientModel] : " + clientDataModel);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
 
         // EnumValues와 ResponseMessage 초기화
@@ -116,11 +117,19 @@ public class AgencyController {
             } else {
                 response.put("rateSel", null);
             }
-
+            //TODO
+            // 과거일 전달 시 reject 기능 추가 필요
             if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
-                //TODO
-                // 과거일 전달 시 reject 기능 추가 필요
-                response.put("startDate", sdf.format(clientDataModel.getStartDate()));
+                Calendar cal = Calendar.getInstance();
+                Date today = cal.getTime();
+
+                System.out.println(clientDataModel.getStartDate().before(today));
+                if(clientDataModel.getStartDate().before(today)){
+                    return null;
+                } else {
+                    System.out.println(sdf.format(clientDataModel.getStartDate()));
+                    response.put("startDate", sdf.format(clientDataModel.getStartDate()));
+                }
             } else if (clientInfo.getStartDate() != null) {
                 response.put("startDate", sdf.format(clientInfo.getStartDate()));
             } else {

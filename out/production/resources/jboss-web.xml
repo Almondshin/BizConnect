@@ -1,32 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jboss-web>
-	<server-instance>default-server</server-instance>
-	<context-root>/</context-root>
-<!--	<max-active-sessions>60</max-active-sessions>-->
-
-	<replication-config>
-<!--		<cache-name>web</cache-name>-->
-		<replication-trigger>SET</replication-trigger>
-		<replication-granularity>SESSION</replication-granularity>
-<!--		<use-jk>true</use-jk>-->
-<!--		<snapshot-mode>INSTANT</snapshot-mode>-->
-	</replication-config>
-
-<!--	<jboss-deployment-structure>-->
-<!--		<deployment>-->
-<!--			<exclusions>-->
-<!--				<module name="org.slf4j"/>-->
-<!--				<module name="org.slf4j.impl"/>-->
-<!--			</exclusions>-->
-<!--		</deployment>-->
-<!--	</jboss-deployment-structure>-->
-
-
-	<!--	<passivation-config>-->
-<!--		<use-session-passivation>false</use-session-passivation>-->
-<!--		<passivation-min-idle-time>60</passivation-min-idle-time>-->
-<!--		<passivation-max-idle-time>600</passivation-max-idle-time>-->
-<!--	</passivation-config>-->
-
+	<jboss-deployment-structure>
+		<deployment>
+			<exclusions>
+				<module name="org.slf4j"/>
+				<module name="org.slf4j.impl"/>
+			</exclusions>
+		</deployment>
+	</jboss-deployment-structure>
 </jboss-web>
 

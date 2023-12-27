@@ -47,6 +47,7 @@ public class ConnectHectoFinancialService {
                 if (respParam.containsKey(DECRYPT_PARAMS[i])) {
                     String aesCipher = (respParam.get(DECRYPT_PARAMS[i])).trim();
                     if (!("".equals(aesCipher))) {
+                        System.out.println("for each aesCipher : " + aesCipher);
                         byte[] aesCipherRaw = EncryptUtil.decodeBase64(aesCipher);
                         String aesPlain = new String(EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, aesCipherRaw), "UTF-8");
 

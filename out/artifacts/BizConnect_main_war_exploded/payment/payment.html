@@ -40,16 +40,21 @@
             success    : function (response) {
                 $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 console.log(JSON.stringify(response));
-                if (response.startDate != null){
-                    document.querySelector("#startDate").value = response.startDate;
-                }
                 if (response.listSel) {
                     populateSelect(response.listSel);
                     response.listSel.forEach(e => {
                         productTypeList.push(e.type, e.name, e.price, e.basicOffer, e.month);
                     })
+                    if (response.rateSel != null){
+                        document.querySelector("#productTypeSelect").value = response.rateSel;
+                        updateDataByProduct();
+                    }
                 } else {
                     console.error('enumProductTypes is missing in the response');
+                }
+
+                if (response.startDate != null) {
+                    document.querySelector("#startDate").value = response.startDate;
                 }
             },
             error      : function (xhr) {
@@ -79,6 +84,10 @@
             });
         }
 
+        function updateDisplayValue(displayElementId, valueElementId, value) {
+            document.getElementById(displayElementId).value = value.toLocaleString();
+            document.getElementById(valueElementId).value = value;
+        }
 
         function updateDataByProduct() {
             const select = document.getElementById('productTypeSelect');
@@ -155,13 +164,19 @@
             document.getElementById('endDate').value = formattedEndDate;
             document.getElementById('offer').value = Math.floor(offer);
             document.getElementById('price').value = Math.floor(price);
+
+            let offerValue = Math.floor(offer); // 실제 값
+            let priceValue = Math.floor(price); // 실제 값
+
+            updateDisplayValue('offerDisplay', 'offer', offerValue);
+            updateDisplayValue('priceDisplay', 'price', priceValue);
         }
 
 
         function result(data) {
             $.ajax({
                 type       : "POST",
-                url        : "https://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt",
                 contentType: "application/json",
                 dataType   : "json",
                 data       : JSON.stringify({"data": data}),
@@ -203,7 +218,7 @@
             }
             $.ajax({
                 type       : "POST",
-                url        : "https://127.0.0.1:9000/api/v1/hectoFinancial/VBank/cancel",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/VBank/cancel",
                 contentType: "application/json",
                 dataType   : "json",
                 data       : JSON.stringify(data),
@@ -224,7 +239,7 @@
             }
             $.ajax({
                 type       : "POST",
-                url        : "https://127.0.0.1:9000/api/v1/hectoFinancial/billKey/cancel",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/billKey/cancel",
                 contentType: "application/json",
                 dataType   : "json",
                 data       : JSON.stringify(data),
@@ -276,7 +291,7 @@
             var plainMchtCustId = ""
             var mchtName = "드림시큐리티"
             var mchtEName = "dreamsecurity"
-            var pmtPrdtNm = productName +" (" + startDate + " - " + endDate + ")";
+            var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
 
 
             var data = {
@@ -301,7 +316,7 @@
 
             $.ajax({
                 type       : "POST",
-                url        : "https://127.0.0.1:9000/api/v1/hectoFinancial/init/encrypt",
+                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/init/encrypt",
                 contentType: "application/json",
                 dataType   : "json",
                 // data: $("#STPG_payForm").serialize(),
@@ -325,8 +340,8 @@
                         pmtPrdtNm : pmtPrdtNm,
                         trdAmt    : rsp.encParams.trdAmt,
                         mchtCustNm: rsp.encParams.mchtCustNm,
-                        notiUrl   : "https://127.0.0.1:9000/api/v1/hectoFinancial/result/noti",
-                        nextUrl   : "https://127.0.0.1:9000/api/v1/hectoFinancial/result/next",
+                        notiUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/noti",
+                        nextUrl   : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/next",
                         cancUrl   : "http://example.com/cancUrl",
                         pktHash   : rsp.hashCipher,
                         ui        : {
@@ -371,11 +386,17 @@
     </tr>
     <tr>
         <th>제공 건수</th>
-        <td><input readonly="readonly" type="text" id="offer" name="offer" value="0"></td>
+        <td>
+            <input type="text" id="offerDisplay" readonly="readonly" value="0">
+            <input type="hidden" id="offer" name="offer" >
+        </td>
     </tr>
     <tr>
         <th>결제 금액</th>
-        <td><input readonly="readonly" type="text" id="price" name="price" value="0"></td>
+        <td>
+            <input type="text" id="priceDisplay" readonly="readonly" value="0">
+            <input type="hidden" id="price" name="price">
+        </td>
     </tr>
     <tr>
         <td>

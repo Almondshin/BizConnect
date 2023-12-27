@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 import java.util.Date;
 
 @Entity
-@Table(name = "PAYMENT_HISTORY_TEST")
+@Table(name = "PAYMENTHISTORY_TEST")
 @Data
 public class PaymentJpaEntity {
 
@@ -39,10 +39,8 @@ public class PaymentJpaEntity {
 
     @Column(name = "TR_DATE")
     private Date trDate;
-    @NotBlank
     @Column(name = "START_DATE", nullable = false)
     private Date startDate;
-    @NotBlank
     @Column(name = "END_DATE", nullable = false)
     private Date endDate;
 

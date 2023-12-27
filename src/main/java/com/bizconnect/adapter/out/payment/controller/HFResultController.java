@@ -3,6 +3,7 @@ package com.bizconnect.adapter.out.payment.controller;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.service.HFResultService;
+import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -23,8 +24,11 @@ import java.util.Map;
 public class HFResultController {
     private final HFResultService hfResultService;
 
-    public HFResultController(HFResultService hfResultService) {
+    private final PaymentUseCase paymentUseCase;
+
+    public HFResultController(HFResultService hfResultService, PaymentUseCase paymentUseCase) {
         this.hfResultService = hfResultService;
+        this.paymentUseCase = paymentUseCase;
     }
 
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리
@@ -34,10 +38,41 @@ public class HFResultController {
         HFDataModel card = new HFDataModel(request.getParameter("mchtTrdNo"), request.getParameter("pointTrdNo"), request.getParameter("trdNo"), request.getParameter("vtlAcntNo"), request.getParameter("mchtCustId"), request.getParameter("fnNm"), request.getParameter("method"), request.getParameter("authNo"), request.getParameter("trdAmt"), request.getParameter("pointTrdAmt"), request.getParameter("cardTrdAmt"), request.getParameter("outRsltMsg"), request.getParameter("mchtParam"), request.getParameter("outStatCd"), request.getParameter("outRsltCd"), request.getParameter("intMon"), request.getParameter("authDt"), request.getParameter("mchtId"), request.getParameter("fnCd"));
         HFDataModel vbank = new HFDataModel(request.getParameter("mchtTrdNo"), request.getParameter("trdNo"), request.getParameter("vtlAcntNo"), request.getParameter("mchtCustId"), request.getParameter("fnNm"), request.getParameter("method"), request.getParameter("trdAmt"), request.getParameter("outRsltMsg"), request.getParameter("mchtParam"), request.getParameter("expireDt"), request.getParameter("outStatCd"), request.getParameter("outRsltCd"), request.getParameter("authDt"), request.getParameter("mchtId"), request.getParameter("fnCd"));
         String data = "";
+
+        HFResultDataModel resultDataModel = new HFResultDataModel();
+        resultDataModel.setMchtId(request.getParameter("mchtId"));
+        resultDataModel.setOutStatCd(request.getParameter("outStatCd"));
+        resultDataModel.setOutRsltCd(request.getParameter("outRsltCd"));
+        resultDataModel.setOutRsltMsg(request.getParameter("outRsltMsg"));
+        resultDataModel.setMethod(request.getParameter("method"));
+        resultDataModel.setMchtTrdNo(request.getParameter("mchtTrdNo"));
+        resultDataModel.setMchtCustId(request.getParameter("mchtCustId"));
+        resultDataModel.setTrdNo(request.getParameter("trdNo"));
+        resultDataModel.setTrdAmt(request.getParameter("trdAmt"));
+        resultDataModel.setMchtParam(request.getParameter("mchtParam"));
+        resultDataModel.setAuthDt(request.getParameter("authDt"));
+        resultDataModel.setAuthNo(request.getParameter("authNo"));
+        resultDataModel.setReqIssueDt(request.getParameter("reqIssueDt"));
+        resultDataModel.setIntMon(request.getParameter("intMon"));
+        resultDataModel.setFnNm(request.getParameter("fnNm"));
+        resultDataModel.setFnCd(request.getParameter("fnCd"));
+        resultDataModel.setPointTrdNo(request.getParameter("pointTrdNo"));
+        resultDataModel.setPointTrdAmt(request.getParameter("pointTrdAmt"));
+        resultDataModel.setCardTrdAmt(request.getParameter("cardTrdAmt"));
+        resultDataModel.setVtlAcntNo(request.getParameter("vtlAcntNo"));
+        resultDataModel.setExpireDt(request.getParameter("expireDt"));
+        resultDataModel.setCphoneNo(request.getParameter("cphoneNo"));
+        resultDataModel.setBillKey(request.getParameter("billKey"));
+        resultDataModel.setCsrcAmt(request.getParameter("csrcAmt"));
+
+        System.out.println("hfResultService.decryptData(resultDataModel) 복호화됨 :  " + hfResultService.decryptData(resultDataModel));
+
         if (method.equals("card")) {
+            paymentUseCase.insertPaymentData(hfResultService.decryptData(resultDataModel));
             data = hfResultService.nextCardData(card);
         }
         if (method.equals("vbank")) {
+            paymentUseCase.insertPaymentData(hfResultService.decryptData(resultDataModel));
             data = hfResultService.nextVBankData(vbank);
         }
         response.sendRedirect("http://127.0.0.1:9000/end.html?data=" + data);
@@ -64,12 +99,10 @@ public class HFResultController {
     public String result(HttpServletRequest request, @RequestBody Map<String, String> requestMap) throws IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         String encodeData = requestMap.get("data");
-
         String decodeData = new String(Base64.getDecoder().decode(encodeData.getBytes()), StandardCharsets.UTF_8);
 
         Map<String, String> resMap = objectMapper.readValue(decodeData, new TypeReference<>() {
         });
-
 
         if (resMap == null) {
             HFResultDataModel resultDataModel = new HFResultDataModel();
@@ -99,7 +132,7 @@ public class HFResultController {
             resultDataModel.setCsrcAmt(request.getParameter("csrcAmt"));
             resMap = hfResultService.decryptData(resultDataModel);
         }
-
+        System.out.println("resMap : "  + resMap);
         return objectMapper.writeValueAsString(resMap);
     }
 

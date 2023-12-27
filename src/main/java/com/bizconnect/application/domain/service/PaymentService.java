@@ -3,22 +3,28 @@ package com.bizconnect.application.domain.service;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.in.PaymentUseCase;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.bizconnect.application.port.out.SavePaymentDataPort;
 import org.springframework.stereotype.Service;
 
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 
 @Service
 public class PaymentService implements PaymentUseCase {
 
-    private  final Constant constant;
-//    Logger logger = LoggerFactory.getLogger("HFInitController");
+    private final Constant constant;
+    //    Logger logger = LoggerFactory.getLogger("HFInitController");
+    private final SavePaymentDataPort savePaymentDataPort;
 
-    public PaymentService(Constant constant) {
+    public PaymentService(Constant constant, SavePaymentDataPort savePaymentDataPort) {
         this.constant = constant;
+        this.savePaymentDataPort = savePaymentDataPort;
     }
 
     @Override
@@ -76,17 +82,101 @@ public class PaymentService implements PaymentUseCase {
     }
 
     @Override
-    public void insertPaymentData() {
+    public void insertPaymentData(Map<String, String> resultMap) {
 
+        String[] pairs = resultMap.get("mchtParam").split("&");
+
+        String agencyId = null;
+        String siteId = null;
+        Date startDate = null;
+        Date endDate = null;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        Calendar cal = Calendar.getInstance();
+        Date regDate = cal.getTime();
+
+        try {
+            // 분리된 문자열 처리
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                if (keyValue.length == 2) {
+                    switch (keyValue[0]) {
+                        case "agencyId":
+                            agencyId = keyValue[1];
+                            break;
+                        case "siteId":
+                            siteId = keyValue[1];
+                            break;
+                        case "startDate":
+
+                            startDate = sdf.parse(keyValue[1]);
+
+                            break;
+                        case "endDate":
+                            endDate = sdf.parse(keyValue[1]);
+                            break;
+                    }
+                }
+            }
+
+
+        System.out.println("resultMap service : " + resultMap);
+
+        switch (resultMap.get("method")) {
+            case "card": {
+                PaymentHistory paymentHistory = new PaymentHistory(
+                        resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                        resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
+                        agencyId,
+                        siteId,
+                        resultMap.get("method"),        //결제수단
+                        resultMap.get("trdAmt"),        //결제금액
+                        resultMap.get("authDt"),         //거래일
+                        startDate,
+                        endDate,
+                        "Y",
+                        regDate
+                );
+                savePaymentDataPort.insertPayment(paymentHistory);
+                break;
+            }
+            case "vbank": {
+                PaymentHistory paymentHistory = new PaymentHistory(
+                        resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                        resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
+                        agencyId,
+                        siteId,
+                        resultMap.get("method"),      //결제수단
+                        resultMap.get("trdAmt"),        //결제금액
+                        resultMap.get("authDt"),         //거래일
+                        "(주)드림시큐리티",
+                        "M",
+                        resultMap.get("fnNm"),
+                        resultMap.get("fnCd"),
+                        resultMap.get("vtlAcntNo"),
+                        sdf.format(originalFormat.parse(resultMap.get("expireDt"))),
+                        startDate,
+                        endDate,
+                        regDate
+                );
+                System.out.println("vBank paymentHistory : " + paymentHistory);
+                savePaymentDataPort.insertPayment(paymentHistory);
+                break;
+            }
+
+        }
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();
         map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
-        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustId());
+        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
         map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
         map.put("email", paymentDataModel.getPlainEmail());
-        map.put("mchtCustId", paymentDataModel.getPlainMchtCustNm());
+        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
         map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
         map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
         map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
@@ -94,6 +184,7 @@ public class PaymentService implements PaymentUseCase {
         map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
         map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
         map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
+        map.put("mchtParam", paymentDataModel.getMchtParam());
         return map;
     }
 

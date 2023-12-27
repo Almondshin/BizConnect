@@ -15,8 +15,7 @@
     {
       "name": "hectofinancial.c-o-n-n-t-i-m-e-o-u-t",
       "type": "java.lang.Integer",
-      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant",
-      "defaultValue": 0
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
     },
     {
       "name": "hectofinancial.l-i-c-e-n-s-e-k-e-y",
@@ -36,8 +35,7 @@
     {
       "name": "hectofinancial.r-e-a-d-t-i-m-e-o-u-t",
       "type": "java.lang.Integer",
-      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant",
-      "defaultValue": 0
+      "sourceType": "com.bizconnect.adapter.out.payment.config.hectofinancial.Constant"
     },
     {
       "name": "hectofinancial.s-e-r-v-e-r-u-r-l",
