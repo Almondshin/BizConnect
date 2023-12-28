@@ -2,6 +2,7 @@ package com.bizconnect.application.exceptions.enums;
 
 public enum EnumSiteStatus {
     UNREGISTERED("U", "제휴사 미등록"),
+    DUPLICATE("D", "이미 등록된 사이트"),
     PENDING("P" , "제휴사 승인대기"),
     ACTIVE("A" , "사이트 사용중"),
     SUSPENDED("S" , "사이트 이용정지");

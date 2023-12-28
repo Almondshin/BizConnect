@@ -6,10 +6,9 @@ import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
 import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
-import com.bizconnect.application.exceptions.exceptions.ResponseMessage;
+import com.bizconnect.application.exceptions.exceptions.handler.ResponseMessage;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import org.apache.catalina.util.ToStringUtil;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -17,16 +16,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.crypto.Cipher;
-import javax.crypto.NoSuchPaddingException;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
-import javax.persistence.Cache;
 import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.NoSuchAlgorithmException;
-import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -47,10 +40,25 @@ public class AgencyController {
     */
     @PostMapping("/getSiteStatus")
     public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataModel clientDataModel) {
-//        agencyUseCase.checkAgencyId(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SUCCESS.getCode(), "Success", EnumSiteStatus.UNREGISTERED.getCode(), clientDataModel.getSiteId());
+        Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId()));
+
+        String siteStatus = EnumSiteStatus.UNREGISTERED.getCode();
+        EnumResultCode resultCode = EnumResultCode.SUCCESS;
+
+        if (info.isPresent()) {
+            ClientDataModel clientInfo = info.get();
+            siteStatus = clientInfo.getSiteStatus();
+            if (siteStatus.equals(EnumSiteStatus.PENDING.getCode())) {
+                resultCode = EnumResultCode.PendingApprovalStatus;
+            } else if (siteStatus.equals(EnumSiteStatus.SUSPENDED.getCode())) {
+                resultCode = EnumResultCode.SuspendedSiteId;
+            }
+        }
+
+        ResponseMessage responseMessage = new ResponseMessage(resultCode.getCode(), resultCode.getValue(), siteStatus, clientDataModel.getSiteId());
         return ResponseEntity.ok(responseMessage);
     }
+
 
     /*
     전제 조건: 제휴사는 이용기관 등록정보중 필수정보를 암호화하여 드림시큐리티에 전송
@@ -97,9 +105,7 @@ public class AgencyController {
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        System.out.println("from client side [clientModel] : " + clientDataModel);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
-
         // EnumValues와 ResponseMessage 초기화
         List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
         Map<String, Object> response = new HashMap<>();
@@ -108,6 +114,15 @@ public class AgencyController {
         // RequestBody로 받은 파라미터 값을 우선 함.
         if (info.isPresent()) {
             ClientDataModel clientInfo = info.get();
+            // 제휴사 승인 대기 시 ErrorMessage Response
+            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())){
+                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingApprovalStatus.getCode(), EnumResultCode.PendingApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                return ResponseEntity.ok(responseMessage);
+                // 사이트 이용 정지 시 ErrorMessage Response
+            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())){
+                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SuspendedSiteId.getCode(), EnumResultCode.SuspendedSiteId.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                return ResponseEntity.ok(responseMessage);
+            }
             if((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null){
                 response.put("rateSel", clientDataModel.getRateSel());
             } else if (clientInfo.getRateSel() != null && clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty()){
@@ -117,17 +132,13 @@ public class AgencyController {
             } else {
                 response.put("rateSel", null);
             }
-            //TODO
-            // 과거일 전달 시 reject 기능 추가 필요
             if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
                 Calendar cal = Calendar.getInstance();
                 Date today = cal.getTime();
-
-                System.out.println(clientDataModel.getStartDate().before(today));
                 if(clientDataModel.getStartDate().before(today)){
-                    return null;
+                    ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.IllegalArgument.getCode(), EnumResultCode.IllegalArgument.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                    return ResponseEntity.ok(responseMessage);
                 } else {
-                    System.out.println(sdf.format(clientDataModel.getStartDate()));
                     response.put("startDate", sdf.format(clientDataModel.getStartDate()));
                 }
             } else if (clientInfo.getStartDate() != null) {

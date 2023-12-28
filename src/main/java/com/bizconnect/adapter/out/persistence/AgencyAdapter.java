@@ -7,6 +7,7 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
@@ -45,6 +46,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         if (foundSiteId.isPresent()) {
             throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
         }
+        client.setSiteStatus(EnumSiteStatus.PENDING.getCode());
         agencyRepository.save(convertToEntity(agency, client, settleManager));
     }
 
@@ -75,7 +77,9 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         agencyJpaEntity.setCompanySite(client.getCompanySite());
         agencyJpaEntity.setEmail(client.getEmail());
         agencyJpaEntity.setRateSel(client.getRateSel());
+        agencyJpaEntity.setSiteStatus(client.getSiteStatus());
         agencyJpaEntity.setStartDate(client.getStartDate());
+        agencyJpaEntity.setEndDate(client.getEndDate());
 
         agencyJpaEntity.setSettleManagerName(settleManager.getSettleManagerName());
         agencyJpaEntity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
@@ -101,7 +105,9 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         clientDataModel.setCompanySite(entity.getCompanySite());
         clientDataModel.setEmail(entity.getEmail());
         clientDataModel.setRateSel(entity.getRateSel());
+        clientDataModel.setSiteStatus(entity.getSiteStatus());
         clientDataModel.setStartDate(entity.getStartDate());
+        clientDataModel.setEndDate(entity.getEndDate());
 
         clientDataModel.setSettleManagerName(entity.getSettleManagerName());
         clientDataModel.setSettleManagerPhoneNumber(entity.getSettleManagerPhoneNumber());

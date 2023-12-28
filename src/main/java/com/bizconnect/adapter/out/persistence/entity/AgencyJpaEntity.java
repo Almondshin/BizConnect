@@ -44,8 +44,13 @@ public class AgencyJpaEntity {
 	private String email;
 	@Column(name = "RATE_SEL")
 	private String rateSel;
+	@Column(name = "SITE_STATUS")
+	private String siteStatus;
+
 	@Column(name = "START_DATE")
 	private Date startDate;
+	@Column(name = "END_DATE")
+	private Date endDate;
 
 	@Column(name = "SETTLE_MANAGER_NAME")
 	private String settleManagerName;

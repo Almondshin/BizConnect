@@ -87,7 +87,9 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getCompanySite(),
                 clientDataModel.getEmail(),
                 clientDataModel.getRateSel(),
-                clientDataModel.getStartDate()
+                clientDataModel.getSiteStatus(),
+                clientDataModel.getStartDate(),
+                clientDataModel.getEndDate()
         );
     }
 
