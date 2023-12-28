@@ -20,6 +20,9 @@ public class PaymentJpaEntity {
     @Column(name = "TRADE_NUM", nullable = false)
     private String tradeNum;
     @NotBlank
+    @Column(name = "PG_TRADE_NUM", nullable = false)
+    private String pgTradeNum;
+    @NotBlank
     @Column(name = "AGENCY_ID", nullable = false)
     private String agencyId;
     @NotBlank

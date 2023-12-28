@@ -43,11 +43,14 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     private PaymentJpaEntity paymentHistoryConvertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();
         entity.setTradeNum(paymentHistory.getTradeNum());
+        entity.setPgTradeNum(paymentHistory.getHfTradeNum());
         entity.setAgencyId(paymentHistory.getAgencyId());
         entity.setSiteId(paymentHistory.getSiteId());
         entity.setPaymentType(paymentHistory.getPaymentType());
         entity.setRateSel(paymentHistory.getRateSel());
         entity.setAmount(paymentHistory.getAmount());
+        entity.setOffer(paymentHistory.getOffer());
+        entity.setTrDate(paymentHistory.getTrDate());
         entity.setStartDate(paymentHistory.getStartDate());
         entity.setEndDate(paymentHistory.getEndDate());
         entity.setRcptName(paymentHistory.getRcptName());
@@ -63,6 +66,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     private PaymentHistoryDataModel convertToPaymentHistoryDomain(PaymentJpaEntity entity) {
         PaymentHistoryDataModel paymentHistoryDataModel = new PaymentHistoryDataModel();
         paymentHistoryDataModel.setTradeNum(entity.getTradeNum());
+        paymentHistoryDataModel.setPgTradeNum(entity.getPgTradeNum());
         paymentHistoryDataModel.setAgencyId(entity.getAgencyId());
         paymentHistoryDataModel.setSiteId(entity.getSiteId());
         paymentHistoryDataModel.setPaymentType(entity.getPaymentType());

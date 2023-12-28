@@ -249,6 +249,11 @@
             })
         }
 
+        function encryptWithAES(text) {
+            const passphrase = 'your-secret-passphrase';
+            return CryptoJS.AES.encrypt(text, passphrase).toString();
+        }
+
 
         function pay(type) {
             var curr_date = new Date();
@@ -284,7 +289,6 @@
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
 
-
             var trdAmt = document.getElementById("price").value;
             var plainMchtCustNm = ""
             var plainEmail = ""
@@ -292,9 +296,11 @@
             var mchtName = "드림시큐리티"
             var mchtEName = "dreamsecurity"
             var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
-            var mchtParam = "agencyId="+agencyId+"&siteId="+siteId + "&startDate=" + startDate + "&endDate="+endDate;
+            //암호화 대상 파라미터
+            var mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
 
 
+            console.log("selectedOption : " + selectedOption)
             var data = {
                 mchtId              : mchtId,
                 method              : method,

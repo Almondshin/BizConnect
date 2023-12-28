@@ -90,8 +90,11 @@ public class PaymentService implements PaymentUseCase {
         String siteId = null;
         Date startDate = null;
         Date endDate = null;
+        String rateSel = null;
+        String offer = null;
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+
         Calendar cal = Calendar.getInstance();
         Date regDate = cal.getTime();
 
@@ -108,63 +111,71 @@ public class PaymentService implements PaymentUseCase {
                             siteId = keyValue[1];
                             break;
                         case "startDate":
-
                             startDate = sdf.parse(keyValue[1]);
-
                             break;
                         case "endDate":
                             endDate = sdf.parse(keyValue[1]);
+                            break;
+                        case "rateSel":
+                            rateSel = keyValue[1];
+                            break;
+                        case "offer":
+                            offer = keyValue[1];
                             break;
                     }
                 }
             }
 
 
-        System.out.println("resultMap service : " + resultMap);
+            System.out.println("resultMap service : " + resultMap);
 
-        switch (resultMap.get("method")) {
-            case "card": {
-                PaymentHistory paymentHistory = new PaymentHistory(
-                        resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                        resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
-                        agencyId,
-                        siteId,
-                        resultMap.get("method"),        //결제수단
-                        resultMap.get("trdAmt"),        //결제금액
-                        resultMap.get("authDt"),         //거래일
-                        startDate,
-                        endDate,
-                        "Y",
-                        regDate
-                );
-                savePaymentDataPort.insertPayment(paymentHistory);
-                break;
-            }
-            case "vbank": {
-                PaymentHistory paymentHistory = new PaymentHistory(
-                        resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                        resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
-                        agencyId,
-                        siteId,
-                        resultMap.get("method"),      //결제수단
-                        resultMap.get("trdAmt"),        //결제금액
-                        resultMap.get("authDt"),         //거래일
-                        "(주)드림시큐리티",
-                        "M",
-                        resultMap.get("fnNm"),
-                        resultMap.get("fnCd"),
-                        resultMap.get("vtlAcntNo"),
-                        sdf.format(originalFormat.parse(resultMap.get("expireDt"))),
-                        startDate,
-                        endDate,
-                        regDate
-                );
-                System.out.println("vBank paymentHistory : " + paymentHistory);
-                savePaymentDataPort.insertPayment(paymentHistory);
-                break;
-            }
+            switch (resultMap.get("method")) {
+                case "card": {
+                    PaymentHistory paymentHistory = new PaymentHistory(
+                            resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                            resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
+                            agencyId,
+                            siteId,
+                            resultMap.get("method"),        //결제수단
+                            rateSel,                        //결제상품
+                            resultMap.get("trdAmt"),        //결제금액
+                            offer,
+                            originalFormat.parse(resultMap.get("authDt")),        //거래일
+                            startDate,
+                            endDate,
+                            "Y",
+                            regDate
+                    );
+                    savePaymentDataPort.insertPayment(paymentHistory);
+                    break;
+                }
+                case "vbank": {
+                    PaymentHistory paymentHistory = new PaymentHistory(
+                            resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
+                            resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
+                            agencyId,
+                            siteId,
+                            resultMap.get("method"),        //결제수단
+                            rateSel,                        //결제상품
+                            resultMap.get("trdAmt"),        //결제금액
+                            offer,
+                            originalFormat.parse(resultMap.get("authDt")),        //거래일
+                            "(주)드림시큐리티",
+                            "M",
+                            resultMap.get("fnNm"),
+                            resultMap.get("fnCd"),
+                            resultMap.get("vtlAcntNo"),
+                            sdf.format(originalFormat.parse(resultMap.get("expireDt"))),
+                            startDate,
+                            endDate,
+                            regDate
+                    );
+                    System.out.println("vBank paymentHistory : " + paymentHistory);
+                    savePaymentDataPort.insertPayment(paymentHistory);
+                    break;
+                }
 
-        }
+            }
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }

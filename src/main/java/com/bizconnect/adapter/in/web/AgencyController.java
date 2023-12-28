@@ -31,7 +31,7 @@ import java.text.SimpleDateFormat;
 import java.util.*;
 
 @RestController
-@RequestMapping("/agency")
+@RequestMapping(value = {"/agency", "/"})
 public class AgencyController {
 
     private final AgencyUseCase agencyUseCase;

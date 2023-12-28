@@ -11,6 +11,7 @@ import java.util.Date;
 @ToString
 public class PaymentHistoryDataModel {
     private String tradeNum;
+    private String pgTradeNum;
     private String agencyId;
     private String siteId;
 

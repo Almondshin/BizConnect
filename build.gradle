@@ -9,12 +9,21 @@ group = 'com.BizConnect'
 version = '0.0.1-SNAPSHOT'
 
 
-bootWar {
+/*bootWar {
     archiveBaseName = 'BizConnect'
     archiveFileName = 'BizConnect.war'
     archiveVersion = '0.0.0'
+}*/
+bootWar {
+    enabled = false
+    archiveClassifier = ''
 }
 
+war {
+    enabled = true
+    archiveClassifier = ''
+//    archiveFileName = "eziok_admin"
+}
 
 java {
     sourceCompatibility = '11'

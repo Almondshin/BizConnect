@@ -17,9 +17,9 @@ public class PaymentHistory {
     private String rateSel;
     private String amount;
     private String offer;
-    private int useCount;
+    private String useCount;
 
-    private String trDate;
+    private Date trDate;
     private Date startDate;
     private Date endDate;
 
@@ -46,13 +46,15 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType,  String amount, String trDate, Date startDate, Date endDate, String paymentStatus, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, Date trDate, Date startDate, Date endDate, String paymentStatus, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.paymentType = paymentType;
+        this.rateSel = rateSel;
         this.amount = amount;
+        this.offer = offer;
         this.trDate = trDate;
         this.startDate = startDate;
         this.endDate = endDate;
@@ -60,13 +62,15 @@ public class PaymentHistory {
         this.regDate = regDate;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType,  String amount, String trDate, String rcptName, String paymentStatus, String vbankName, String vbankCode, String vbankAccount, String vbankExpireDate, Date startDate, Date endDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, Date trDate, String rcptName, String paymentStatus, String vbankName, String vbankCode, String vbankAccount, String vbankExpireDate, Date startDate, Date endDate, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.paymentType = paymentType;
+        this.rateSel = rateSel;
         this.amount = amount;
+        this.offer = offer;
         this.trDate = trDate;
         this.rcptName = rcptName;
         this.paymentStatus = paymentStatus;
