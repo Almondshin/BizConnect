@@ -38,8 +38,7 @@
             dataType   : "json",
             data       : JSON.stringify({agencyId: agencyId, siteId: siteId, rateSel: rateSel, startDate: startDate}),
             success    : function (response) {
-                $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
-                console.log(JSON.stringify(response));
+                // $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 if (response.startDate != null) {
                     document.querySelector("#startDate").value = response.startDate;
                 }
@@ -58,7 +57,7 @@
                 }
             },
             error      : function (xhr) {
-                $("#paymentInfo").find("#paymentInfo_result").val(xhr.responseText);
+                // $("#paymentInfo").find("#paymentInfo_result").val(xhr.responseText);
                 console.log(xhr.responseText);
             }
         })
@@ -146,9 +145,6 @@
                 }
             }
 
-
-
-            // Set date to the 0th day of the next month to get the last day of the current month
             endDate = new Date(endDate.getFullYear(), endDate.getMonth() + 1, 0);
 
             var year = endDate.getFullYear();
@@ -165,88 +161,6 @@
 
             updateDisplayValue('offerDisplay', 'offer', offerValue);
             updateDisplayValue('priceDisplay', 'price', priceValue);
-        }
-
-
-        function result(data) {
-            $.ajax({
-                type       : "POST",
-                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt",
-                contentType: "application/json",
-                dataType   : "json",
-                data       : JSON.stringify({"data": data}),
-                success    : function (res) {
-                    console.log(res);
-                    if (res.method === "vbank") {
-                        $("#vbank_proc").find("#orgTrdNo").val(res.trdNo)
-                        $("#vbank_proc").find("#cnclAmt").val(res.trdAmt)
-                        $("#vbank_proc").find("#refundBankCd").val(res.fnCd)
-                        $("#vbank_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
-                    } else {
-                        $("#card_proc").find("#orgTrdNo").val(res.trdNo)
-                        $("#card_proc").find("#cnclAmt").val(res.trdAmt)
-                        $("#card_proc").find("#pay_result").val(JSON.stringify(res, null, 4))
-                    }
-                }
-            })
-
-            // var xhr = new XMLHttpRequest();
-            // xhr.open("POST", "http://127.0.0.1:9000/api/v1/hectoFinancial/result/decrypt", false);
-            // xhr.setRequestHeader("Content-Type","application/json");
-            // xhr.send(JSON.stringify({data: data}))
-        }
-
-        function vbankCancel() {
-            var mchtId = $("#mchtId").val();
-            var orgTrdNo = $("#orgTrdNo").val();
-            var cnclAmt = $("#cnclAmt").val();
-            var refundBankCd = $("#refundBankCd").val();
-            var refundAcntNo = $("#refundAcntNo").val();
-            var refundDpstrNm = $("#refundDpstrNm").val();
-            var data = {
-                mchtId       : mchtId,
-                orgTrdNo     : orgTrdNo,
-                cnclAmt      : cnclAmt,
-                refundBankCd : refundBankCd,
-                refundAcntNo : refundAcntNo,
-                refundDpstrNm: refundDpstrNm
-            }
-            $.ajax({
-                type       : "POST",
-                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/VBank/cancel",
-                contentType: "application/json",
-                dataType   : "json",
-                data       : JSON.stringify(data),
-                success    : function (res) {
-                    $("#vbank_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
-                }
-            })
-        }
-
-        function cardCancel() {
-            var mchtId = $("#card_proc").find("#mchtId").val();
-            var orgTrdNo = $("#card_proc").find("#orgTrdNo").val();
-            var cnclAmt = $("#card_proc").find("#cnclAmt").val();
-            var data = {
-                mchtId  : mchtId,
-                orgTrdNo: orgTrdNo,
-                cnclAmt : cnclAmt,
-            }
-            $.ajax({
-                type       : "POST",
-                url        : "http://127.0.0.1:9000/api/v1/hectoFinancial/billKey/cancel",
-                contentType: "application/json",
-                dataType   : "json",
-                data       : JSON.stringify(data),
-                success    : function (res) {
-                    $("#card_proc").find("#cancel_result").val(JSON.stringify(res, null, 4))
-                }
-            })
-        }
-
-        function encryptWithAES(text) {
-            const passphrase = 'your-secret-passphrase';
-            return CryptoJS.AES.encrypt(text, passphrase).toString();
         }
 
 
@@ -294,8 +208,6 @@
             //암호화 대상 파라미터
             var mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption + "&offer=" + document.getElementById("offer").value;
 
-
-            console.log()
             var data = {
                 mchtId              : mchtId,
                 method              : method,
@@ -368,9 +280,9 @@
 </head>
 <body>
 <h1>결제요청</h1>
-<div id="paymentInfo">
-    <textarea id="paymentInfo_result" cols="75" rows="4"></textarea>
-</div>
+<!--<div id="paymentInfo">-->
+<!--    <textarea id="paymentInfo_result" cols="75" rows="4"></textarea>-->
+<!--</div>-->
 <table class="info_tbl" summary="충전제 요금 안내표입니다.">
     <tr>
         <th>상품 선택</th>
@@ -407,7 +319,7 @@
             <div style="display: flex; height: 500px" id="vbank_proc">
                 <div style="display: inline-flex; flex-direction: column; height: 100%;">
                     <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
-                    <textarea id="pay_result" cols="75" rows="30"></textarea>
+<!--                    <textarea id="pay_result" cols="75" rows="30"></textarea>-->
                 </div>
             </div>
         </td>
@@ -415,7 +327,7 @@
             <div style="display: flex; height: 500px" id="card_proc">
                 <div style="display: inline-flex; flex-direction: column; height: 100%;">
                     <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
-                    <textarea id="pay_result" cols="75" rows="30"></textarea>
+<!--                    <textarea id="pay_result" cols="75" rows="30"></textarea>-->
                 </div>
             </div>
         </td>

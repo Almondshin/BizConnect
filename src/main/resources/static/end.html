@@ -9,10 +9,10 @@ result
 <script>
     var params = new URLSearchParams(location.search);
     var data   = params.get("data");
-    console.log(" script data : " + data);
-    top.opener.result(data);
+    // console.log(" script data : " + data);
+    // top.opener.result(data);
     // opener.parent.result(data);
-    // self.close();
+    self.close();
 </script>
 
 </body>
