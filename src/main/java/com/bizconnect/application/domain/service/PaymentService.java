@@ -188,16 +188,20 @@ public class PaymentService implements PaymentUseCase {
 
         String[] pairs = paymentDataModel.getMchtParam().split("&");
 
-        String agencyId = "";
-        String siteId = "";
-        String rateSel = "";
-        int offer, price;
-        int cliOffer = 0;
-        int cliPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
+        int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
         Calendar lastDateByCal = Calendar.getInstance();
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+
+        String agencyId = "";
+        String siteId = "";
+        String rateSel = "";
+        int offer;
+        double price;
+        int clientOffer = 0;
+        String endDate = "";
+        String clientEndDate = "";
         try {
             for (String pair : pairs) {
                 String[] keyValue = pair.split("=");
@@ -218,11 +222,11 @@ public class PaymentService implements PaymentUseCase {
                             break;
                         }
                         case "endDate": {
-                            endDateByCal.setTime(sdf.parse(keyValue[1]));
+                            clientEndDate = keyValue[1];
                             break;
                         }
                         case "offer": {
-                            cliOffer = Integer.parseInt(keyValue[1]);
+                            clientOffer = Integer.parseInt(keyValue[1]);
                             break;
                         }
                     }
@@ -241,18 +245,27 @@ public class PaymentService implements PaymentUseCase {
         int dataMonth = productType.getMonth();
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
-        price = (int) (((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
+        price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
 
         if (productType.getMonth() == 1) {
             if (durations <= 15) {
-                price = (int) (((basePrice * durations / lastDate) + basePrice) * 1.1);
+                endDateByCal.add(Calendar.MONTH, productType.getMonth() + 1);
+                price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
             } else {
                 offer = (baseOffer * durations / lastDate);
-                price = (int) ((basePrice * durations / lastDate) * 1.1);
+                price = (((double) (basePrice * durations) / lastDate) * 1.1);
             }
+        } else {
+            endDateByCal.add(Calendar.MONTH, productType.getMonth() - 1);
+            System.out.println("endDateByCal.get(Calendar.MONTH) : " + endDateByCal.get(Calendar.MONTH));
+            System.out.println("endDateByCal.getTime() : " + endDateByCal.getTime());
+            System.out.println(" productType.getMonth() - 1 : " +  (productType.getMonth() - 1));
         }
-        if(offer != cliOffer || price != cliPrice){
-            throw new ValueException(offer, cliOffer, price, cliPrice, agencyId,siteId);
+        endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
+        endDate = sdf.format(endDateByCal.getTime());
+
+        if(offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)){
+            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId,siteId);
         }
     }
 

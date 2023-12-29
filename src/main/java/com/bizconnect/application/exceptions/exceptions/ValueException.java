@@ -7,17 +7,21 @@ import lombok.ToString;
 @ToString
 public class ValueException extends RuntimeException{
     private final int offer;
-    private final int cliOffer;
+    private final int clientOffer;
     private final int price;
-    private final int cliPrice;
+    private final int clientPrice;
+    private final String endDate;
+    private final String clientEndDate;
     private final String agencyId;
     private final String siteId;
 
-    public ValueException(int offer, int cliOffer, int price, int cliPrice, String agencyId, String siteId) {
+    public ValueException(int offer, int clientOffer, int price, int clientPrice, String endDate, String clientEndDate, String agencyId, String siteId) {
         this.offer = offer;
-        this.cliOffer = cliOffer;
+        this.clientOffer = clientOffer;
         this.price = price;
-        this.cliPrice = cliPrice;
+        this.clientPrice = clientPrice;
+        this.endDate = endDate;
+        this.clientEndDate = clientEndDate;
         this.agencyId = agencyId;
         this.siteId = siteId;
     }

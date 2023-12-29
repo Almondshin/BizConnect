@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(ValueException.class)
     public void handleValueException(ValueException ex) {
-        log.error("Price or Offer doesn't match: " + ex.toString());
+        log.error("결제 요청 정보가 일치하지 않습니다. " + ex.toString());
         // 여기서 추가적인 로그 메시지나 처리를 추가할 수 있습니다.
     }
 }
