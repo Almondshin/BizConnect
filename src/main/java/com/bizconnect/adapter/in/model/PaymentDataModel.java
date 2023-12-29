@@ -1,8 +1,10 @@
 package com.bizconnect.adapter.in.model;
 
 import lombok.Getter;
+import lombok.ToString;
 
 @Getter
+@ToString
 public class PaymentDataModel {
     private String mchtId;
     private String method;

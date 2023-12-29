@@ -140,7 +140,7 @@
                     price = ((basePrice * durations / lastDate) + basePrice) * 1.1;
                 } else {
                     endDate.setMonth(endDate.getMonth());
-                    offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
+                    offer = baseOffer * durations / lastDate;
                     price = (basePrice * durations / lastDate) * 1.1;
                 }
             }
@@ -206,7 +206,7 @@
             var mchtEName = "dreamsecurity"
             var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
             //암호화 대상 파라미터
-            var mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption + "&offer=" + document.getElementById("offer").value;
+            var mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
 
             var data = {
                 mchtId              : mchtId,
@@ -316,18 +316,16 @@
     </tr>
     <tr>
         <td>
-            <div style="display: flex; height: 500px" id="vbank_proc">
+            <div style="display: flex; height: 20px" id="vbank_proc">
                 <div style="display: inline-flex; flex-direction: column; height: 100%;">
                     <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
-<!--                    <textarea id="pay_result" cols="75" rows="30"></textarea>-->
                 </div>
             </div>
         </td>
         <td>
-            <div style="display: flex; height: 500px" id="card_proc">
+            <div style="display: flex; height: 20px" id="card_proc">
                 <div style="display: inline-flex; flex-direction: column; height: 100%;">
                     <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
-<!--                    <textarea id="pay_result" cols="75" rows="30"></textarea>-->
                 </div>
             </div>
         </td>

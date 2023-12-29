@@ -12,5 +12,7 @@ public interface PaymentUseCase {
     String aes256EncryptEcb(PaymentDataModel paymentDataModel);
     HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel);
     void insertPaymentData(Map<String, String> resultDataModel);
+
+    void checkMchtParams(PaymentDataModel paymentDataModel);
 }
 

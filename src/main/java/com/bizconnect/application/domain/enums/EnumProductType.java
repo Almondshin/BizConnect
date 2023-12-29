@@ -1,5 +1,6 @@
 package com.bizconnect.application.domain.enums;
 
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import lombok.Getter;
 
 @Getter
@@ -30,5 +31,14 @@ public enum EnumProductType {
         this.price = price;
         this.basicOffer = basicOffer;
         this.month = month;
+    }
+
+    public static EnumProductType getProductTypeByString(String type) {
+        for (EnumProductType productType : EnumProductType.values()) {
+            if (productType.getType().equals(type)) {
+                return productType;
+            }
+        }
+        throw new IllegalArgumentException("Invalid productType: " + type);
     }
 }

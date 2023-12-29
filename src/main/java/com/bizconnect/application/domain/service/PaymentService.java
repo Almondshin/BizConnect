@@ -3,7 +3,9 @@ package com.bizconnect.application.domain.service;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.PaymentHistory;
+import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import org.springframework.stereotype.Service;
@@ -178,6 +180,79 @@ public class PaymentService implements PaymentUseCase {
             }
         } catch (ParseException e) {
             throw new RuntimeException(e);
+        }
+    }
+
+    @Override
+    public void checkMchtParams(PaymentDataModel paymentDataModel) {
+
+        String[] pairs = paymentDataModel.getMchtParam().split("&");
+
+        String agencyId = "";
+        String siteId = "";
+        String rateSel = "";
+        int offer, price;
+        int cliOffer = 0;
+        int cliPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
+        Calendar lastDateByCal = Calendar.getInstance();
+        Calendar startDateByCal = Calendar.getInstance();
+        Calendar endDateByCal = Calendar.getInstance();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        try {
+            for (String pair : pairs) {
+                String[] keyValue = pair.split("=");
+                if (keyValue.length == 2) {
+                    switch (keyValue[0]) {
+                        case "agencyId":
+                            agencyId = keyValue[1];
+                            break;
+                        case "siteId":
+                            siteId = keyValue[1];
+                            break;
+                        case "rateSel": {
+                            rateSel = keyValue[1];
+                            break;
+                        }
+                        case "startDate": {
+                            startDateByCal.setTime(sdf.parse(keyValue[1]));
+                            break;
+                        }
+                        case "endDate": {
+                            endDateByCal.setTime(sdf.parse(keyValue[1]));
+                            break;
+                        }
+                        case "offer": {
+                            cliOffer = Integer.parseInt(keyValue[1]);
+                            break;
+                        }
+                    }
+                }
+            }
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
+        // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
+        EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
+        int lastDate = lastDateByCal.getActualMaximum(Calendar.DATE);
+        int startDate = startDateByCal.get(Calendar.DATE);
+        int durations = lastDate - startDate + 1;
+        int baseOffer = productType.getBasicOffer() / productType.getMonth();
+        int basePrice = productType.getPrice() / productType.getMonth();
+        int dataMonth = productType.getMonth();
+
+        offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
+        price = (int) (((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
+
+        if (productType.getMonth() == 1) {
+            if (durations <= 15) {
+                price = (int) (((basePrice * durations / lastDate) + basePrice) * 1.1);
+            } else {
+                offer = (baseOffer * durations / lastDate);
+                price = (int) ((basePrice * durations / lastDate) * 1.1);
+            }
+        }
+        if(offer != cliOffer || price != cliPrice){
+            throw new ValueException(offer, cliOffer, price, cliPrice, agencyId,siteId);
         }
     }
 
