@@ -5,6 +5,7 @@
     <title>Title</title>
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             var today = new Date();
@@ -68,7 +69,7 @@
             const select = document.getElementById('productTypeSelect'); // select 요소를 선택합니다.
 
             productTypes.forEach((product) => {
-                const option = document.createElement('option'); // 새 option 요소를 생성합니다.
+                let option = document.createElement('option'); // 새 option 요소를 생성합니다.
                 option.textContent = `${product.name} - ${parseInt(product.price).toLocaleString()}원`; // 표시될 텍스트를 설정합니다.
                 option.value = product.type; // option의 value를 설정합니다.
 
@@ -92,15 +93,10 @@
             const select = document.getElementById('productTypeSelect');
             const selectedOption = select.options[select.selectedIndex];
 
-            const dataMonth = selectedOption.getAttribute('data-month');
             const dataType = selectedOption.getAttribute('data-type');
+            const dataMonth = selectedOption.getAttribute('data-month');
 
-
-            let offer;
-            let price;
-
-            let baseOffer;
-            let basePrice;
+            let offer, price, baseOffer, basePrice;
 
             const startDate = new Date(document.getElementById('startDate').value);
             let endDate = new Date(startDate);
@@ -109,7 +105,7 @@
             const durations = lastDate - startDate.getDate() + 1;
 
 
-            if (dataType == null) {
+            if (dataType == "") {
                 baseOffer = 0
                 basePrice = 0
             } else if (dataType.includes('lite')) {
@@ -162,6 +158,18 @@
             updateDisplayValue('priceDisplay', 'price', priceValue);
         }
 
+        function AES_CBC_256_encrypt(data, base64Key, base64Iv) {
+            var key = CryptoJS.enc.Base64.parse(base64Key);
+            var iv = CryptoJS.enc.Base64.parse(base64Iv);
+
+            var encrypted = CryptoJS.AES.encrypt(data, key, {
+                iv: iv,
+                mode: CryptoJS.mode.CBC,
+                padding: CryptoJS.pad.Pkcs7
+            });
+
+            return encrypted.toString();
+        }
 
         function pay(type) {
             var curr_date = new Date();
@@ -204,8 +212,19 @@
             var mchtName = "드림시큐리티"
             var mchtEName = "dreamsecurity"
             var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
+
             //암호화 대상 파라미터
-            var mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
+            const mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
+
+            const aesSecretKey = "your-secret-key";
+            // mchtParam 암호화
+
+            // 사용 예시
+            const base64Key = 'tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8='; // Base64 인코딩된 키
+            const base64Iv = '/SwvI/9aT7RiMmfm8CfP4g=='; // Base64 인코딩된 IV
+
+            var encryptedMchtParam = AES_CBC_256_encrypt(mchtParam, base64Key, base64Iv);
+            console.log(encryptedMchtParam);
 
             var data = {
                 mchtId              : mchtId,
@@ -213,7 +232,7 @@
                 mchtTrdNo           : mchtTrdNo,
                 trdDt               : trdDt,
                 trdTm               : trdTm,
-                mchtParam           : mchtParam,
+                mchtParam           : encryptedMchtParam,
                 plainTrdAmt         : trdAmt,
                 plainMchtCustNm     : plainMchtCustNm,
                 plainCphoneNo       : "",
@@ -287,7 +306,7 @@
         <th>상품 선택</th>
         <td>
             <select id="productTypeSelect">
-                <option value="-" name="">기본</option>
+                <option value="" name="" data-type="" data-month="">기본</option>
             </select>
         </td>
     </tr>

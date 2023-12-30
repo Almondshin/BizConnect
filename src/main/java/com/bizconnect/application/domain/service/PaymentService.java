@@ -10,12 +10,12 @@ import com.bizconnect.application.port.in.PaymentUseCase;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class PaymentService implements PaymentUseCase {
@@ -185,7 +185,6 @@ public class PaymentService implements PaymentUseCase {
 
     @Override
     public void checkMchtParams(PaymentDataModel paymentDataModel) {
-
         String[] pairs = paymentDataModel.getMchtParam().split("&");
 
         int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
@@ -202,6 +201,15 @@ public class PaymentService implements PaymentUseCase {
         int clientOffer = 0;
         String endDate = "";
         String clientEndDate = "";
+
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2){
+                if (keyValue[0].equals("s")
+            }
+        }
+
+
         try {
             for (String pair : pairs) {
                 String[] keyValue = pair.split("=");
@@ -268,6 +276,38 @@ public class PaymentService implements PaymentUseCase {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId,siteId);
         }
     }
+
+
+    private String decrypt(String encryptedData) {
+        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
+        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
+
+        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
+        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+            byte[] plainBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
+            return new String(plainBytes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Map<String, String> parseParams(String[] pairs) {
+        Map<String, String> parsedParams = new HashMap<>();
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                parsedParams.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return parsedParams;
+    }
+
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();
