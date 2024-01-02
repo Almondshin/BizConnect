@@ -7,6 +7,8 @@ import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import javax.persistence.Cache;
@@ -22,7 +24,7 @@ public class HFResultService {
     private final SavePaymentDataPort savePaymentDataPort;
 
     private final ConnectHectoFinancialService connectHectoFinancialService;
-//    Logger logger = LoggerFactory.getLogger("HFResultController");
+    Logger logger = LoggerFactory.getLogger("HFResultController");
 
     public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, ConnectHectoFinancialService connectHectoFinancialService) {
         this.constant = constant;
@@ -134,11 +136,11 @@ public class HFResultService {
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
-//            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString()));
+            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+//            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString()));
         } finally {
-//            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
-            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
+            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+//            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
         }
 
         return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"), RES_PARAMS);
@@ -189,11 +191,11 @@ public class HFResultService {
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
-//            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString()));
+            logger.error("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+//            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString()));
         } finally {
-//            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
-            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
+            logger.info("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+//            System.out.println(("[" + RES_PARAMS.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
         }
 
         return responseMessage(hashCipher, RES_PARAMS.get("mchtTrdNo"), RES_PARAMS.get("pktHash"), RES_PARAMS.get("outStatCd"), RES_PARAMS);
@@ -210,8 +212,8 @@ public class HFResultService {
          그리고 정상적으로 데이터를 처리한 경우에도 헥토파이낸셜에서 응답을 받지 못한 경우는 결제결과가 중복해서 나갈 수 있으므로 관련한 처리도 고려되어야 합니다
          */
         if (hashCipher.equals(pktHash)) {
-//            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
-            System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]"));
+            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
+//            System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]"));
             if ("0021".equals(outStatCd)) {
 //                switch (responseParam.get("method")){
 //                    case "CA" : {
@@ -245,19 +247,19 @@ public class HFResultService {
                 resp = false;
             }
         } else {
-//            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
-            System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]"));
+            logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
+//            System.out.println(("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]"));
             // resp = notiHashError(noti); // 실패 처리
         }
 
         // OK, FAIL문자열은 헥토파이낸셜로 전송되어야 하는 값이므로 변경하거나 삭제하지마십시오.
         if (resp) {
-//            logger.info("[" + mchtTrdNo + "][Result] OK");
-            System.out.println(("[" + mchtTrdNo + "][Result] OK"));
+            logger.info("[" + mchtTrdNo + "][Result] OK");
+//            System.out.println(("[" + mchtTrdNo + "][Result] OK"));
             return "OK";
         } else {
-//            logger.info("[" + mchtTrdNo + "][Result] FAIL");
-            System.out.println(("[" + mchtTrdNo + "][Result] FAIL"));
+            logger.info("[" + mchtTrdNo + "][Result] FAIL");
+//            System.out.println(("[" + mchtTrdNo + "][Result] FAIL"));
             return "FAIL";
         }
     }
@@ -299,7 +301,6 @@ public class HFResultService {
         String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "vtlAcntNo"};
 
 
-//        savePaymentDataPort.insertPayment();
         connectHectoFinancialService.decryptParams(DECRYPT_PARAMS, responseParams, responseParams);
 
         System.out.println("responseParams " + responseParams);

@@ -8,20 +8,22 @@ import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import javax.crypto.Cipher;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 @Service
 public class PaymentService implements PaymentUseCase {
 
     private final Constant constant;
-    //    Logger logger = LoggerFactory.getLogger("HFInitController");
+    Logger logger = LoggerFactory.getLogger("HFInitController");
     private final SavePaymentDataPort savePaymentDataPort;
 
     public PaymentService(Constant constant, SavePaymentDataPort savePaymentDataPort) {
@@ -41,16 +43,15 @@ public class PaymentService implements PaymentUseCase {
                 paymentDataModel.getPlainTrdAmt()
         ).getHashPlain() + licenseKey;
 
-        System.out.println("aes256EncryptEcb hashPlain : " + hashPlain);
         String hashCipher = "";
         /** SHA256 해쉬 처리 */
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
-//            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+//            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
         } finally {
-//            logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+            logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
 
         return hashCipher;
@@ -60,7 +61,6 @@ public class PaymentService implements PaymentUseCase {
     public HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel) {
         String aesKey = constant.AES256_KEY;
         HashMap<String, String> params = convertToMap(paymentDataModel);
-        System.out.println("encodeBase64 params : " + params);
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();
@@ -72,13 +72,13 @@ public class PaymentService implements PaymentUseCase {
                     String aesCipher = EncryptUtil.encodeBase64(aesCipherRaw);
 
                     params.put(key, aesCipher);//암호화된 데이터로 세팅
-//                    logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
-                    System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
+                    logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
+//                    System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
         } catch (Exception e) {
-//            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
-            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
+            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
+//            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
         }
         return params;
     }
@@ -128,8 +128,6 @@ public class PaymentService implements PaymentUseCase {
                 }
             }
 
-
-            System.out.println("resultMap service : " + resultMap);
 
             switch (resultMap.get("method")) {
                 case "card": {
@@ -186,8 +184,6 @@ public class PaymentService implements PaymentUseCase {
     @Override
     public void checkMchtParams(PaymentDataModel paymentDataModel) {
 
-        String[] pairs = paymentDataModel.getMchtParam().split("&");
-
         int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
         Calendar lastDateByCal = Calendar.getInstance();
         Calendar startDateByCal = Calendar.getInstance();
@@ -202,6 +198,9 @@ public class PaymentService implements PaymentUseCase {
         int clientOffer = 0;
         String endDate = "";
         String clientEndDate = "";
+
+        String[] pairs = decrypt(paymentDataModel.getMchtParam()).split("&");
+
         try {
             for (String pair : pairs) {
                 String[] keyValue = pair.split("=");
@@ -244,30 +243,65 @@ public class PaymentService implements PaymentUseCase {
         int basePrice = productType.getPrice() / productType.getMonth();
         int dataMonth = productType.getMonth();
 
+        //TODO
+        // offer, Price  조겅이 필요함
+
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
         price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
 
         if (productType.getMonth() == 1) {
             if (durations <= 15) {
-                endDateByCal.add(Calendar.MONTH, productType.getMonth() + 1);
+                endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth());
+                offer = (baseOffer) + (baseOffer * durations / lastDate);
                 price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
             } else {
                 offer = (baseOffer * durations / lastDate);
                 price = (((double) (basePrice * durations) / lastDate) * 1.1);
             }
         } else {
-            endDateByCal.add(Calendar.MONTH, productType.getMonth() - 1);
-            System.out.println("endDateByCal.get(Calendar.MONTH) : " + endDateByCal.get(Calendar.MONTH));
-            System.out.println("endDateByCal.getTime() : " + endDateByCal.getTime());
-            System.out.println(" productType.getMonth() - 1 : " +  (productType.getMonth() - 1));
+            endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth() - 1);
         }
+
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
         endDate = sdf.format(endDateByCal.getTime());
+        System.out.println("마지막endDateByCal.getTime() : " + sdf.format(endDateByCal.getTime()));
 
-        if(offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)){
-            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId,siteId);
+        if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
+            throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }
     }
+
+
+    private String decrypt(String encryptedData) {
+        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
+        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
+
+        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
+        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        try {
+            Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+            cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+            byte[] plainBytes = cipher.doFinal(Base64.getDecoder().decode(encryptedData));
+            return new String(plainBytes);
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    private Map<String, String> parseParams(String[] pairs) {
+        Map<String, String> parsedParams = new HashMap<>();
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                parsedParams.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return parsedParams;
+    }
+
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();

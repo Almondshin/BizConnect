@@ -84,8 +84,8 @@
         function goProduct() {
             const agencyId = document.getElementById('agencyId').value;
             const siteId = document.getElementById('siteId').value;
-
-            window.location.href = "http://127.0.0.1:9000/request.html?agencyId="+agencyId+"&siteId="+siteId;
+            var profileSpecificUrl = 'http://127.0.0.1:9000'
+            window.location.href = profileSpecificUrl+"/agency/payment.html?agencyId="+agencyId+"&siteId="+siteId;
         }
 
     </script>

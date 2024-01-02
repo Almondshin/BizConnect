@@ -7,6 +7,7 @@ import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -20,9 +21,12 @@ import java.util.Base64;
 import java.util.Map;
 
 @RestController
-@RequestMapping("/api/v1/hectoFinancial/result")
+@RequestMapping(value = {"/agency/payment/api/result", "/payment/api/result"})
 public class HFResultController {
     private final HFResultService hfResultService;
+
+    @Value("${" + "${spring.profiles.active}" + ".url}")
+    private String profileSpecificUrl;
 
     private final PaymentUseCase paymentUseCase;
 
@@ -75,7 +79,11 @@ public class HFResultController {
             paymentUseCase.insertPaymentData(hfResultService.decryptData(resultDataModel));
             data = hfResultService.nextVBankData(vbank);
         }
-        response.sendRedirect("http://127.0.0.1:9000/end.html?data=" + data);
+
+        if(profileSpecificUrl.equals("local")){
+            response.sendRedirect(profileSpecificUrl + "/end.html?data=" + data);
+        }
+        response.sendRedirect(profileSpecificUrl + "/agency/end.html?data=" + data);
     }
 
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가

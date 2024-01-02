@@ -11,7 +11,7 @@ import javax.validation.constraints.NotBlank;
 import java.util.Date;
 
 @Entity
-@Table(name = "PAYMENTHISTORY_TEST")
+@Table(name = "AGENCY_PAYMENT_HISTORY")
 @Data
 public class PaymentJpaEntity {
 

@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class HttpClientUtil {
-//	private Logger logger = LoggerFactory.getLogger("trans");
+	private Logger logger = LoggerFactory.getLogger("trans");
 	
 	public String sendApi(String targetUrl, Map<String, Object> param, int connTimeout, int readTimeout) {
 		
@@ -26,8 +26,8 @@ public class HttpClientUtil {
 		JSONObject tmp = jsonObj.has("params") ? jsonObj.getJSONObject("params") : null;
 		String trdNo = (tmp == null) ? "" : tmp.getString("mchtTrdNo");
 		
-//		logger.info("["+trdNo+"]=========================START SEND API=========================");
-		System.out.println(("["+trdNo+"]=========================START SEND API========================="));
+		logger.info("["+trdNo+"]=========================START SEND API=========================");
+//		System.out.println(("["+trdNo+"]=========================START SEND API========================="));
 		
 		HttpsURLConnection httpsURLConnection = null;
 		
@@ -57,10 +57,10 @@ public class HttpClientUtil {
 			
 			URL url = new URL( targetUrl );
 			
-//			logger.info("["+trdNo+"][API Send URL]" + url);
-//			logger.info("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout);
-			System.out.println(("["+trdNo+"][API Send URL]" + url));
-			System.out.println(("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout));
+			logger.info("["+trdNo+"][API Send URL]" + url);
+			logger.info("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout);
+//			System.out.println(("["+trdNo+"][API Send URL]" + url));
+//			System.out.println(("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout));
 			
 			httpsURLConnection = (HttpsURLConnection)url.openConnection();
 			httpsURLConnection.setDoInput(true);
@@ -74,8 +74,8 @@ public class HttpClientUtil {
 			sendData = jsonObj.toString();
 			
 			//보낼 데이터
-//			logger.info("["+trdNo+"][Send Data]" + sendData);
-			System.out.println(("["+trdNo+"][Send Data]" + sendData));
+			logger.info("["+trdNo+"][Send Data]" + sendData);
+//			System.out.println(("["+trdNo+"][Send Data]" + sendData));
 
 			OutputStream os = null;
 			os = httpsURLConnection.getOutputStream();
@@ -84,8 +84,8 @@ public class HttpClientUtil {
 			os.flush();
 			os.close();
 			
-//			logger.info("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
-			System.out.println("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
+			logger.info("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
+//			System.out.println("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
 			if(httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
 				DataInputStream in = new DataInputStream(httpsURLConnection.getInputStream());
 				ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -106,14 +106,14 @@ public class HttpClientUtil {
 				
 				resData = new String(resMessage, "UTF-8");
 				
-//				logger.info("["+trdNo+"][Response Data]" + resData);
-//				logger.info("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
-				System.out.println("["+trdNo+"][Response Data]" + resData);
-				System.out.println("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
+				logger.info("["+trdNo+"][Response Data]" + resData);
+				logger.info("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
+//				System.out.println("["+trdNo+"][Response Data]" + resData);
+//				System.out.println("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
 				
 			}else {
-//				logger.error("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
-				System.out.println("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
+				logger.error("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
+//				System.out.println("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
 
 				Map<String,String> params = new HashMap<String, String>();
 				params.put("outStatCd", "0031");
@@ -132,8 +132,8 @@ public class HttpClientUtil {
 			
 			httpsURLConnection.disconnect();
 		}catch (Exception e) {
-//			logger.error("["+trdNo+"][HTTP Connect Error]" + e.toString());
-			System.out.println("["+trdNo+"][HTTP Connect Error]" + e.toString());
+			logger.error("["+trdNo+"][HTTP Connect Error]" + e.toString());
+//			System.out.println("["+trdNo+"][HTTP Connect Error]" + e.toString());
 
 			Map<String,String> params = new HashMap<String, String>();
 			params.put("outStatCd", "0031");
@@ -153,8 +153,8 @@ public class HttpClientUtil {
 				httpsURLConnection.disconnect();
 		}
 		
-//		logger.info("["+trdNo+"]=========================END SEND API=========================");
-		System.out.println("["+trdNo+"]=========================END SEND API=========================");
+		logger.info("["+trdNo+"]=========================END SEND API=========================");
+//		System.out.println("["+trdNo+"]=========================END SEND API=========================");
 
 		return resData;
 	}

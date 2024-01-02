@@ -2,14 +2,29 @@ package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.application.port.in.PaymentUseCase;
+import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONObject;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.IvParameterSpec;
+import javax.crypto.spec.SecretKeySpec;
+import java.security.InvalidAlgorithmParameterException;
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.Map;
+
+@Slf4j
 @RestController
-@RequestMapping("/api/v1/hectoFinancial/init")
+@RequestMapping(value = {"/agency/payment/api", "/payment/api"})
 public class PaymentController {
     private final PaymentUseCase paymentUseCase;
 

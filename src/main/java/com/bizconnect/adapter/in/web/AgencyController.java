@@ -9,6 +9,8 @@ import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdExcept
 import com.bizconnect.application.exceptions.exceptions.handler.ResponseMessage;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -23,11 +25,15 @@ import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+@Slf4j
 @RestController
 @RequestMapping(value = {"/agency", "/"})
 public class AgencyController {
 
     private final AgencyUseCase agencyUseCase;
+
+    @Value("${" + "${spring.profiles.active}" + ".url}")
+    private String profileSpecificUrl;
 
     public AgencyController(AgencyUseCase agencyUseCase) {
         this.agencyUseCase = agencyUseCase;
@@ -88,7 +94,7 @@ public class AgencyController {
 
         ObjectMapper objectMapper = new ObjectMapper();
         ClientDataModel info = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
-        System.out.println(info);
+
         agencyUseCase.registerAgency(info);
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
@@ -150,6 +156,7 @@ public class AgencyController {
         // responseMessage에 나머지 정보 추가
         response.put("resultCode", EnumResultCode.SUCCESS.getCode());
         response.put("resultMsg", EnumResultCode.SUCCESS.getValue());
+        response.put("profileUrl", profileSpecificUrl);
         response.put("siteId", clientDataModel.getSiteId());
         response.put("listSel", enumValues);
 
@@ -158,20 +165,7 @@ public class AgencyController {
 
     @PostMapping("/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
-
-        /*
-        {
-            "agencyId": "agency1",
-            "siteId": "test1234",
-            "startDate": "2023-12-01",
-            "endDate": "2023-12-31",
-            "salesPrice": "10000",
-            "rateSel": "lite_1m_200",
-            "method": "card"
-        }
-        */
         agencyUseCase.getPaymentInfo(clientDataModel);
-
         return ResponseEntity.ok(null);
     }
 

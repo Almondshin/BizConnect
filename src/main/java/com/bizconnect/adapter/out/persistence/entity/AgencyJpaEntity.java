@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Date;
 
 @Entity
-@Table(name = "AGENCY_TEST")
+@Table(name = "AGENCY_INFO")
 @Data
 public class AgencyJpaEntity {
 
