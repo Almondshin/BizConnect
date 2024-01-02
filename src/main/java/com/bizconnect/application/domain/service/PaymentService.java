@@ -185,7 +185,6 @@ public class PaymentService implements PaymentUseCase {
     public void checkMchtParams(PaymentDataModel paymentDataModel) {
 
         int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
-        Calendar lastDateByCal = Calendar.getInstance();
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
@@ -236,7 +235,7 @@ public class PaymentService implements PaymentUseCase {
         }
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
-        int lastDate = lastDateByCal.getActualMaximum(Calendar.DATE);
+        int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
         int durations = lastDate - startDate + 1;
         int baseOffer = productType.getBasicOffer() / productType.getMonth();
