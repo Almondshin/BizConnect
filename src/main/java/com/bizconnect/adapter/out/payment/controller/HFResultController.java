@@ -25,7 +25,7 @@ import java.util.Map;
 public class HFResultController {
     private final HFResultService hfResultService;
 
-    @Value("${" + "${spring.profiles.active}" + ".url}")
+    @Value("${external.url}")
     private String profileSpecificUrl;
 
     private final PaymentUseCase paymentUseCase;

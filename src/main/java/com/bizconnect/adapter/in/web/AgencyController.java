@@ -32,7 +32,7 @@ public class AgencyController {
 
     private final AgencyUseCase agencyUseCase;
 
-    @Value("${" + "${spring.profiles.active}" + ".url}")
+    @Value("${external.url}")
     private String profileSpecificUrl;
 
     public AgencyController(AgencyUseCase agencyUseCase) {
@@ -123,10 +123,14 @@ public class AgencyController {
             // 제휴사 승인 대기 시 ErrorMessage Response
             if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())){
                 ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingApprovalStatus.getCode(), EnumResultCode.PendingApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                //로그 필요
+                System.out.println(EnumResultCode.PendingApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() +  " 사이트 상태 : " +  clientInfo.getSiteStatus());
                 return ResponseEntity.ok(responseMessage);
                 // 사이트 이용 정지 시 ErrorMessage Response
             } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())){
                 ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SuspendedSiteId.getCode(), EnumResultCode.SuspendedSiteId.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                //로그 필요
+                System.out.println(EnumResultCode.SuspendedSiteId.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() +  " 사이트 상태 : " +  clientInfo.getSiteStatus());
                 return ResponseEntity.ok(responseMessage);
             }
             if((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null){

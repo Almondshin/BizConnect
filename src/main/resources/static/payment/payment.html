@@ -61,11 +61,13 @@
                     }
                 } else {
                     console.error('enumProductTypes is missing in the response');
+                    alert(JSON.stringify(response));
                 }
             },
             error      : function (xhr) {
                 // $("#paymentInfo").find("#paymentInfo_result").val(xhr.responseText);
                 console.log(xhr.responseText);
+                window.history.back();
             }
         })
 
