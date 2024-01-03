@@ -260,11 +260,8 @@ public class PaymentService implements PaymentUseCase {
         } else {
             endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth() - 1);
         }
-
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
         endDate = sdf.format(endDateByCal.getTime());
-        System.out.println("마지막endDateByCal.getTime() : " + sdf.format(endDateByCal.getTime()));
-
         if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }

@@ -111,13 +111,6 @@
 
             const durations = lastDate - startDate.getDate() + 1;
 
-            console.log(startDate);
-            console.log(endDate);
-            console.log(lastDate);
-
-            //TODO
-            // offer, Price  조겅이 필요함
-
             if (dataType == "") {
                 baseOffer = 0
                 basePrice = 0
@@ -138,19 +131,21 @@
             offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
             price = ((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1;
 
-            if (dataMonth === '12') {
-                endDate.setFullYear(endDate.getFullYear() + 1);
-                endDate.setMonth(endDate.getMonth() - 1);
-            } else if (dataMonth === '6') {
-                endDate.setMonth(endDate.getMonth() + 5);
-            } else {
+            if (dataMonth === '1') {
                 if (durations <= 15) {
-                    endDate.setMonth(endDate.getMonth() + 1);
+                    endDate = new Date(endDate.getFullYear(), endDate.getMonth() + Number(dataMonth) + 1 , 0);
                     offer = (baseOffer) + (baseOffer * durations / lastDate);
                     price = ((basePrice * durations / lastDate) + basePrice) * 1.1;
                 } else {
                     offer = baseOffer * durations / lastDate;
                     price = (basePrice * durations / lastDate) * 1.1;
+                }
+            } else {
+                if (dataMonth === '12') {
+                    endDate.setFullYear(endDate.getFullYear() + 1);
+                    endDate.setMonth(endDate.getMonth() - 1);
+                } else if (dataMonth === '6') {
+                    endDate.setMonth(endDate.getMonth() + 5);
                 }
             }
 
@@ -262,14 +257,8 @@
                 url        : profileSpecificUrl + "/agency/payment/api/encrypt",
                 contentType: "application/json",
                 dataType   : "json",
-                // data: $("#STPG_payForm").serialize(),
                 data   : JSON.stringify(data),
                 success: function (rsp) {
-                    //암호화 된 파라미터 세팅
-                    // for (name in rsp.encParams) {
-                    //     $('#STPG_payForm [name=' + name + ']').val(rsp.encParams[name]);
-                    // }
-                    console.log("콘솔 메소드 확인용 : " + method)
                     //가맹점 -> 세틀뱅크로 결제 요청
                     SETTLE_PG.pay({
                         env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
@@ -308,9 +297,6 @@
 </head>
 <body>
 <h1>결제요청</h1>
-<!--<div id="paymentInfo">-->
-<!--    <textarea id="paymentInfo_result" cols="75" rows="4"></textarea>-->
-<!--</div>-->
 <table class="info_tbl" summary="충전제 요금 안내표입니다.">
     <tr>
         <th>상품 선택</th>
