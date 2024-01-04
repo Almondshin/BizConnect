@@ -4,7 +4,6 @@ import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumProductType;
-import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
@@ -17,18 +16,19 @@ import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 @Service
 public class PaymentService implements PaymentUseCase {
 
     private final Constant constant;
     Logger logger = LoggerFactory.getLogger("HFInitController");
-    private final SavePaymentDataPort savePaymentDataPort;
 
-    public PaymentService(Constant constant, SavePaymentDataPort savePaymentDataPort) {
+    public PaymentService(Constant constant) {
         this.constant = constant;
-        this.savePaymentDataPort = savePaymentDataPort;
     }
 
     @Override
@@ -49,7 +49,6 @@ public class PaymentService implements PaymentUseCase {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
             logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-//            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
         } finally {
             logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
@@ -73,112 +72,12 @@ public class PaymentService implements PaymentUseCase {
 
                     params.put(key, aesCipher);//암호화된 데이터로 세팅
                     logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
-//                    System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
         } catch (Exception e) {
             logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
-//            System.out.println("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
         }
         return params;
-    }
-
-    @Override
-    public void insertPaymentData(Map<String, String> resultMap) {
-
-        String[] pairs = resultMap.get("mchtParam").split("&");
-
-        String agencyId = null;
-        String siteId = null;
-        Date startDate = null;
-        Date endDate = null;
-        String rateSel = null;
-        String offer = null;
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
-
-        Calendar cal = Calendar.getInstance();
-        Date regDate = cal.getTime();
-
-        try {
-            // 분리된 문자열 처리
-            for (String pair : pairs) {
-                String[] keyValue = pair.split("=");
-                if (keyValue.length == 2) {
-                    switch (keyValue[0]) {
-                        case "agencyId":
-                            agencyId = keyValue[1];
-                            break;
-                        case "siteId":
-                            siteId = keyValue[1];
-                            break;
-                        case "startDate":
-                            startDate = sdf.parse(keyValue[1]);
-                            break;
-                        case "endDate":
-                            endDate = sdf.parse(keyValue[1]);
-                            break;
-                        case "rateSel":
-                            rateSel = keyValue[1];
-                            break;
-                        case "offer":
-                            offer = keyValue[1];
-                            break;
-                    }
-                }
-            }
-
-
-            switch (resultMap.get("method")) {
-                case "card": {
-                    PaymentHistory paymentHistory = new PaymentHistory(
-                            resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                            resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
-                            agencyId,
-                            siteId,
-                            resultMap.get("method"),        //결제수단
-                            rateSel,                        //결제상품
-                            resultMap.get("trdAmt"),        //결제금액
-                            offer,
-                            originalFormat.parse(resultMap.get("authDt")),        //거래일
-                            startDate,
-                            endDate,
-                            "Y",
-                            regDate
-                    );
-                    savePaymentDataPort.insertPayment(paymentHistory);
-                    break;
-                }
-                case "vbank": {
-                    PaymentHistory paymentHistory = new PaymentHistory(
-                            resultMap.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                            resultMap.get("trdNo"),         //헥토파이낸셜 TradeNum
-                            agencyId,
-                            siteId,
-                            resultMap.get("method"),        //결제수단
-                            rateSel,                        //결제상품
-                            resultMap.get("trdAmt"),        //결제금액
-                            offer,
-                            originalFormat.parse(resultMap.get("authDt")),        //거래일
-                            "(주)드림시큐리티",
-                            "M",
-                            resultMap.get("fnNm"),
-                            resultMap.get("fnCd"),
-                            resultMap.get("vtlAcntNo"),
-                            sdf.format(originalFormat.parse(resultMap.get("expireDt"))),
-                            startDate,
-                            endDate,
-                            regDate
-                    );
-                    System.out.println("vBank paymentHistory : " + paymentHistory);
-                    savePaymentDataPort.insertPayment(paymentHistory);
-                    break;
-                }
-
-            }
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @Override

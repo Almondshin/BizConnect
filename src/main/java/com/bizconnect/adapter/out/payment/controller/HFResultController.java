@@ -68,39 +68,31 @@ public class HFResultController {
         resultDataModel.setCphoneNo(request.getParameter("cphoneNo"));
         resultDataModel.setBillKey(request.getParameter("billKey"));
         resultDataModel.setCsrcAmt(request.getParameter("csrcAmt"));
-
-        System.out.println("hfResultService.decryptData(resultDataModel) 복호화됨 :  " + hfResultService.decryptData(resultDataModel));
-
         if (method.equals("card")) {
-            paymentUseCase.insertPaymentData(hfResultService.decryptData(resultDataModel));
             data = hfResultService.nextCardData(card);
         }
         if (method.equals("vbank")) {
-            paymentUseCase.insertPaymentData(hfResultService.decryptData(resultDataModel));
             data = hfResultService.nextVBankData(vbank);
-        }
-
-        if(profileSpecificUrl.equals("local")){
-            response.sendRedirect(profileSpecificUrl + "/end.html?data=" + data);
         }
         response.sendRedirect(profileSpecificUrl + "/agency/end.html?data=" + data);
     }
 
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
     @PostMapping(value = "/noti")
-    public void noti(HttpServletRequest request) {
+    public String noti(HttpServletRequest request) {
         HFDataModel notiCA = new HFDataModel(request.getParameter("outStatCd"), request.getParameter("trdNo"), request.getParameter("method"), request.getParameter("bizType"), request.getParameter("mchtId"), request.getParameter("mchtTrdNo"), request.getParameter("mchtCustNm"), request.getParameter("mchtName"), request.getParameter("pmtprdNm"), request.getParameter("trdDtm"), request.getParameter("trdAmt"), request.getParameter("billKey"), request.getParameter("billKeyExpireDt"), request.getParameter("bankCd"), request.getParameter("bankNm"), request.getParameter("cardCd"), request.getParameter("cardNm"), request.getParameter("telecomCd"), request.getParameter("telecomNm"), request.getParameter("vAcntNo"), request.getParameter("expireDt"), request.getParameter("AcntPrintNm"), request.getParameter("dpstrNm"), request.getParameter("email"), request.getParameter("mchtCustId"), request.getParameter("cardNo"), request.getParameter("cardApprNo"), request.getParameter("instmtMon"), request.getParameter("instmtType"), request.getParameter("phoneNoEnc"), request.getParameter("orgTrdNo"), request.getParameter("orgTrdDt"), request.getParameter("mixTrdNo"), request.getParameter("mixTrdAmt"), request.getParameter("payAmt"), request.getParameter("csrcIssNo"), request.getParameter("cnclType"), request.getParameter("mchtParam"), request.getParameter("pktHash"));
         HFDataModel notiVA = new HFDataModel(request.getParameter("outStatCd"), request.getParameter("trdNo"), request.getParameter("method"), request.getParameter("bizType"), request.getParameter("mchtId"), request.getParameter("mchtTrdNo"), request.getParameter("mchtCustNm"), request.getParameter("mchtName"), request.getParameter("pmtprdNm"), request.getParameter("trdDtm"), request.getParameter("trdAmt"), request.getParameter("bankCd"), request.getParameter("bankNm"), request.getParameter("acntType"), request.getParameter("vAcntNo"), request.getParameter("expireDt"), request.getParameter("AcntPrintNm"), request.getParameter("dpstrNm"), request.getParameter("email"), request.getParameter("mchtCustId"), request.getParameter("orgTrdNo"), request.getParameter("orgTrdDt"), request.getParameter("csrcIssNo"), request.getParameter("cnclType"), request.getParameter("mchtParam"), request.getParameter("pktHash"));
         /** 응답 파라미터 세팅 */
         String method = request.getParameter("method");
         if (method.equals("CA")) {
-            hfResultService.notiCAData(notiCA);
-            System.out.println("notiCA : " + notiCA);
+            System.out.println("hfResultService.notiCAData(notiCA) : " + hfResultService.notiCAData(notiCA));
+            return hfResultService.notiCAData(notiCA);
         }
         if (method.equals("VA")) {
-            hfResultService.notiVAData(notiVA);
-            System.out.println("notiVA : " + notiVA);
+            System.out.println("hfResultService.notiVAData(notiVA) : " + hfResultService.notiVAData(notiVA));
+            return hfResultService.notiVAData(notiVA);
         }
+        return "FAIL";
     }
 
     @PostMapping(value = "/decrypt")
@@ -140,7 +132,6 @@ public class HFResultController {
             resultDataModel.setCsrcAmt(request.getParameter("csrcAmt"));
             resMap = hfResultService.decryptData(resultDataModel);
         }
-        System.out.println("resMap : "  + resMap);
         return objectMapper.writeValueAsString(resMap);
     }
 

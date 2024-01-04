@@ -15,10 +15,10 @@ import java.util.Date;
 @Data
 public class PaymentJpaEntity {
 
-    @Id
     @NotBlank
     @Column(name = "TRADE_NUM", nullable = false)
     private String tradeNum;
+    @Id
     @NotBlank
     @Column(name = "PG_TRADE_NUM", nullable = false)
     private String pgTradeNum;
@@ -57,7 +57,7 @@ public class PaymentJpaEntity {
     @Column(name = "VBANK_ACCOUNT")
     private String vbankAccount;
     @Column(name = "VBANK_EXPIREDATE")
-    private String vbankExpireDate;
+    private Date vbankExpireDate;
 
     @Column(name = "REG_DATE")
     private Date regDate;

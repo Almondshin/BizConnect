@@ -29,7 +29,7 @@ public class PaymentHistory {
     private String vbankName;
     private String vbankCode;
     private String vbankAccount;
-    private String vbankExpireDate;
+    private Date vbankExpireDate;
 
     private Date regDate;
     private Date modDate;
@@ -46,7 +46,7 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, Date trDate, Date startDate, Date endDate, String paymentStatus, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String paymentStatus, Date trDate, Date startDate, Date endDate, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
@@ -56,13 +56,13 @@ public class PaymentHistory {
         this.amount = amount;
         this.offer = offer;
         this.trDate = trDate;
+        this.paymentStatus = paymentStatus;
         this.startDate = startDate;
         this.endDate = endDate;
-        this.paymentStatus = paymentStatus;
         this.regDate = regDate;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum,String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, Date trDate, String rcptName, String paymentStatus, String vbankName, String vbankCode, String vbankAccount, String vbankExpireDate, Date startDate, Date endDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String paymentStatus, Date trDate, String rcptName, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date startDate, Date endDate, Date regDate, Date modDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
@@ -71,9 +71,9 @@ public class PaymentHistory {
         this.rateSel = rateSel;
         this.amount = amount;
         this.offer = offer;
+        this.paymentStatus = paymentStatus;
         this.trDate = trDate;
         this.rcptName = rcptName;
-        this.paymentStatus = paymentStatus;
         this.vbankName = vbankName;
         this.vbankCode = vbankCode;
         this.vbankAccount = vbankAccount;
@@ -81,5 +81,6 @@ public class PaymentHistory {
         this.startDate = startDate;
         this.endDate = endDate;
         this.regDate = regDate;
+        this.modDate = modDate;
     }
 }

@@ -4,10 +4,7 @@ import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import lombok.extern.slf4j.Slf4j;
 import net.sf.json.JSONObject;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
@@ -40,4 +37,6 @@ public class PaymentController {
         rsp.put("encParams", paymentUseCase.encodeBase64(paymentDataModel));
         return rsp.toString();
     }
+
+
 }

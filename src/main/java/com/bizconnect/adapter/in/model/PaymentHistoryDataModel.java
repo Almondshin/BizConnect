@@ -30,7 +30,7 @@ public class PaymentHistoryDataModel {
 
     private String vbankName;
     private String vbankAccount;
-    private String vbankExpireDate;
+    private Date vbankExpireDate;
 
     private Date regDate;
     private Date modDate;

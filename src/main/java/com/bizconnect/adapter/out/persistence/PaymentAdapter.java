@@ -6,10 +6,14 @@ import com.bizconnect.adapter.out.persistence.repository.PaymentHistoryRepositor
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import javax.persistence.EntityNotFoundException;
 import java.util.Optional;
 
+@Slf4j
 @Service
 public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort {
 
@@ -20,6 +24,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     }
 
     @Override
+    @Transactional
     public Optional<PaymentHistoryDataModel> getPaymentHistory(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = paymentHistoryConvertToEntity(paymentHistory);
         Optional<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndStartDateAndEndDateAndRateSelAndPaymentType(
@@ -30,15 +35,45 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
                 entity.getRateSel(),
                 entity.getPaymentType()
         );
-
         return foundPaymentHistory.map(this::convertToPaymentHistoryDomain);
     }
 
     @Override
+    @Transactional
     public void insertPayment(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = paymentHistoryConvertToEntity(paymentHistory);
         paymentHistoryRepository.save(entity);
     }
+
+    @Override
+    @Transactional
+    public void updatePayment(PaymentHistory paymentHistory) {
+        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getHfTradeNum());
+        if (optionalEntity.isPresent()) {
+            paymentHistoryConvertToEntity(paymentHistory);
+            System.out.println("update Payment" + paymentHistoryConvertToEntity(paymentHistory));
+        } else {
+            throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getHfTradeNum() + "인 엔터티를 찾을 수 없습니다.");
+        }
+    }
+
+//    @Override
+//    @Transactional
+//    public void updatePayment(PaymentHistory paymentHistory) {
+//        System.out.println("update paymentHistory : " + paymentHistory);
+//        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getHfTradeNum());
+//        if (optionalEntity.isPresent()) {
+//            PaymentJpaEntity entity = optionalEntity.get();
+//            PaymentJpaEntity updatedEntity = paymentHistoryConvertToEntity(paymentHistory);
+//            if (!updatedEntity.equals(entity)) {
+//                paymentHistoryRepository.save(updatedEntity);
+//                System.out.println("update Payment" + updatedEntity);
+//            }
+//        } else {
+//            throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getHfTradeNum() + " 인 엔터티를 찾을 수 없습니다.");
+//        }
+//    }
+
 
     private PaymentJpaEntity paymentHistoryConvertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();
