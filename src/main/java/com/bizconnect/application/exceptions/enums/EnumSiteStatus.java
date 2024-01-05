@@ -4,7 +4,8 @@ public enum EnumSiteStatus {
     UNREGISTERED("U", "제휴사 미등록"),
     DUPLICATE("D", "이미 등록된 사이트"),
     ACTIVE("A" , "사이트 사용중"),
-    PENDING("P" , "제휴사 승인대기"),
+    PENDING("P" , "이용기관 등록대기"),
+    TELCO_PENDING("T" , "통신사 승인대기"),
     SUSPENDED("S" , "사이트 이용정지");
 
     private final String code;

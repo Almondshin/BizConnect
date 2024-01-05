@@ -56,6 +56,8 @@ public class AgencyController {
             siteStatus = clientInfo.getSiteStatus();
             if (siteStatus.equals(EnumSiteStatus.PENDING.getCode())) {
                 resultCode = EnumResultCode.PendingApprovalStatus;
+            } else if (siteStatus.equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
+                resultCode = EnumResultCode.PendingTelcoApprovalStatus;
             } else if (siteStatus.equals(EnumSiteStatus.SUSPENDED.getCode())) {
                 resultCode = EnumResultCode.SuspendedSiteId;
             }
@@ -115,38 +117,55 @@ public class AgencyController {
         // EnumValues와 ResponseMessage 초기화
         List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
         Map<String, Object> response = new HashMap<>();
+        Calendar cal = Calendar.getInstance();
+        Date today = cal.getTime();
+
 
         // info 객체가 비어있지 않은 경우, rateSel과 startDate 값을 추출하여 responseMessage에 넣음
         // RequestBody로 받은 파라미터 값을 우선 함.
         if (info.isPresent()) {
             ClientDataModel clientInfo = info.get();
+
             // 제휴사 승인 대기 시 ErrorMessage Response
-            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())){
+            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())) {
                 ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingApprovalStatus.getCode(), EnumResultCode.PendingApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
                 //로그 필요
-                System.out.println(EnumResultCode.PendingApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() +  " 사이트 상태 : " +  clientInfo.getSiteStatus());
+                System.out.println(EnumResultCode.PendingApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " 종료일 : " + clientInfo.getEndDate());
                 return ResponseEntity.ok(responseMessage);
                 // 사이트 이용 정지 시 ErrorMessage Response
-            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())){
+            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
+                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingTelcoApprovalStatus.getCode(), EnumResultCode.PendingTelcoApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                //로그 필요
+                System.out.println(EnumResultCode.PendingTelcoApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " 종료일 : " + clientInfo.getEndDate());
+                return ResponseEntity.ok(responseMessage);
+            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())) {
                 ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SuspendedSiteId.getCode(), EnumResultCode.SuspendedSiteId.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
                 //로그 필요
-                System.out.println(EnumResultCode.SuspendedSiteId.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() +  " 사이트 상태 : " +  clientInfo.getSiteStatus());
+                System.out.println(EnumResultCode.SuspendedSiteId.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " .종료일 : " + clientInfo.getEndDate());
                 return ResponseEntity.ok(responseMessage);
             }
-            if((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null){
+
+            if ((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null) {
                 response.put("rateSel", clientDataModel.getRateSel());
-            } else if (clientInfo.getRateSel() != null && clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty()){
+            } else if (clientInfo.getRateSel() != null && clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty()) {
                 response.put("rateSel", clientDataModel.getRateSel());
-            }else if (clientInfo.getRateSel() != null){
+            } else if (clientInfo.getRateSel() != null) {
                 response.put("rateSel", clientInfo.getRateSel());
             } else {
                 response.put("rateSel", null);
             }
+
+            //만료일 15일 이전은 통과하도록 변경 필요
+
             if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
-                Calendar cal = Calendar.getInstance();
-                Date today = cal.getTime();
-                if(clientDataModel.getStartDate().before(today)){
-                    ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.IllegalArgument.getCode(), EnumResultCode.IllegalArgument.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                response.put("startDate", sdf.format(clientDataModel.getStartDate()));
+            } else if (clientInfo.getStartDate() != null && clientDataModel.getStartDate() != null) {
+
+                System.out.println(clientDataModel.getStartDate().before(clientInfo.getEndDate()));
+                if (clientDataModel.getStartDate().before(clientInfo.getEndDate())) {
+                    ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NoExtension.getCode(), EnumResultCode.NoExtension.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                    //로그 필요
+                    System.out.println(EnumResultCode.NoExtension.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + "종료일 : " + clientInfo.getEndDate());
                     return ResponseEntity.ok(responseMessage);
                 } else {
                     response.put("startDate", sdf.format(clientDataModel.getStartDate()));
@@ -155,6 +174,17 @@ public class AgencyController {
                 response.put("startDate", sdf.format(clientInfo.getStartDate()));
             } else {
                 response.put("startDate", null);
+            }
+
+            if (clientInfo.getEndDate() != null) {
+                if (clientDataModel.getStartDate() == null) {
+                    if (today.before(clientInfo.getEndDate())) {
+                        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NoExtension.getCode(), EnumResultCode.NoExtension.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
+                        //로그 필요
+                        System.out.println(EnumResultCode.NoExtension.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + "종료일 : " + clientInfo.getEndDate());
+                        return ResponseEntity.ok(responseMessage);
+                    }
+                }
             }
         }
         // responseMessage에 나머지 정보 추가
@@ -167,10 +197,5 @@ public class AgencyController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/setPaymentSiteInfo")
-    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
-        agencyUseCase.getPaymentInfo(clientDataModel);
-        return ResponseEntity.ok(null);
-    }
 
 }

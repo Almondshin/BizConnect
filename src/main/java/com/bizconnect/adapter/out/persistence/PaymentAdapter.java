@@ -94,6 +94,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setVbankAccount(paymentHistory.getVbankAccount());
         entity.setVbankExpireDate(paymentHistory.getVbankExpireDate());
         entity.setRegDate(paymentHistory.getRegDate());
+        entity.setModDate(paymentHistory.getModDate());
         return entity;
     }
 

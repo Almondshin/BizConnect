@@ -39,4 +39,9 @@ public class Client {
         this.startDate = startDate;
         this.endDate = endDate;
     }
+    public Client(String rateSel, Date startDate, Date endDate){
+        this.rateSel = rateSel;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
 }

@@ -4,14 +4,20 @@ import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.application.domain.model.Agency;
+import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
+import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.web.reactive.function.BodyInserters;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
+import reactor.core.publisher.Mono;
 
-import javax.persistence.Cache;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -20,12 +26,17 @@ import java.util.*;
 public class HFResultService {
     private final Constant constant;
     private final SavePaymentDataPort savePaymentDataPort;
+    private final SaveAgencyDataPort saveAgencyDataPort;
     private final ConnectHectoFinancialService connectHectoFinancialService;
+
+    @Value("${external.admin.url}")
+    private String profileSpecificUrl;
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, ConnectHectoFinancialService connectHectoFinancialService) {
+    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, ConnectHectoFinancialService connectHectoFinancialService) {
         this.constant = constant;
         this.savePaymentDataPort = savePaymentDataPort;
+        this.saveAgencyDataPort = saveAgencyDataPort;
         this.connectHectoFinancialService = connectHectoFinancialService;
     }
 
@@ -270,6 +281,7 @@ public class HFResultService {
                             );
                             System.out.println("0021 card paymentHistory : " + paymentHistory);
                             savePaymentDataPort.insertPayment(paymentHistory);
+                            saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
                             break;
                         }
                         case "VA": {
@@ -297,6 +309,8 @@ public class HFResultService {
                             );
                             System.out.println("0021 vBank paymentHistory : " + paymentHistory);
                             savePaymentDataPort.updatePayment(paymentHistory);
+                            saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
+                            this.paymentCompletionNoti(agencyId,siteId);
                             break;
                         }
                     }
@@ -388,6 +402,23 @@ public class HFResultService {
 
         System.out.println("responseParams " + responseParams);
         return responseParams;
+    }
+
+
+    public void paymentCompletionNoti(String agencyId,String siteId){
+        WebClient webClient = WebClient.create(profileSpecificUrl);  // 외부 서버의 URL
+        // 데이터
+        Map<String, String> data = new HashMap<>();
+        data.put("agencyId", agencyId);
+        data.put("siteId", siteId);
+
+        Mono<Void> response = webClient.post()
+                .uri("/clientManagement/agency/payment/noti")  // 요청을 보낼 엔드포인트
+                .body(BodyInserters.fromValue(data))
+                .retrieve()
+                .bodyToMono(Void.class);
+
+        response.subscribe();  // 비동기로 요청 실행
     }
 
 

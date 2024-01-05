@@ -66,10 +66,6 @@ public class AgencyService implements AgencyUseCase {
         return enumValues;
     }
 
-    @Override
-    public Optional<PaymentHistoryDataModel> getPaymentInfo(ClientDataModel clientDataModel) {
-        return loadPaymentDataPort.getPaymentHistory(converToPaymentHistory(clientDataModel));
-    }
 
     private Agency convertToAgency(ClientDataModel clientDataModel) {
         return new Agency(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
@@ -101,15 +97,4 @@ public class AgencyService implements AgencyUseCase {
         );
     }
 
-    private PaymentHistory converToPaymentHistory(ClientDataModel clientDataModel) {
-        return new PaymentHistory(
-                clientDataModel.getAgencyId(),
-                clientDataModel.getSiteId(),
-                clientDataModel.getStartDate(),
-                clientDataModel.getEndDate(),
-                clientDataModel.getSalesPrice(),
-                clientDataModel.getRateSel(),
-                clientDataModel.getMethod()
-        );
-    }
 }
