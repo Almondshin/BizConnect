@@ -26,7 +26,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     @Override
     @Transactional
     public Optional<PaymentHistoryDataModel> getPaymentHistory(PaymentHistory paymentHistory) {
-        PaymentJpaEntity entity = paymentHistoryConvertToEntity(paymentHistory);
+        PaymentJpaEntity entity = convertToEntity(paymentHistory);
         Optional<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndStartDateAndEndDateAndRateSelAndPaymentType(
                 entity.getAgencyId(),
                 entity.getSiteId(),
@@ -35,47 +35,52 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
                 entity.getRateSel(),
                 entity.getPaymentType()
         );
-        return foundPaymentHistory.map(this::convertToPaymentHistoryDomain);
+        return foundPaymentHistory.map(this::convertToDomain);
     }
 
     @Override
     @Transactional
     public void insertPayment(PaymentHistory paymentHistory) {
-        PaymentJpaEntity entity = paymentHistoryConvertToEntity(paymentHistory);
+        PaymentJpaEntity entity = convertToEntity(paymentHistory);
         paymentHistoryRepository.save(entity);
     }
+
 
     @Override
     @Transactional
     public void updatePayment(PaymentHistory paymentHistory) {
+        //persistence context
         Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getHfTradeNum());
         if (optionalEntity.isPresent()) {
-            paymentHistoryConvertToEntity(paymentHistory);
-            System.out.println("update Payment" + paymentHistoryConvertToEntity(paymentHistory));
+            updateEntityFields(paymentHistory, optionalEntity.get());
         } else {
             throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getHfTradeNum() + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 
-//    @Override
-//    @Transactional
-//    public void updatePayment(PaymentHistory paymentHistory) {
-//        System.out.println("update paymentHistory : " + paymentHistory);
-//        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getHfTradeNum());
-//        if (optionalEntity.isPresent()) {
-//            PaymentJpaEntity entity = optionalEntity.get();
-//            PaymentJpaEntity updatedEntity = paymentHistoryConvertToEntity(paymentHistory);
-//            if (!updatedEntity.equals(entity)) {
-//                paymentHistoryRepository.save(updatedEntity);
-//                System.out.println("update Payment" + updatedEntity);
-//            }
-//        } else {
-//            throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getHfTradeNum() + " 인 엔터티를 찾을 수 없습니다.");
-//        }
-//    }
 
+    private void updateEntityFields(PaymentHistory paymentHistory, PaymentJpaEntity paymentJpaEntity) {
+        paymentJpaEntity.setTradeNum(paymentHistory.getTradeNum());
+        paymentJpaEntity.setPgTradeNum(paymentHistory.getHfTradeNum());
+        paymentJpaEntity.setAgencyId(paymentHistory.getAgencyId());
+        paymentJpaEntity.setSiteId(paymentHistory.getSiteId());
+        paymentJpaEntity.setPaymentType(paymentHistory.getPaymentType());
+        paymentJpaEntity.setRateSel(paymentHistory.getRateSel());
+        paymentJpaEntity.setAmount(paymentHistory.getAmount());
+        paymentJpaEntity.setOffer(paymentHistory.getOffer());
+        paymentJpaEntity.setTrDate(paymentHistory.getTrDate());
+        paymentJpaEntity.setStartDate(paymentHistory.getStartDate());
+        paymentJpaEntity.setEndDate(paymentHistory.getEndDate());
+        paymentJpaEntity.setRcptName(paymentHistory.getRcptName());
+        paymentJpaEntity.setPaymentStatus(paymentHistory.getPaymentStatus());
+        paymentJpaEntity.setVbankName(paymentHistory.getVbankName());
+        paymentJpaEntity.setVbankAccount(paymentHistory.getVbankAccount());
+        paymentJpaEntity.setVbankExpireDate(paymentHistory.getVbankExpireDate());
+        paymentJpaEntity.setRegDate(paymentHistory.getRegDate());
+        paymentJpaEntity.setModDate(paymentHistory.getModDate());
+    }
 
-    private PaymentJpaEntity paymentHistoryConvertToEntity(PaymentHistory paymentHistory) {
+    private PaymentJpaEntity convertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();
         entity.setTradeNum(paymentHistory.getTradeNum());
         entity.setPgTradeNum(paymentHistory.getHfTradeNum());
@@ -99,7 +104,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     }
 
 
-    private PaymentHistoryDataModel convertToPaymentHistoryDomain(PaymentJpaEntity entity) {
+    private PaymentHistoryDataModel convertToDomain(PaymentJpaEntity entity) {
         PaymentHistoryDataModel paymentHistoryDataModel = new PaymentHistoryDataModel();
         paymentHistoryDataModel.setTradeNum(entity.getTradeNum());
         paymentHistoryDataModel.setPgTradeNum(entity.getPgTradeNum());

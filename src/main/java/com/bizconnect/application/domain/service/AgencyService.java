@@ -3,6 +3,7 @@ package com.bizconnect.application.domain.service;
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
+import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
@@ -50,18 +51,30 @@ public class AgencyService implements AgencyUseCase {
     }
 
     @Override
-    public List<Map<String, String>> getEnumValues() {
+    public List<Map<String, String>> getProductTypes(String agencyId) {
         EnumProductType[] enumProductTypes = EnumProductType.values();
         List<Map<String, String>> enumValues = new ArrayList<>();
 
         for (EnumProductType enumProductType : enumProductTypes) {
             Map<String, String> enumData = new HashMap<>();
-            enumData.put("type", enumProductType.getType());
-            enumData.put("name", enumProductType.getName());
-            enumData.put("price", String.valueOf(enumProductType.getPrice()));
-            enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
-            enumData.put("month", String.valueOf(enumProductType.getMonth()));
-            enumValues.add(enumData);
+            //제휴사가 스퀘어스인 경우, 1개월짜리 상품만 제공됨.
+            if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
+                if (enumProductType.getMonth() == 1) {  // Check if the month is 1
+                    enumData.put("type", enumProductType.getType());
+                    enumData.put("name", enumProductType.getName());
+                    enumData.put("price", String.valueOf(enumProductType.getPrice()));
+                    enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
+                    enumData.put("month", String.valueOf(enumProductType.getMonth()));
+                    enumValues.add(enumData);
+                }
+            } else {
+                enumData.put("type", enumProductType.getType());
+                enumData.put("name", enumProductType.getName());
+                enumData.put("price", String.valueOf(enumProductType.getPrice()));
+                enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
+                enumData.put("month", String.valueOf(enumProductType.getMonth()));
+                enumValues.add(enumData);
+            }
         }
         return enumValues;
     }

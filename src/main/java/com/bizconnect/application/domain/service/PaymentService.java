@@ -97,7 +97,10 @@ public class PaymentService implements PaymentUseCase {
         String endDate = "";
         String clientEndDate = "";
 
-        String[] pairs = decrypt(paymentDataModel.getMchtParam()).split("&");
+//        String[] pairs = decrypt(paymentDataModel.getMchtParam()).split("&");
+        String[] pairs = paymentDataModel.getMchtParam().split("&");
+
+        parseParams(new String[] {"agencyId","siteId","rateSel","startDate","endDate","offer"});
 
         try {
             for (String pair : pairs) {
@@ -167,6 +170,7 @@ public class PaymentService implements PaymentUseCase {
     }
 
 
+    // 파라미터 암/복호화가 필요한 경우 사용
     private String decrypt(String encryptedData) {
         String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
         String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";

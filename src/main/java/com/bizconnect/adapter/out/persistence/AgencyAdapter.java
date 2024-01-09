@@ -58,8 +58,10 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), agency.getSiteId());
         if (optionalEntity.isPresent()){
             AgencyJpaEntity entity = optionalEntity.get();
+            entity.setRateSel(client.getRateSel());
+            entity.setStartDate(client.getStartDate());
+            entity.setEndDate(client.getEndDate());
             System.out.println("entity : " + entity);
-            agencyRepository.save(entity);
         } else {
             throw  new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() +", "+  agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }
@@ -78,7 +80,6 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
 
     private AgencyJpaEntity convertToEntity(Agency agency, Client client, SettleManager settleManager) {
         AgencyJpaEntity agencyJpaEntity = new AgencyJpaEntity();
-
 
         agencyJpaEntity.setAgencyId(agency.getAgencyId());
         agencyJpaEntity.setSiteId(agency.getSiteId());
@@ -106,8 +107,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
 
     private ClientDataModel convertToClientDomain(AgencyJpaEntity entity) {
         ClientDataModel clientDataModel = new ClientDataModel();
-        SimpleDateFormat
-                sdf = new SimpleDateFormat("yyyy-MM-dd");
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         clientDataModel.setAgencyId(entity.getAgencyId());
         clientDataModel.setSiteId(entity.getSiteId());

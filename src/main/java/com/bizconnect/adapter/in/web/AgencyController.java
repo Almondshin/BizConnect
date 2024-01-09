@@ -1,6 +1,7 @@
 package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
+import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
@@ -8,6 +9,7 @@ import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdExc
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.exceptions.exceptions.handler.ResponseMessage;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -18,9 +20,11 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -54,16 +58,17 @@ public class AgencyController {
         if (info.isPresent()) {
             ClientDataModel clientInfo = info.get();
             siteStatus = clientInfo.getSiteStatus();
-            if (siteStatus.equals(EnumSiteStatus.PENDING.getCode())) {
-                resultCode = EnumResultCode.PendingApprovalStatus;
-            } else if (siteStatus.equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
-                resultCode = EnumResultCode.PendingTelcoApprovalStatus;
-            } else if (siteStatus.equals(EnumSiteStatus.SUSPENDED.getCode())) {
-                resultCode = EnumResultCode.SuspendedSiteId;
+            System.out.println("check : " + siteStatus);
+
+            if (Arrays.asList(EnumSiteStatus.PENDING.getCode(),
+                            EnumSiteStatus.TELCO_PENDING.getCode(),
+                            EnumSiteStatus.SUSPENDED.getCode())
+                    .contains(siteStatus)) {
+                return ResponseEntity.ok(getResponseMessage(clientInfo));
             }
         }
 
-        ResponseMessage responseMessage = new ResponseMessage(resultCode.getCode(), resultCode.getValue(), siteStatus, clientDataModel.getSiteId());
+        ResponseMessage responseMessage = new ResponseMessage(resultCode.getCode(), resultCode.getValue(), siteStatus);
         return ResponseEntity.ok(responseMessage);
     }
 
@@ -77,25 +82,43 @@ public class AgencyController {
     - 이용기관 ID는 기본적으로 사이트ID와 동일정보이나 사이트 및 이용기관 등록전에 이용기관ID는 변경을 통해 설정할 수 있다.
     */
     @PostMapping("/regSiteInfo")
-    public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws IOException, GeneralSecurityException, DuplicateMemberException, NullAgencyIdSiteIdException, IllegalAgencyIdSiteIdException {
-
-        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
-        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
-
+    public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Map<String, String> responseMessage = new HashMap<>();
 
-        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
-        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-
-        byte[] plainBytes = cipher.doFinal(Base64.getDecoder().decode(clientDataModel.getEncryptData()));
+        byte[] plainBytes = decryptData(clientDataModel.getEncryptData());
 
         ObjectMapper objectMapper = new ObjectMapper();
         ClientDataModel info = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+
+        //HMAC 검증
+        String encryptedHmacValue = clientDataModel.getVerifyInfo();
+        Map<String, String> jsonData = new HashMap<>();
+        jsonData.put("agencyId", info.getAgencyId());
+        jsonData.put("siteId", info.getSiteId());
+        jsonData.put("siteName", info.getSiteName());
+        jsonData.put("companyName", info.getCompanyName());
+        jsonData.put("businessType", info.getBusinessType());
+        jsonData.put("bizNumber", info.getBizNumber());
+        jsonData.put("ceoName", info.getCeoName());
+        jsonData.put("phoneNumber", info.getPhoneNumber());
+        jsonData.put("address", info.getAddress());
+        jsonData.put("companySite", info.getCompanySite());
+        jsonData.put("email", info.getEmail());
+        jsonData.put("rateSel", info.getRateSel());
+        String startDate = info.getStartDate() == null ? "" : sdf.format(info.getStartDate());
+        jsonData.put("startDate", startDate);
+
+        String originalMessage = objectMapper.writeValueAsString(jsonData);
+        String hmacKeyString = clientDataModel.getAgencyId();
+
+        //HMAC, MsgType 검증
+        boolean isVerified = verifyHmacSHA256(encryptedHmacValue, originalMessage, hmacKeyString);
+        boolean isVerifiedMsgType = verifyMsgType("reg", clientDataModel.getMsgType(), clientDataModel.getAgencyId());
+
+        if (verifiedHmacAndType(responseMessage, isVerified, isVerifiedMsgType)) {
+            return ResponseEntity.ok(responseMessage);
+        }
 
         agencyUseCase.registerAgency(info);
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
@@ -113,89 +136,170 @@ public class AgencyController {
     @PostMapping("/getPaymentInfo")
     public ResponseEntity<?> getPaymentInfo(@RequestBody ClientDataModel clientDataModel) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
-        // EnumValues와 ResponseMessage 초기화
-        List<Map<String, String>> enumValues = agencyUseCase.getEnumValues();
+        Optional<ClientDataModel> optClientInfo = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
         Map<String, Object> response = new HashMap<>();
-        Calendar cal = Calendar.getInstance();
-        Date today = cal.getTime();
+        List<Map<String, String>> productTypes = agencyUseCase.getProductTypes(clientDataModel.getAgencyId());
 
+        if (optClientInfo.isPresent()) {
+            ClientDataModel clientInfo = optClientInfo.get();
+            String siteStatus = clientInfo.getSiteStatus();
 
-        // info 객체가 비어있지 않은 경우, rateSel과 startDate 값을 추출하여 responseMessage에 넣음
-        // RequestBody로 받은 파라미터 값을 우선 함.
-        if (info.isPresent()) {
-            ClientDataModel clientInfo = info.get();
-
-            // 제휴사 승인 대기 시 ErrorMessage Response
-            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())) {
-                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingApprovalStatus.getCode(), EnumResultCode.PendingApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
-                //로그 필요
-                System.out.println(EnumResultCode.PendingApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " 종료일 : " + clientInfo.getEndDate());
-                return ResponseEntity.ok(responseMessage);
-                // 사이트 이용 정지 시 ErrorMessage Response
-            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
-                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.PendingTelcoApprovalStatus.getCode(), EnumResultCode.PendingTelcoApprovalStatus.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
-                //로그 필요
-                System.out.println(EnumResultCode.PendingTelcoApprovalStatus.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " 종료일 : " + clientInfo.getEndDate());
-                return ResponseEntity.ok(responseMessage);
-            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())) {
-                ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.SuspendedSiteId.getCode(), EnumResultCode.SuspendedSiteId.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
-                //로그 필요
-                System.out.println(EnumResultCode.SuspendedSiteId.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + " .종료일 : " + clientInfo.getEndDate());
-                return ResponseEntity.ok(responseMessage);
+            if (Arrays.asList(EnumSiteStatus.PENDING.getCode(),
+                            EnumSiteStatus.TELCO_PENDING.getCode(),
+                            EnumSiteStatus.SUSPENDED.getCode())
+                    .contains(siteStatus)) {
+                return ResponseEntity.ok(getResponseMessage(clientInfo));
             }
 
-            if ((clientInfo.getRateSel() == null || clientInfo.getRateSel().isEmpty()) && clientDataModel.getRateSel() != null) {
-                response.put("rateSel", clientDataModel.getRateSel());
-            } else if (clientInfo.getRateSel() != null && clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty()) {
-                response.put("rateSel", clientDataModel.getRateSel());
-            } else if (clientInfo.getRateSel() != null) {
-                response.put("rateSel", clientInfo.getRateSel());
-            } else {
-                response.put("rateSel", null);
-            }
+            String rateSel = decideRateSel(clientInfo, clientDataModel);
+            String startDate = decideStartDate(sdf, clientInfo, clientDataModel);
 
-            //만료일 15일 이전은 통과하도록 변경 필요
-
-            if (clientInfo.getStartDate() == null && clientDataModel.getStartDate() != null) {
-                response.put("startDate", sdf.format(clientDataModel.getStartDate()));
-            } else if (clientInfo.getStartDate() != null && clientDataModel.getStartDate() != null) {
-
-                System.out.println(clientDataModel.getStartDate().before(clientInfo.getEndDate()));
-                if (clientDataModel.getStartDate().before(clientInfo.getEndDate())) {
-                    ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NoExtension.getCode(), EnumResultCode.NoExtension.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
-                    //로그 필요
-                    System.out.println(EnumResultCode.NoExtension.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + "종료일 : " + clientInfo.getEndDate());
-                    return ResponseEntity.ok(responseMessage);
-                } else {
-                    response.put("startDate", sdf.format(clientDataModel.getStartDate()));
-                }
-            } else if (clientInfo.getStartDate() != null) {
-                response.put("startDate", sdf.format(clientInfo.getStartDate()));
-            } else {
-                response.put("startDate", null);
-            }
-
-            if (clientInfo.getEndDate() != null) {
-                if (clientDataModel.getStartDate() == null) {
-                    if (today.before(clientInfo.getEndDate())) {
-                        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NoExtension.getCode(), EnumResultCode.NoExtension.getValue(), clientInfo.getSiteStatus(), clientDataModel.getSiteId());
-                        //로그 필요
-                        System.out.println(EnumResultCode.NoExtension.getValue() + " 가맹점 ID :  " + clientDataModel.getSiteId() + " 사이트 상태 : " + clientInfo.getSiteStatus() + "종료일 : " + clientInfo.getEndDate());
-                        return ResponseEntity.ok(responseMessage);
-                    }
-                }
-            }
+            response.put("rateSel", rateSel);
+            response.put("startDate", startDate);
         }
-        // responseMessage에 나머지 정보 추가
+
         response.put("resultCode", EnumResultCode.SUCCESS.getCode());
         response.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         response.put("profileUrl", profileSpecificUrl);
         response.put("siteId", clientDataModel.getSiteId());
-        response.put("listSel", enumValues);
+        response.put("listSel", productTypes);
 
         return ResponseEntity.ok(response);
     }
 
+    @PostMapping("/cancelSiteInfo")
+    public ResponseEntity<?> cancelSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, IOException {
+        ObjectMapper objectMapper = new ObjectMapper();
+        Map<String, String> responseMessage = new HashMap<>();
+
+        byte[] plainBytes = decryptData(clientDataModel.getEncryptSiteId());
+        ClientDataModel info = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+        clientDataModel.setSiteId(info.getSiteId());
+
+        String encryptedHmacValue = clientDataModel.getVerifyInfo();
+        Map<String, String> jsonData = new HashMap<>();
+        jsonData.put("siteId", clientDataModel.getSiteId());
+
+        String originalMessage = objectMapper.writeValueAsString(jsonData);
+        String hmacKeyString = clientDataModel.getAgencyId();
+        //HMAC, MsgType 검증
+        boolean isVerified = verifyHmacSHA256(encryptedHmacValue, originalMessage, hmacKeyString);
+        boolean isVerifiedMsgType = verifyMsgType("cancel", clientDataModel.getMsgType(), clientDataModel.getAgencyId());
+
+        if (verifiedHmacAndType(responseMessage, isVerified, isVerifiedMsgType)) {
+            return ResponseEntity.ok(responseMessage);
+        }
+
+        //웹 관리도구로  해당 가맹점을 전달하여, 해지한 가맹점 정보를 Mail로 전달할 수 있도록 요청하는 기능 추가
+        responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
+        responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
+        return ResponseEntity.ok(responseMessage);
+    }
+
+    private ResponseMessage getResponseMessage(ClientDataModel clientInfo) {
+        EnumResultCode resultCode = EnumResultCode.SUCCESS; // 기본값 설정
+        if(clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())){
+            resultCode = EnumResultCode.PendingTelcoApprovalStatus;
+        }
+        if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())){
+            resultCode = EnumResultCode.PendingApprovalStatus;
+        }
+        if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())){
+            resultCode = EnumResultCode.SuspendedSiteId;
+        }
+        return new ResponseMessage(resultCode.getCode(), resultCode.getValue(), clientInfo.getSiteStatus());
+    }
+
+
+    private String decideRateSel(ClientDataModel clientInfo, ClientDataModel clientDataModel) {
+        return clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty() ? clientDataModel.getRateSel() :
+                clientInfo.getRateSel() != null ? clientInfo.getRateSel() : null;
+    }
+
+    private String decideStartDate(SimpleDateFormat sdf, ClientDataModel clientInfo, ClientDataModel clientDataModel) {
+        Date startDateClient = clientDataModel.getStartDate();
+        Date startDateInfo = clientInfo.getStartDate();
+        if (startDateClient != null && (startDateInfo == null || startDateClient.before(clientInfo.getEndDate()))) {
+            return sdf.format(startDateClient);
+        } else if (startDateInfo != null) {
+            return sdf.format(startDateInfo);
+        } else {
+            return null;
+        }
+    }
+
+
+    private boolean verifiedHmacAndType(Map<String, String> responseMessage, boolean isVerified, boolean isVerifiedMsgType) {
+        if (!isVerifiedMsgType) {
+            System.out.println("MsgType 검증이 실패하였습니다.");
+            responseMessage.put("resultMsg", "MsgType 검증이 실패하였습니다.");
+            return true;
+        }
+        if (!isVerified) {
+            System.out.println("HMAC 검증에 실패하였습니다.");
+            responseMessage.put("resultMsg", "HMAC 검증에 실패하였습니다.");
+            return true;
+        }
+        return false;
+    }
+
+    public static String hmacSHA256(String target, String hmacKeyString) {
+        try {
+            byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
+
+            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
+            SecretKeySpec secret_key = new SecretKeySpec(hmacKey, "HmacSHA256");
+            sha256_HMAC.init(secret_key);
+            byte[] hashed = sha256_HMAC.doFinal(target.getBytes(StandardCharsets.UTF_8));
+            return Base64.getEncoder().encodeToString(hashed);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    public static boolean verifyHmacSHA256(String receivedHmac, String originalMessage, String hmacKeyString) {
+        try {
+            String calculatedHmac = hmacSHA256(originalMessage, hmacKeyString);
+            return receivedHmac.equals(calculatedHmac);
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    public static boolean verifyMsgType(String type, String receivedMsgType, String agencyId) {
+        try {
+            if (type.equals("cancel")) {
+                if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
+                    return EnumAgency.SQUARES.getCancelMsg().equals(receivedMsgType);
+                }
+            } else if (type.equals("reg")) {
+                if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
+                    return EnumAgency.SQUARES.getRegMsg().equals(receivedMsgType);
+                }
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+        return false;
+    }
+
+
+    private static byte[] decryptData(String targetDecode) throws GeneralSecurityException, DuplicateMemberException, NullAgencyIdSiteIdException, IllegalAgencyIdSiteIdException {
+        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
+        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
+
+        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
+        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
+        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
+
+        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
+        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
+
+        return cipher.doFinal(Base64.getDecoder().decode(targetDecode));
+    }
 
 }

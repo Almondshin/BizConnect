@@ -14,6 +14,7 @@ import java.util.Date;
 public class ClientDataModel {
     private String agencyId;
     private String siteId;
+    private String encryptSiteId;
 
     private String siteName;
     private String companyName;

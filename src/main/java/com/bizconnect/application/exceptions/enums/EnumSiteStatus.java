@@ -1,12 +1,12 @@
 package com.bizconnect.application.exceptions.enums;
 
 public enum EnumSiteStatus {
-    UNREGISTERED("U", "제휴사 미등록"),
+    ACTIVE("Y" , "사이트 사용중"),
+    SUSPENDED("N" , "사이트 이용정지"),
+    UNREGISTERED("E", "제휴사 미등록"),
+    PENDING("H" , "제휴사 승인대기"),
     DUPLICATE("D", "이미 등록된 사이트"),
-    ACTIVE("A" , "사이트 사용중"),
-    PENDING("P" , "이용기관 등록대기"),
-    TELCO_PENDING("T" , "통신사 승인대기"),
-    SUSPENDED("S" , "사이트 이용정지");
+    TELCO_PENDING("T" , "통신사 승인대기");
 
     private final String code;
     private final String value;

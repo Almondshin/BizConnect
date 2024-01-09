@@ -226,7 +226,6 @@ public class HFResultService {
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
-
             Calendar cal = Calendar.getInstance();
             Date regDate = cal.getTime();
             Date modDate = cal.getTime();
@@ -282,6 +281,7 @@ public class HFResultService {
                             System.out.println("0021 card paymentHistory : " + paymentHistory);
                             savePaymentDataPort.insertPayment(paymentHistory);
                             saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
+                            this.paymentCompletionNoti(agencyId,siteId, responseParam.get("mchtTrdNo"));
                             break;
                         }
                         case "VA": {
@@ -310,7 +310,7 @@ public class HFResultService {
                             System.out.println("0021 vBank paymentHistory : " + paymentHistory);
                             savePaymentDataPort.updatePayment(paymentHistory);
                             saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
-                            this.paymentCompletionNoti(agencyId,siteId);
+                            this.paymentCompletionNoti(agencyId,siteId, responseParam.get("mchtTrdNo"));
                             break;
                         }
                     }
@@ -405,12 +405,13 @@ public class HFResultService {
     }
 
 
-    public void paymentCompletionNoti(String agencyId,String siteId){
+    public void paymentCompletionNoti(String agencyId,String siteId, String tradeNum){
         WebClient webClient = WebClient.create(profileSpecificUrl);  // 외부 서버의 URL
         // 데이터
         Map<String, String> data = new HashMap<>();
         data.put("agencyId", agencyId);
         data.put("siteId", siteId);
+        data.put("tradeNum", tradeNum);
 
         Mono<Void> response = webClient.post()
                 .uri("/clientManagement/agency/payment/noti")  // 요청을 보낼 엔드포인트
@@ -420,8 +421,6 @@ public class HFResultService {
 
         response.subscribe();  // 비동기로 요청 실행
     }
-
-
 }
 
 

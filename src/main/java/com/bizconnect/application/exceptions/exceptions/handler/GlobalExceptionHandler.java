@@ -19,17 +19,17 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     @ExceptionHandler(DuplicateMemberException.class)
     public ResponseEntity<?> DuplicateMemberException(DuplicateMemberException ex) {
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.DuplicateMember.getCode(), ex.getMessage(), EnumSiteStatus.DUPLICATE.getCode(), ex.getSiteId());
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.DuplicateMember.getCode(), ex.getMessage(), EnumSiteStatus.DUPLICATE.getCode());
         return new ResponseEntity<>(responseMessage, HttpStatus.OK);
     }
     @ExceptionHandler(IllegalAgencyIdSiteIdException.class)
     public ResponseEntity<?> IllegalAgencyIdSiteIdException(IllegalAgencyIdSiteIdException ex) {
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.IllegalArgument.getCode(), ex.getMessage(), EnumSiteStatus.UNREGISTERED.getCode(), ex.getSiteId());
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.IllegalArgument.getCode(), ex.getMessage(), EnumSiteStatus.UNREGISTERED.getCode());
         return new ResponseEntity<>(responseMessage, HttpStatus.OK);
     }
     @ExceptionHandler(NullAgencyIdSiteIdException.class)
     public ResponseEntity<?> NullAgencyIdSiteIdException(NullAgencyIdSiteIdException ex) {
-        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NullPointArgument.getCode(), ex.getMessage(), EnumSiteStatus.UNREGISTERED.getCode(), ex.getSiteId());
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NullPointArgument.getCode(), ex.getMessage(), EnumSiteStatus.UNREGISTERED.getCode());
         return new ResponseEntity<>(responseMessage, HttpStatus.OK);
     }
 

@@ -53,14 +53,20 @@
                 if (response.listSel) {
                     populateSelect(response.listSel);
                     response.listSel.forEach(e => {
-                        productTypeList.push(e.type, e.name, e.price, e.basicOffer, e.month);
+                        productTypeList.push({
+                            type: e.type,
+                            name: e.name,
+                            price: e.price,
+                            basicOffer: e.basicOffer,
+                            month: e.month
+                        });
                     })
                     if (response.rateSel != null) {
                         document.querySelector("#productTypeSelect").value = response.rateSel;
                         updateDataByProduct();
                     }
                 } else {
-                    console.error('enumProductTypes is missing in the response');
+                    console.error('listSel is missing in the response');
                     alert(JSON.stringify(response));
                 }
             },
@@ -72,6 +78,7 @@
         })
 
         var productTypeList = [];
+        console.log(productTypeList);
 
         function populateSelect(productTypes) {
             const select = document.getElementById('productTypeSelect'); // select 요소를 선택합니다.
@@ -101,8 +108,8 @@
             const select = document.getElementById('productTypeSelect');
             const selectedOption = select.options[select.selectedIndex];
 
-            const dataType = selectedOption.getAttribute('data-type');
-            const dataMonth = selectedOption.getAttribute('data-month');
+            const dataType = selectedOption.getAttribute('data-type') == null ? "" : selectedOption.getAttribute('data-type');
+            const dataMonth = selectedOption.getAttribute('data-month') == null ? "" : selectedOption.getAttribute('data-month');
 
             let offer, price, baseOffer, basePrice;
 
@@ -117,17 +124,17 @@
                 baseOffer = 0
                 basePrice = 0
             } else if (dataType.includes('lite')) {
-                baseOffer = parseInt(select.options[9].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[9].getAttribute('data-price'));
+                baseOffer = parseInt(productTypeList.find(e => e.type === "lite_1m_200").basicOffer);
+                basePrice = parseInt(productTypeList.find(e => e.type === "lite_1m_200").price);
             } else if (dataType.includes('basic')) {
-                baseOffer = parseInt(select.options[10].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[10].getAttribute('data-price'));
+                baseOffer = parseInt(productTypeList.find(e => e.type === "basic_1m_1000").basicOffer);
+                basePrice = parseInt(productTypeList.find(e => e.type === "basic_1m_1000").price);
             } else if (dataType.includes('standard')) {
-                baseOffer = parseInt(select.options[11].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[11].getAttribute('data-price'));
+                baseOffer = parseInt(productTypeList.find(e => e.type === "standard_1m_2000").basicOffer);
+                basePrice = parseInt(productTypeList.find(e => e.type === "standard_1m_2000").price);
             } else if (dataType.includes('premium')) {
-                baseOffer = parseInt(select.options[12].getAttribute('data-basic-offer'));
-                basePrice = parseInt(select.options[12].getAttribute('data-price'));
+                baseOffer = parseInt(productTypeList.find(e => e.type === "premium_1m_3000").basicOffer);
+                basePrice = parseInt(productTypeList.find(e => e.type === "premium_1m_3000").price);
             }
 
             offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
@@ -169,23 +176,6 @@
             updateDisplayValue('priceDisplay', 'price', priceValue);
         }
 
-
-        function AES_CBC_256_encrypt(data) {
-            const base64Key = 'tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8='; // Base64 인코딩된 키
-            const base64Iv = '/SwvI/9aT7RiMmfm8CfP4g=='; // Base64 인코딩된 IV
-
-            var key = CryptoJS.enc.Base64.parse(base64Key);
-            var iv = CryptoJS.enc.Base64.parse(base64Iv);
-
-            var encrypted = CryptoJS.AES.encrypt(data, key, {
-                iv: iv,
-                mode: CryptoJS.mode.CBC,
-                padding: CryptoJS.pad.Pkcs7
-            });
-
-            return encrypted.toString();
-        }
-
         function pay(type) {
             var curr_date = new Date();
             var year = curr_date.getFullYear().toString();
@@ -202,6 +192,8 @@
             var mchtTrdNo = "PAYMENT" + year + month + day + hours + mins + secs + random4;//주문번호 세팅
 
 
+
+
             var method = type;
 
             var mchtId;
@@ -216,6 +208,12 @@
             const productTypeSelect = document.getElementById('productTypeSelect');
             const selectedOption = productTypeSelect.options[productTypeSelect.selectedIndex];
             const productName = selectedOption.getAttribute('data-name');
+            const productValue = productTypeSelect.value;
+
+            if (productValue === null || productValue === '') {
+                alert('상품 타입을 선택해주세요.');
+                return;
+            }
 
             const startDate = document.getElementById('startDate').value;
             const endDate = document.getElementById('endDate').value;
@@ -228,10 +226,8 @@
             var mchtEName = "dreamsecurity"
             var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
 
-            //암호화 대상 파라미터
             const mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
 
-            var encryptedMchtParam = AES_CBC_256_encrypt(mchtParam);
 
             var data = {
                 mchtId              : mchtId,
@@ -239,7 +235,7 @@
                 mchtTrdNo           : mchtTrdNo,
                 trdDt               : trdDt,
                 trdTm               : trdTm,
-                mchtParam           : encryptedMchtParam,
+                mchtParam           : mchtParam,
                 plainTrdAmt         : trdAmt,
                 plainMchtCustNm     : plainMchtCustNm,
                 plainCphoneNo       : "",
@@ -256,8 +252,7 @@
 
             $.ajax({
                 type       : "POST",
-                url        : "https://sextlink.mobile-ok.com" + "/agency/payment/api/encrypt",
-                // url        : profileSpecificUrl + "/agency/payment/api/encrypt",
+                url        : profileSpecificUrl + "/agency/payment/api/encrypt",
                 contentType: "application/json",
                 dataType   : "json",
                 data   : JSON.stringify(data),
