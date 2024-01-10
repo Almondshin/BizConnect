@@ -1,13 +1,10 @@
 package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.in.model.PaymentDataModel;
-import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
@@ -17,8 +14,6 @@ import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
 import java.util.*;
 
 @Service
@@ -44,6 +39,7 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel) {
+        System.out.println(clientDataModel);
         if (clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()) {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }

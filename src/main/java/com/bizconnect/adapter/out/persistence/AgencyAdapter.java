@@ -9,7 +9,7 @@ import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
-import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
+import com.bizconnect.application.exceptions.exceptions.UnregisteredAgencyException;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
@@ -32,8 +32,9 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client) {
         AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
         Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
+
         if (foundAgencyInfo.isEmpty()){
-            throw new NullAgencyIdSiteIdException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
+            throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
         }
         return foundAgencyInfo.map(this::convertToClientDomain);
     }

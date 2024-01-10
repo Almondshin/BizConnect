@@ -22,6 +22,9 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+/**
+ * The type Hf result service.
+ */
 @Service
 public class HFResultService {
     private final Constant constant;
