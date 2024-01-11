@@ -9,6 +9,7 @@ import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.BodyInserters;
@@ -18,7 +19,12 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Mono;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -407,22 +413,59 @@ public class HFResultService {
         return responseParams;
     }
 
-
-    public void paymentCompletionNoti(String agencyId,String siteId, String tradeNum){
-        WebClient webClient = WebClient.create(profileSpecificUrl);  // 외부 서버의 URL
+    public void paymentCompletionNoti(String agencyId, String siteId, String tradeNum) {
         // 데이터
         Map<String, String> data = new HashMap<>();
         data.put("agencyId", agencyId);
         data.put("siteId", siteId);
         data.put("tradeNum", tradeNum);
 
-        Mono<Void> response = webClient.post()
-                .uri("/clientManagement/agency/payment/noti")  // 요청을 보낼 엔드포인트
-                .body(BodyInserters.fromValue(data))
-                .retrieve()
-                .bodyToMono(Void.class);
+        // 데이터를 JSON 문자열로 변환
+        ObjectMapper objectMapper = new ObjectMapper();
+        String jsonData = "";
+        try {
+            jsonData = objectMapper.writeValueAsString(data);
+        } catch (JsonProcessingException e) {
+            e.printStackTrace();
+        }
 
-        response.subscribe();  // 비동기로 요청 실행
+        sendPostRequest(profileSpecificUrl +"/clientManagement/agency/payment/noti", jsonData);
+    }
+
+    public void sendPostRequest(String targetUrl, String jsonData) {
+        try {
+            URL url = new URL(targetUrl);
+            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+            connection.setRequestMethod("POST");
+            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
+            connection.setDoOutput(true);
+
+            DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
+            dataOutputStream.writeBytes(jsonData); // jsonData is the request body
+            dataOutputStream.flush();
+            dataOutputStream.close();
+
+            // GET the server response
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) { //success
+                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
+                String inputLine;
+                StringBuffer response = new StringBuffer();
+
+                while ((inputLine = in.readLine()) != null) {
+                    response.append(inputLine);
+                }
+                in.close();
+
+                // print result
+                System.out.println("send Noti Post request : " + response.toString());
+            } else {
+                System.out.println("POST request not worked");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }
 

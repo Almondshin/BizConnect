@@ -7,12 +7,11 @@
 <body>
 result
 <script>
-    var params = new URLSearchParams(location.search);
-    var data   = params.get("data");
-    // console.log(" script data : " + data);
-    // top.opener.result(data);
-    // opener.parent.result(data);
+    var newUrl = "/context.html"
+    window.opener.location.href = newUrl;
     self.close();
+    // console.log(" script data : " + data);
+    // opener.parent.result(data);
 </script>
 
 </body>

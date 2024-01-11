@@ -7,8 +7,6 @@
     <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
     <script>
-
-
         document.addEventListener("DOMContentLoaded", function () {
             var today = new Date();
 
@@ -27,6 +25,7 @@
         })
 
         var profileSpecificUrl = 'http://127.0.0.1:9000';
+        var profileSpecificPaymentUrl = 'http://127.0.0.1:9000';
 
         const searchParams = new URLSearchParams(window.location.search);
         const agencyId = searchParams.get('agencyId');
@@ -37,17 +36,19 @@
 
         $.ajax({
             type       : 'POST',
-            url        : "/agency/getPaymentInfo",
+            url        : "/agency/payment/getPaymentInfo",
             contentType: "application/json",
             dataType   : "json",
             data       : JSON.stringify({agencyId: agencyId, siteId: siteId, rateSel: rateSel, startDate: startDate}),
             success    : function (response) {
-                // $("#paymentInfo").find("#paymentInfo_result").val(JSON.stringify(response));
                 if (response.startDate != null) {
                     document.querySelector("#startDate").value = response.startDate;
                 }
                 if (response.profileUrl != null) {
                     profileSpecificUrl = response.profileUrl;
+                }
+                if (response.profilePaymentUrl != null) {
+                    profileSpecificPaymentUrl = response.profilePaymentUrl;
                 }
 
                 if (response.listSel) {
@@ -228,7 +229,6 @@
 
             const mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
 
-
             var data = {
                 mchtId              : mchtId,
                 method              : method,
@@ -250,46 +250,51 @@
                 plainClipCustPhoneNo: ""
             }
 
+
             $.ajax({
-                type       : "POST",
-                url        : profileSpecificUrl + "/agency/payment/api/encrypt",
+                type : "POST",
+                url : profileSpecificPaymentUrl + "/agency/payment/setPaymentSiteInfo",
                 contentType: "application/json",
                 dataType   : "json",
                 data   : JSON.stringify(data),
-                success: function (rsp) {
-                    //가맹점 -> 세틀뱅크로 결제 요청
-                    SETTLE_PG.pay({
-                        env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
-                        mchtId    : mchtId,
-                        method    : method,
-                        trdDt     : trdDt,
-                        trdTm     : trdTm,
-                        mchtTrdNo : mchtTrdNo,
-                        mchtName  : mchtName,
-                        mchtEName : mchtEName,
-                        mchtParam : mchtParam,
-                        pmtPrdtNm : pmtPrdtNm,
-                        trdAmt    : rsp.encParams.trdAmt,
-                        mchtCustNm: rsp.encParams.mchtCustNm,
-                        notiUrl   : profileSpecificUrl + "/agency/payment/api/result/noti",
-                        nextUrl   : profileSpecificUrl + "/agency/payment/api/result/next",
-                        cancUrl   : "http://example.com/cancUrl",
-                        pktHash   : rsp.hashCipher,
-                        ui        : {
-                            type  : "popup",   //popup, iframe, self, blank
-                            width : "430",   //popup창의 너비
-                            height: "660"   //popup창의 높이
-                        }
-                    }, function (rsp) {
-                        //iframe인 경우 전달된 결제 완료 후 응답 파라미터 처리
+                success: function (response) {
+                    if(response.resultCode === "2000"){
+                        console.log(JSON.stringify(response));
+                        //가맹점 -> 세틀뱅크로 결제 요청
+                        SETTLE_PG.pay({
+                            env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
+                            mchtId    : mchtId,
+                            method    : method,
+                            trdDt     : trdDt,
+                            trdTm     : trdTm,
+                            mchtTrdNo : mchtTrdNo,
+                            mchtName  : mchtName,
+                            mchtEName : mchtEName,
+                            mchtParam : mchtParam,
+                            pmtPrdtNm : pmtPrdtNm,
+                            trdAmt    : response.encParams.trdAmt,
+                            mchtCustNm: response.encParams.mchtCustNm,
+                            notiUrl   : profileSpecificUrl + "/agency/payment/api/result/noti",
+                            nextUrl   : profileSpecificUrl + "/agency/payment/api/result/next",
+                            cancUrl   : "http://example.com/cancUrl",
+                            pktHash   : response.hashCipher,
+                            ui        : {
+                                type  : "popup",   //popup, iframe, self, blank
+                                width : "430",   //popup창의 너비
+                                height: "660"   //popup창의 높이
+                            }
+                        }, function (response) {
+                            //iframe인 경우 전달된 결제 완료 후 응답 파라미터 처리
 
-                        console.log(rsp);
-                    });
-                },
-                error  : function () {
+                            console.log(response);
+                        });
+                    } else {
+                        console.log(response);
+                    }
+                }, error  : function () {
                     alert("에러 발생");
                 },
-            });
+            })
         }
     </script>
 </head>

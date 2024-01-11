@@ -3,8 +3,6 @@ package com.bizconnect.adapter.out.payment.controller;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.service.HFResultService;
-import com.bizconnect.application.domain.model.PaymentHistory;
-import com.bizconnect.application.port.in.PaymentUseCase;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,11 +26,9 @@ public class HFResultController {
     @Value("${external.url}")
     private String profileSpecificUrl;
 
-    private final PaymentUseCase paymentUseCase;
 
-    public HFResultController(HFResultService hfResultService, PaymentUseCase paymentUseCase) {
+    public HFResultController(HFResultService hfResultService) {
         this.hfResultService = hfResultService;
-        this.paymentUseCase = paymentUseCase;
     }
 
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리
@@ -74,7 +70,7 @@ public class HFResultController {
         if (method.equals("vbank")) {
             data = hfResultService.nextVBankData(vbank);
         }
-        response.sendRedirect(profileSpecificUrl + "/agency/end.html?data=" + data);
+        response.sendRedirect(profileSpecificUrl + "/end.html");
     }
 
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
