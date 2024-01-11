@@ -433,6 +433,9 @@ public class HFResultService {
     }
 
     public void sendPostRequest(String targetUrl, String jsonData) {
+
+        logger.info("[paymentCompletionNoti] URL : " + targetUrl);
+        logger.info("[paymentCompletionNoti] jsonData : " + jsonData);
         try {
             URL url = new URL(targetUrl);
             HttpURLConnection connection = (HttpURLConnection) url.openConnection();
@@ -457,8 +460,7 @@ public class HFResultService {
                 }
                 in.close();
 
-                // print result
-                System.out.println("send Noti Post request : " + response.toString());
+                logger.info("[paymentCompletionNoti] Response : " + response);
             } else {
                 System.out.println("POST request not worked");
             }

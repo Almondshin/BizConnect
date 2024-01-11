@@ -70,7 +70,7 @@ public class HFResultController {
         if (method.equals("vbank")) {
             data = hfResultService.nextVBankData(vbank);
         }
-        response.sendRedirect(profileSpecificUrl + "/end.html");
+        response.sendRedirect(profileSpecificUrl + "/agency/payment/end.html");
     }
 
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가

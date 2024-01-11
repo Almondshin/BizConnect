@@ -175,10 +175,10 @@ public class AgencyService implements AgencyUseCase {
         logger.info("[agencyId] : [" + agencyId + "]");
         logger.info("[siteId] : [" + siteId + "]");
         logger.info("[rateSel] : [" + productType.getType() + ", "+productType.getName() + "]");
-        logger.info("[startDate] : [" + startDate + "]");
+        logger.info("[startDate] : [" + sdf.format(startDateByCal.getTime()) + "]");
         logger.info("[endDate] : [" + endDate + "]");
         logger.info("[offer] : [" + offer + "]");
-        logger.info("[price] : [" + price + "]");
+        logger.info("[price] : [" + (int) Math.floor(price) + "]");
 
     }
 
