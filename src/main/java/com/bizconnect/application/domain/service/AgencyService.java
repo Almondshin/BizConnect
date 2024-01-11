@@ -103,7 +103,6 @@ public class AgencyService implements AgencyUseCase {
         String endDate = "";
         String clientEndDate = "";
 
-//        String[] pairs = decrypt(paymentDataModel.getMchtParam()).split("&");
         String[] pairs = paymentDataModel.getMchtParam().split("&");
 
         parseParams(new String[] {"agencyId","siteId","rateSel","startDate","endDate","offer"});
@@ -141,6 +140,7 @@ public class AgencyService implements AgencyUseCase {
         } catch (ParseException e) {
             throw new RuntimeException(e);
         }
+
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
@@ -149,9 +149,6 @@ public class AgencyService implements AgencyUseCase {
         int baseOffer = productType.getBasicOffer() / productType.getMonth();
         int basePrice = productType.getPrice() / productType.getMonth();
         int dataMonth = productType.getMonth();
-
-        //TODO
-        // offer, Price  조겅이 필요함
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
         price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
@@ -173,6 +170,16 @@ public class AgencyService implements AgencyUseCase {
         if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }
+
+        logger.info("S ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ S");
+        logger.info("[agencyId] : [" + agencyId + "]");
+        logger.info("[siteId] : [" + siteId + "]");
+        logger.info("[rateSel] : [" + productType.getType() + ", "+productType.getName() + "]");
+        logger.info("[startDate] : [" + startDate + "]");
+        logger.info("[endDate] : [" + endDate + "]");
+        logger.info("[offer] : [" + offer + "]");
+        logger.info("[price] : [" + price + "]");
+
     }
 
     private Map<String, String> parseParams(String[] pairs) {

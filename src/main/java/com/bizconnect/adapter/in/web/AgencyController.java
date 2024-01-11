@@ -206,26 +206,33 @@ public class AgencyController {
             responseMessage.put("startDate", startDate);
         }
 
-        logger.info("E ------------------------------[AGENCY] - [getPaymentInfo] ------------------------------ E");
+
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         responseMessage.put("profileUrl", profileSpecificUrl);
         responseMessage.put("profilePaymentUrl", profileSpecificPaymentUrl);
         responseMessage.put("siteId", clientDataModel.getSiteId());
         responseMessage.put("listSel", productTypes);
+
+        logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
+        logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
+        logger.info("E ------------------------------[AGENCY] - [getPaymentInfo] ------------------------------ E");
         return ResponseEntity.ok(responseMessage);
     }
 
 
     @PostMapping("/payment/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody PaymentDataModel paymentDataModel) {
-        System.out.println("setPaymentSiteInfo " + paymentDataModel.toString());
         Map<String, Object> responseMessage = new HashMap<>();
         agencyUseCase.checkMchtParams(paymentDataModel);
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         responseMessage.put("hashCipher", agencyUseCase.aes256EncryptEcb(paymentDataModel));
         responseMessage.put("encParams", agencyUseCase.encodeBase64(paymentDataModel));
+
+        logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
+        logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
+        logger.info("E ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ E");
         return ResponseEntity.ok(responseMessage);
     }
 
@@ -245,10 +252,15 @@ public class AgencyController {
 
         byte[] plainBytes = decryptData(clientDataModel.getEncryptData());
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
-        clientDataModel.setSiteId(decryptInfo.getSiteId());
 
         agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
 
+        logger.info("S ------------------------------[AGENCY] - [cancelSiteInfo] ------------------------------ S");
+        logger.info("[agencyId] : [" + clientDataModel.getAgencyId() + "]");
+        logger.info("[siteId] : [" + decryptInfo.getSiteId() + "]");
+        logger.info("[client msgType] : [" + clientDataModel.getMsgType() + "]");
+        logger.info("[client encryptData] : [" + clientDataModel.getEncryptData() + "]");
+        logger.info("[client verifyInfo] : [" + clientDataModel.getVerifyInfo() + "]");
 
         String encryptedHmacValue = clientDataModel.getVerifyInfo();
         Map<String, String> jsonData = new HashMap<>();
@@ -267,6 +279,10 @@ public class AgencyController {
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
+
+        logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
+        logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
+        logger.info("E ------------------------------[AGENCY] - [cancelSiteInfo] ------------------------------ E");
         return ResponseEntity.ok(responseMessage);
     }
 
