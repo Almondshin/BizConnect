@@ -47,6 +47,10 @@ public class AgencyJpaEntity {
 	@Column(name = "SITE_STATUS")
 	private String siteStatus;
 
+	@Column(name = "EXTENSION_STATUS")
+	private String extensionStatus;
+
+
 	@Column(name = "START_DATE")
 	private Date startDate;
 	@Column(name = "END_DATE")

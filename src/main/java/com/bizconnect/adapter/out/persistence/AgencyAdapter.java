@@ -3,6 +3,7 @@ package com.bizconnect.adapter.out.persistence;
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.out.persistence.entity.AgencyJpaEntity;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
+import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
@@ -32,7 +33,6 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     public Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client) {
         AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
         Optional<AgencyJpaEntity> foundAgencyInfo = agencyRepository.findByAgencyIdAndSiteId(entity.getAgencyId(), entity.getSiteId());
-
         if (foundAgencyInfo.isEmpty()){
             throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
         }
@@ -49,6 +49,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
             throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
         }
         client.setSiteStatus(EnumSiteStatus.PENDING.getCode());
+        client.setExtensionStatus(EnumExtensionStatus.DEFAULT.getCode());
         agencyRepository.save(convertToEntity(agency, client, settleManager));
     }
 
@@ -59,12 +60,12 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), agency.getSiteId());
         if (optionalEntity.isPresent()){
             AgencyJpaEntity entity = optionalEntity.get();
+            entity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
             entity.setRateSel(client.getRateSel());
             entity.setStartDate(client.getStartDate());
             entity.setEndDate(client.getEndDate());
-            System.out.println("entity : " + entity);
         } else {
-            throw  new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() +", "+  agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() +", "+  agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 
@@ -124,6 +125,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         clientDataModel.setEmail(entity.getEmail());
         clientDataModel.setRateSel(entity.getRateSel());
         clientDataModel.setSiteStatus(entity.getSiteStatus());
+        clientDataModel.setExtensionStatus(entity.getExtensionStatus());
         clientDataModel.setStartDate(entity.getStartDate());
         clientDataModel.setEndDate(entity.getEndDate());
 

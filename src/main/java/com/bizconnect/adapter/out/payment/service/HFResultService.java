@@ -358,8 +358,6 @@ public class HFResultService {
             logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
             // resp = notiHashError(noti); // 실패 처리
         }
-        System.out.println("HF Service ResponseMessage : " + resp);
-
         // OK, FAIL문자열은 헥토파이낸셜로 전송되어야 하는 값이므로 변경하거나 삭제하지마십시오.
         if (resp) {
             logger.info("[" + mchtTrdNo + "][Result] OK");

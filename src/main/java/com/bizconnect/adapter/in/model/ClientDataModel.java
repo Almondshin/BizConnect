@@ -26,6 +26,7 @@ public class ClientDataModel {
     private String email;
     private String rateSel;
     private String siteStatus;
+    private String extensionStatus;
     private Date startDate;
 
     private Date endDate;

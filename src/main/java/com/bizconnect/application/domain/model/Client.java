@@ -21,10 +21,11 @@ public class Client {
     private String email;
     private String rateSel;
     private String siteStatus;
+    private String extensionStatus;
     private Date startDate;
     private Date endDate;
 
-    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String siteStatus, Date startDate,  Date endDate) {
+    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String siteStatus, Date startDate, Date endDate) {
         this.siteName = siteName;
         this.companyName = companyName;
         this.businessType = businessType;
@@ -39,8 +40,17 @@ public class Client {
         this.startDate = startDate;
         this.endDate = endDate;
     }
-    public Client(String rateSel, Date startDate, Date endDate){
+
+    public Client(String rateSel, Date startDate, Date endDate) {
         this.rateSel = rateSel;
+        this.startDate = startDate;
+        this.endDate = endDate;
+    }
+
+    public Client(String rateSel, String siteStatus, String extensionStatus, Date startDate, Date endDate) {
+        this.rateSel = rateSel;
+        this.siteStatus = siteStatus;
+        this.extensionStatus = extensionStatus;
         this.startDate = startDate;
         this.endDate = endDate;
     }

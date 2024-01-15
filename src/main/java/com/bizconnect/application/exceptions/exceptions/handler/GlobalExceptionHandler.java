@@ -1,10 +1,7 @@
 package com.bizconnect.application.exceptions.exceptions.handler;
 
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
-import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
-import com.bizconnect.application.exceptions.exceptions.UnregisteredAgencyException;
+import com.bizconnect.application.exceptions.exceptions.*;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -57,6 +54,17 @@ public class GlobalExceptionHandler {
         logger.info("[Exception ResultCode] : [" + responseMessage.getResultCode() + "]");
         logger.info("[Exception ResultMsg] : [" + responseMessage.getResultMsg() + "]");
         logger.info("E ------------------------------[Exception] - [NullAgencyIdSiteIdException] ------------------------------ E");
+        return new ResponseEntity<>(responseMessage, HttpStatus.OK);
+    }
+
+    @ExceptionHandler(NoExtensionException.class)
+    public ResponseEntity<?> NoExtensionException(NoExtensionException ex) {
+        ResponseMessage responseMessage = new ResponseMessage(EnumResultCode.NoExtension.getCode(), EnumResultCode.NoExtension.getValue());
+        logger.info("S ------------------------------[Exception] - [NoExtensionException] ------------------------------ S");
+        logger.info("[Exception siteId] : [" + ex.getSiteId() + "]");
+        logger.info("[Exception ResultCode] : [" + responseMessage.getResultCode() + "]");
+        logger.info("[Exception ResultMsg] : [" + responseMessage.getResultMsg() + "]");
+        logger.info("E ------------------------------[Exception] - [NoExtensionException] ------------------------------ E");
         return new ResponseEntity<>(responseMessage, HttpStatus.OK);
     }
 }

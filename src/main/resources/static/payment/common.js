@@ -80,7 +80,7 @@ function populateSelect(productTypes) {
         option.textContent = `${product.name} - ${parseInt(product.price).toLocaleString()}원`; // 표시될 텍스트를 설정합니다.
         option.value = product.type; // option의 value를 설정합니다.
 
-        // 필요하다면 추가 데이터를 속성으로 저장할 수 있습니다.
+         // 필요하다면 추가 데이터를 속성으로 저장할 수 있습니다.
         option.setAttribute('data-basic-offer', product.basicOffer);
         option.setAttribute('data-month', product.month);
         option.setAttribute('data-price', product.price);
