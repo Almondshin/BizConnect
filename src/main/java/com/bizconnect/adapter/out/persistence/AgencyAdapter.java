@@ -97,6 +97,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         agencyJpaEntity.setEmail(client.getEmail());
         agencyJpaEntity.setRateSel(client.getRateSel());
         agencyJpaEntity.setSiteStatus(client.getSiteStatus());
+        agencyJpaEntity.setExtensionStatus(client.getExtensionStatus());
         agencyJpaEntity.setStartDate(client.getStartDate());
         agencyJpaEntity.setEndDate(client.getEndDate());
 

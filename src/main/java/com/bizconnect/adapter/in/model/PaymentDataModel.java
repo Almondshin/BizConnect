@@ -1,10 +1,12 @@
 package com.bizconnect.adapter.in.model;
 
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 import lombok.ToString;
 
 @Getter
 @ToString
+@NoArgsConstructor
 public class PaymentDataModel {
     private String mchtId;
     private String method;
@@ -24,9 +26,6 @@ public class PaymentDataModel {
     private String plainClipCustNm;
     private String plainClipCustCi;
     private String plainClipCustPhoneNo;
-
-    public PaymentDataModel() {
-    }
 
     public PaymentDataModel(String mchtId, String method, String mchtTrdNo, String trdDt, String trdTm, String plainTrdAmt) {
         this.mchtId = mchtId;

@@ -14,9 +14,5 @@ public interface AgencyUseCase {
     Optional<ClientDataModel> getAgencyInfo(ClientDataModel clientDataModel);  // Agency 객체를 전달받는 방식으로 변경
     List<Map<String, String>> getProductTypes(String agencyId);
 
-    void checkMchtParams(PaymentDataModel paymentDataModel);
-    String aes256EncryptEcb(PaymentDataModel paymentDataModel);
-    HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel);
-
 }
 
