@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.Map;
+import java.util.Set;
 
 @RestController
 @RequestMapping(value = {"/agency/payment/api/result", "/payment/api/result"})
@@ -76,16 +77,20 @@ public class HFResultController {
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
     @PostMapping(value = "/noti")
     public String noti(HttpServletRequest request) {
+
+        Set<String> keySet = request.getParameterMap().keySet();
+        for(String key: keySet) {
+            System.out.println("noti request : " + key + ": " + request.getParameter(key));
+        }
+
         HFDataModel notiCA = new HFDataModel(request.getParameter("outStatCd"), request.getParameter("trdNo"), request.getParameter("method"), request.getParameter("bizType"), request.getParameter("mchtId"), request.getParameter("mchtTrdNo"), request.getParameter("mchtCustNm"), request.getParameter("mchtName"), request.getParameter("pmtprdNm"), request.getParameter("trdDtm"), request.getParameter("trdAmt"), request.getParameter("billKey"), request.getParameter("billKeyExpireDt"), request.getParameter("bankCd"), request.getParameter("bankNm"), request.getParameter("cardCd"), request.getParameter("cardNm"), request.getParameter("telecomCd"), request.getParameter("telecomNm"), request.getParameter("vAcntNo"), request.getParameter("expireDt"), request.getParameter("AcntPrintNm"), request.getParameter("dpstrNm"), request.getParameter("email"), request.getParameter("mchtCustId"), request.getParameter("cardNo"), request.getParameter("cardApprNo"), request.getParameter("instmtMon"), request.getParameter("instmtType"), request.getParameter("phoneNoEnc"), request.getParameter("orgTrdNo"), request.getParameter("orgTrdDt"), request.getParameter("mixTrdNo"), request.getParameter("mixTrdAmt"), request.getParameter("payAmt"), request.getParameter("csrcIssNo"), request.getParameter("cnclType"), request.getParameter("mchtParam"), request.getParameter("pktHash"));
         HFDataModel notiVA = new HFDataModel(request.getParameter("outStatCd"), request.getParameter("trdNo"), request.getParameter("method"), request.getParameter("bizType"), request.getParameter("mchtId"), request.getParameter("mchtTrdNo"), request.getParameter("mchtCustNm"), request.getParameter("mchtName"), request.getParameter("pmtprdNm"), request.getParameter("trdDtm"), request.getParameter("trdAmt"), request.getParameter("bankCd"), request.getParameter("bankNm"), request.getParameter("acntType"), request.getParameter("vAcntNo"), request.getParameter("expireDt"), request.getParameter("AcntPrintNm"), request.getParameter("dpstrNm"), request.getParameter("email"), request.getParameter("mchtCustId"), request.getParameter("orgTrdNo"), request.getParameter("orgTrdDt"), request.getParameter("csrcIssNo"), request.getParameter("cnclType"), request.getParameter("mchtParam"), request.getParameter("pktHash"));
         /** 응답 파라미터 세팅 */
         String method = request.getParameter("method");
         if (method.equals("CA")) {
-            System.out.println("hfResultService.notiCAData(notiCA) : " + hfResultService.notiCAData(notiCA));
             return hfResultService.notiCAData(notiCA);
         }
         if (method.equals("VA")) {
-            System.out.println("hfResultService.notiVAData(notiVA) : " + hfResultService.notiVAData(notiVA));
             return hfResultService.notiVAData(notiVA);
         }
         return "FAIL";

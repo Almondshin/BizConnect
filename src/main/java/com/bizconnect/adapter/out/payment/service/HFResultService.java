@@ -7,6 +7,8 @@ import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
+import com.bizconnect.application.port.in.EncryptUseCase;
+import com.bizconnect.application.port.in.NotiUseCase;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
@@ -36,16 +38,25 @@ public class HFResultService {
     private final Constant constant;
     private final SavePaymentDataPort savePaymentDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
+
+    private final NotiUseCase notiUseCase;
+    private final EncryptUseCase encryptUseCase;
     private final ConnectHectoFinancialService connectHectoFinancialService;
 
     @Value("${external.admin.url}")
+    private String profileSpecificAdminUrl;
+
+    @Value("${external.url}")
     private String profileSpecificUrl;
+
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, ConnectHectoFinancialService connectHectoFinancialService) {
+    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, NotiUseCase notiUseCase, EncryptUseCase encryptUseCase, ConnectHectoFinancialService connectHectoFinancialService) {
         this.constant = constant;
         this.savePaymentDataPort = savePaymentDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
+        this.notiUseCase = notiUseCase;
+        this.encryptUseCase = encryptUseCase;
         this.connectHectoFinancialService = connectHectoFinancialService;
     }
 
@@ -288,9 +299,26 @@ public class HFResultService {
                                     regDate
                             );
                             System.out.println("0021 card paymentHistory : " + paymentHistory);
+                            Map<String, String> jsonData = new HashMap<>();
+                            jsonData.put("agencyId", agencyId);
+                            jsonData.put("siteId", siteId);
+                            jsonData.put("trdNum", responseParam.get("mchtTrdNo"));
+
+                            Map<String, String> notifyPaymentData = new HashMap<>();
+                            notifyPaymentData.put("agencyId", agencyId);
+                            notifyPaymentData.put("siteId", siteId);
+                            notifyPaymentData.put("startDate", sdf.format(startDate));
+                            notifyPaymentData.put("endDate", sdf.format(endDate));
+                            notifyPaymentData.put("rateSel", rateSel);
+                            notifyPaymentData.put("salesPrice", responseParam.get("trdAmt"));
+
                             savePaymentDataPort.insertPayment(paymentHistory);
+                            //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
-                            this.paymentCompletionNoti(agencyId,siteId, responseParam.get("mchtTrdNo"));
+
+                            //가맹점Noti + AdminNoti
+                            notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+//                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
                             break;
                         }
                         case "VA": {
@@ -317,9 +345,26 @@ public class HFResultService {
                                     modDate
                             );
                             System.out.println("0021 vBank paymentHistory : " + paymentHistory);
+                            Map<String, String> jsonData = new HashMap<>();
+                            jsonData.put("agencyId", agencyId);
+                            jsonData.put("siteId", siteId);
+                            jsonData.put("trdNum", responseParam.get("mchtTrdNo"));
+
+                            Map<String, String> notifyPaymentData = new HashMap<>();
+                            notifyPaymentData.put("agencyId", agencyId);
+                            notifyPaymentData.put("siteId", siteId);
+                            notifyPaymentData.put("startDate", sdf.format(startDate));
+                            notifyPaymentData.put("endDate", sdf.format(endDate));
+                            notifyPaymentData.put("rateSel", rateSel);
+                            notifyPaymentData.put("salesPrice", responseParam.get("trdAmt"));
+
                             savePaymentDataPort.updatePayment(paymentHistory);
+                            //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
-                            this.paymentCompletionNoti(agencyId,siteId, responseParam.get("mchtTrdNo"));
+
+                            //가맹점Noti + AdminNoti
+                            notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+//                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
                             break;
                         }
                     }
@@ -409,63 +454,6 @@ public class HFResultService {
 
         System.out.println("responseParams " + responseParams);
         return responseParams;
-    }
-
-    public void paymentCompletionNoti(String agencyId, String siteId, String tradeNum) {
-        // 데이터
-        Map<String, String> data = new HashMap<>();
-        data.put("agencyId", agencyId);
-        data.put("siteId", siteId);
-        data.put("tradeNum", tradeNum);
-
-        // 데이터를 JSON 문자열로 변환
-        ObjectMapper objectMapper = new ObjectMapper();
-        String jsonData = "";
-        try {
-            jsonData = objectMapper.writeValueAsString(data);
-        } catch (JsonProcessingException e) {
-            e.printStackTrace();
-        }
-
-        sendPostRequest(profileSpecificUrl +"/clientManagement/agency/payment/noti", jsonData);
-    }
-
-    public void sendPostRequest(String targetUrl, String jsonData) {
-
-        logger.info("[paymentCompletionNoti] URL : " + targetUrl);
-        logger.info("[paymentCompletionNoti] jsonData : " + jsonData);
-        try {
-            URL url = new URL(targetUrl);
-            HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-            connection.setRequestMethod("POST");
-            connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
-            connection.setDoOutput(true);
-
-            DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
-            dataOutputStream.writeBytes(jsonData); // jsonData is the request body
-            dataOutputStream.flush();
-            dataOutputStream.close();
-
-            // GET the server response
-            int responseCode = connection.getResponseCode();
-            if (responseCode == HttpURLConnection.HTTP_OK) { //success
-                BufferedReader in = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-                String inputLine;
-                StringBuffer response = new StringBuffer();
-
-                while ((inputLine = in.readLine()) != null) {
-                    response.append(inputLine);
-                }
-                in.close();
-
-                logger.info("[paymentCompletionNoti] Response : " + response);
-            } else {
-                System.out.println("POST request not worked");
-            }
-
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 }
 

@@ -60,10 +60,12 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), agency.getSiteId());
         if (optionalEntity.isPresent()){
             AgencyJpaEntity entity = optionalEntity.get();
+            if (entity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())){
+                entity.setRateSel(client.getRateSel());
+                entity.setStartDate(client.getStartDate());
+                entity.setEndDate(client.getEndDate());
+            }
             entity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
-            entity.setRateSel(client.getRateSel());
-            entity.setStartDate(client.getStartDate());
-            entity.setEndDate(client.getEndDate());
         } else {
             throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() +", "+  agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }

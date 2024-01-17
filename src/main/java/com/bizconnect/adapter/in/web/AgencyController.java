@@ -1,14 +1,10 @@
 package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.application.domain.enums.EnumAgency;
-import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
-import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import com.bizconnect.application.port.in.EncryptUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -21,15 +17,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import javax.crypto.Cipher;
-import javax.crypto.Mac;
-import javax.crypto.spec.IvParameterSpec;
-import javax.crypto.spec.SecretKeySpec;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -38,6 +32,8 @@ public class AgencyController {
 
     private static final int DAYS_BEFORE_EXPIRATION = 15;
     private final AgencyUseCase agencyUseCase;
+    private final EncryptUseCase encryptUseCase;
+
 
     @Value("${external.url}")
     private String profileSpecificUrl;
@@ -47,8 +43,9 @@ public class AgencyController {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public AgencyController(AgencyUseCase agencyUseCase) {
+    public AgencyController(AgencyUseCase agencyUseCase, EncryptUseCase encryptUseCase) {
         this.agencyUseCase = agencyUseCase;
+        this.encryptUseCase = encryptUseCase;
     }
 
     /**
@@ -61,7 +58,7 @@ public class AgencyController {
     @PostMapping("/getSiteStatus")
     public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        byte[] plainBytes = decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
         String resultCode = EnumResultCode.SUCCESS.getCode();
@@ -92,13 +89,13 @@ public class AgencyController {
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, keyString);
         boolean isVerifiedMsgType = verifyReceivedMessageType("status", clientDataModel.getMsgType(), keyString);
 
-        String originalData = mapToJSONString(encryptMapData);
+        String originalData = encryptUseCase.mapToJSONString(encryptMapData);
 
         responseMessage.put("resultCode", resultCode);
         responseMessage.put("resultMsg", resultMsg);
         responseMessage.put("msgType", "SiteInfo");
-        responseMessage.put("encryptData", encryptData(Objects.requireNonNull(originalData)));
-        responseMessage.put("verifyInfo", hmacSHA256(originalData, keyString));
+        responseMessage.put("encryptData", encryptUseCase.encryptData(Objects.requireNonNull(originalData)));
+        responseMessage.put("verifyInfo", encryptUseCase.hmacSHA256(originalData, keyString));
 
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
 
@@ -120,7 +117,7 @@ public class AgencyController {
     @PostMapping("/regSiteInfo")
     public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        byte[] plainBytes = decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
 
@@ -163,7 +160,7 @@ public class AgencyController {
         logger.info("[client encryptData] : [" + clientDataModel.getEncryptData() + "]");
         logger.info("[client verifyInfo] : [" + clientDataModel.getVerifyInfo() + "]");
 
-        logger.info("[Received data] : [" + mapToJSONString(jsonData) + "]");
+        logger.info("[Received data] : [" + encryptUseCase.mapToJSONString(jsonData) + "]");
 
         responseMessage.put("resultCode", resultCode);
         responseMessage.put("resultMsg", resultMsg);
@@ -189,7 +186,7 @@ public class AgencyController {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, String> responseMessage = new HashMap<>();
 
-        byte[] plainBytes = decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
 
         agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
@@ -243,28 +240,6 @@ public class AgencyController {
     }
 
     /**
-     * HmacSHA256를 사용해 문자열을 해싱합니다.
-     *
-     * @param target        해싱 대상 문자열
-     * @param hmacKeyString Hmac 키 문자열
-     * @return HmacSHA256을 사용해 해싱된 문자열을 반환합니다. 예외 발생 시 null을 반환합니다.
-     */
-    public static String hmacSHA256(String target, String hmacKeyString) {
-        try {
-            byte[] hmacKey = hmacKeyString.getBytes(StandardCharsets.UTF_8);
-
-            Mac sha256_HMAC = Mac.getInstance("HmacSHA256");
-            SecretKeySpec secret_key = new SecretKeySpec(hmacKey, "HmacSHA256");
-            sha256_HMAC.init(secret_key);
-            byte[] hashed = sha256_HMAC.doFinal(target.getBytes(StandardCharsets.UTF_8));
-            return Base64.getEncoder().encodeToString(hashed);
-        } catch (Exception e) {
-            e.printStackTrace();
-            return null;
-        }
-    }
-
-    /**
      * Hmac SHA256 인증을 검증합니다.
      *
      * @param receivedHmac    수신된 hmac
@@ -272,9 +247,9 @@ public class AgencyController {
      * @param keyString       hmac 키 문자열
      * @return 인증이 유효한 경우 true, 그렇지 않은 경우 false를 반환
      */
-    public static boolean verifyHmacSHA256(String receivedHmac, String originalMessage, String keyString) {
+    public boolean verifyHmacSHA256(String receivedHmac, String originalMessage, String keyString) {
         try {
-            String calculatedHmac = hmacSHA256(originalMessage, keyString);
+            String calculatedHmac = encryptUseCase.hmacSHA256(originalMessage, keyString);
             return receivedHmac.equals(calculatedHmac);
         } catch (Exception e) {
             e.printStackTrace();
@@ -314,65 +289,6 @@ public class AgencyController {
     }
 
 
-    /**
-     * AES 암호화를 사용하여 데이터를 복호화합니다.
-     *
-     * @param targetDecode 복호화할 대상 데이터 (Base64 인코딩 되어 있음)
-     * @return 복호화된 데이터 바이트 배열
-     */
-    private static byte[] decryptData(String targetDecode) throws GeneralSecurityException {
-        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
-        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
 
-        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
-        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.DECRYPT_MODE, secretKeySpec, ivParameterSpec);
-
-        return cipher.doFinal(Base64.getDecoder().decode(targetDecode));
-    }
-
-    /**
-     * AES 암호화를 사용하여 데이터를 암호화합니다.
-     *
-     * @param targetEncode 암호화 대상 데이터
-     * @return 암호화된 데이터 문자열
-     */
-    private static String encryptData(String targetEncode) throws GeneralSecurityException {
-        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
-        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
-
-        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
-        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
-        SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
-        IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
-
-        Cipher cipher = Cipher.getInstance("AES/CBC/PKCS5Padding");
-        cipher.init(Cipher.ENCRYPT_MODE, secretKeySpec, ivParameterSpec);
-
-        byte[] cipherBytes = cipher.doFinal(targetEncode.getBytes(StandardCharsets.UTF_8));
-        return Base64.getEncoder().encodeToString(cipherBytes);
-    }
-
-    /**
-     * MAP -> JSON string
-     * libs 필요
-     *
-     * @param map JSON으로 만들 MAP 데이터
-     * @return JSON string
-     */
-    public static String mapToJSONString(Map<String, String> map) {
-        try {
-            /* libs  필요 */
-            ObjectMapper objectMapper = new ObjectMapper();
-            return objectMapper.writeValueAsString(map);
-        } catch (Exception e) {
-            System.out.println("mapToJSONString 실패");
-            return null;
-        }
-    }
 
 }
