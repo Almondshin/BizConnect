@@ -18,6 +18,8 @@ document.addEventListener("DOMContentLoaded", function () {
 var profileSpecificUrl = 'http://127.0.0.1:9000';
 var profileSpecificPaymentUrl = 'http://127.0.0.1:9000';
 
+var excessAmount = 0;
+
 const searchParams = new URLSearchParams(window.location.search);
 const agencyId = searchParams.get('agencyId');
 const siteId = searchParams.get('siteId');
@@ -40,6 +42,10 @@ $.ajax({
         }
         if (response.profilePaymentUrl != null) {
             profileSpecificPaymentUrl = response.profilePaymentUrl;
+        }
+
+        if (response.excessAmount != null) {
+            excessAmount = response.excessAmount;
         }
 
         if (response.listSel) {
@@ -130,16 +136,16 @@ function updateDataByProduct() {
     }
 
     offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
-    price = ((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1;
+    price = ((basePrice * durations / lastDate) + (basePrice * (dataMonth - 1))) * 1.1 + excessAmount;
 
     if (dataMonth === '1') {
         if (durations <= 15) {
             endDate = new Date(endDate.getFullYear(), endDate.getMonth() + Number(dataMonth) + 1, 0);
             offer = (baseOffer) + (baseOffer * durations / lastDate);
-            price = ((basePrice * durations / lastDate) + basePrice) * 1.1;
+            price = ((basePrice * durations / lastDate) + basePrice) * 1.1 + excessAmount;
         } else {
             offer = baseOffer * durations / lastDate;
-            price = (basePrice * durations / lastDate) * 1.1;
+            price = (basePrice * durations / lastDate) * 1.1 + excessAmount;
         }
     } else {
         if (dataMonth === '12') {

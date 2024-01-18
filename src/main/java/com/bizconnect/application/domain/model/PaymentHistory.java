@@ -18,13 +18,14 @@ public class PaymentHistory {
     private String amount;
     private String offer;
     private String useCount;
+    private String trTrace;
+    private String paymentStatus;
 
     private Date trDate;
     private Date startDate;
     private Date endDate;
 
     private String rcptName;
-    private String paymentStatus;
 
     private String vbankName;
     private String vbankCode;
@@ -55,8 +56,8 @@ public class PaymentHistory {
         this.rateSel = rateSel;
         this.amount = amount;
         this.offer = offer;
-        this.trDate = trDate;
         this.paymentStatus = paymentStatus;
+        this.trDate = trDate;
         this.startDate = startDate;
         this.endDate = endDate;
         this.regDate = regDate;

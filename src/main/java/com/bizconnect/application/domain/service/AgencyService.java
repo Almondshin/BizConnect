@@ -10,7 +10,6 @@ import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;
-import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
@@ -20,13 +19,12 @@ import java.util.*;
 public class AgencyService implements AgencyUseCase {
     private final LoadAgencyDataPort loadAgencyDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
-    private final LoadPaymentDataPort loadPaymentDataPort;
 
 
-    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort, LoadPaymentDataPort loadPaymentDataPort) {
+
+    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort) {
         this.loadAgencyDataPort = loadAgencyDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
-        this.loadPaymentDataPort = loadPaymentDataPort;
     }
 
     @Override

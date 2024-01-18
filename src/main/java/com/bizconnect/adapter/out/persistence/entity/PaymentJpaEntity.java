@@ -39,6 +39,11 @@ public class PaymentJpaEntity {
     private String offer;
     @Column(name = "USE_COUNT")
     private int useCount;
+    @Column(name = "TR_TRACE")
+    private String trTrace;
+    @Column(name = "PAYMENT_STATUS")
+    private String paymentStatus;
+
 
     @Column(name = "TR_DATE")
     private Date trDate;
@@ -49,8 +54,6 @@ public class PaymentJpaEntity {
 
     @Column(name = "RCPT_NAME")
     private String rcptName;
-    @Column(name = "PAYMENT_STATUS")
-    private String paymentStatus;
 
     @Column(name = "VBANK_NAME")
     private String vbankName;

@@ -2,22 +2,22 @@ package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
+import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.domain.enums.EnumProductType;
+import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
+import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 
 @Service
 public class PaymentService implements PaymentUseCase {
@@ -26,9 +26,12 @@ public class PaymentService implements PaymentUseCase {
     private final AgencyService agencyService;
     Logger logger = LoggerFactory.getLogger("HFInitController");
 
-    public PaymentService(Constant constant, AgencyService agencyService) {
+    private final LoadPaymentDataPort loadPaymentDataPort;
+
+    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort) {
         this.constant = constant;
         this.agencyService = agencyService;
+        this.loadPaymentDataPort = loadPaymentDataPort;
     }
 
 
@@ -88,6 +91,14 @@ public class PaymentService implements PaymentUseCase {
             throw new RuntimeException(e);
         }
 
+        List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
+        int excessCount;
+        double excessAmount = 0;
+        if (list.size() > 2){
+            excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
+            excessAmount = Math.abs(excessCount) * 50 * 1.1;
+        }
+
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
@@ -98,16 +109,16 @@ public class PaymentService implements PaymentUseCase {
         int dataMonth = productType.getMonth();
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
-        price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
+        price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1 + excessAmount);
 
         if (productType.getMonth() == 1) {
             if (durations <= 15) {
                 endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth());
                 offer = (baseOffer) + (baseOffer * durations / lastDate);
-                price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
+                price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1 + excessAmount);
             } else {
                 offer = (baseOffer * durations / lastDate);
-                price = (((double) (basePrice * durations) / lastDate) * 1.1);
+                price = (((double) (basePrice * durations) / lastDate) * 1.1 + excessAmount);
             }
         } else {
             endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth() - 1);
@@ -192,6 +203,11 @@ public class PaymentService implements PaymentUseCase {
             logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
         }
         return params;
+    }
+
+    @Override
+    public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId,String siteId) {
+        return loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId,siteId));
     }
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {

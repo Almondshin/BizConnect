@@ -4,6 +4,7 @@ import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.application.domain.enums.EnumPaymentStatus;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
@@ -292,7 +293,7 @@ public class HFResultService {
                                     rateSel,
                                     responseParam.get("trdAmt"),        //결제금액
                                     offer,
-                                    "Y",
+                                    EnumPaymentStatus.ACTIVE.getCode(),
                                     originalFormat.parse(responseParam.get("trdDtm")),         //거래일
                                     startDate,
                                     endDate,
@@ -332,7 +333,7 @@ public class HFResultService {
                                     rateSel,
                                     responseParam.get("trdAmt"),        //결제금액
                                     offer,
-                                    "Y",
+                                    EnumPaymentStatus.ACTIVE.getCode(),
                                     originalFormat.parse(responseParam.get("trdDtm")),       //거래일
                                     responseParam.get("AcntPrintNm"),
                                     responseParam.get("bankNm"),
@@ -378,7 +379,7 @@ public class HFResultService {
                             rateSel,
                             responseParam.get("trdAmt"),        //결제금액
                             offer,
-                            "M",    //결제상태
+                            EnumPaymentStatus.NOT_DEPOSITED.getCode(),    //결제상태
                             null,        //거래일
                             responseParam.get("AcntPrintNm"),
                             responseParam.get("bankNm"),

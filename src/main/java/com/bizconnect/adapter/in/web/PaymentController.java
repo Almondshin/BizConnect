@@ -2,6 +2,7 @@ package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
+import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
@@ -45,6 +46,8 @@ public class PaymentController {
     }
 
 
+
+
     /**
      * 결제 정보 요청
      *
@@ -56,6 +59,7 @@ public class PaymentController {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Optional<ClientDataModel> optClientInfo = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
         List<Map<String, String>> productTypes = agencyUseCase.getProductTypes(clientDataModel.getAgencyId());
+
 
         Map<String, Object> responseMessage = new HashMap<>();
 
@@ -75,6 +79,9 @@ public class PaymentController {
             if (siteStatusResponse != null) {
                 return siteStatusResponse;
             }
+
+            checkExtraCount(responseMessage, paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
+
 
             logger.info("[Retrieved agencyId] : [" + clientInfo.getAgencyId() + "]");
             logger.info("[Retrieved siteId] : [" + clientInfo.getSiteId() + "]");
@@ -178,6 +185,19 @@ public class PaymentController {
         }
         throw new IllegalAgencyIdSiteIdException(EnumResultCode.IllegalArgument, clientDataModel.getSiteId());
     }
+
+
+    public void checkExtraCount(Map<String, Object> responseMessage, List<PaymentHistoryDataModel> list){
+        if (list.size() > 2){
+            int excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
+            System.out.println("초과건수 : " + Math.abs(excessCount));
+            System.out.println("초과 금액 : " + Math.abs(excessCount) * 50 * 1.1);
+            responseMessage.put("excessAmount", Math.abs(excessCount) * 50 * 1.1);
+        } else {
+            responseMessage.put("excessAmount", 0);
+        }
+    }
+
 
 
 

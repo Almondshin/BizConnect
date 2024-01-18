@@ -3,6 +3,7 @@ package com.bizconnect.adapter.in.web;
 import com.bizconnect.application.port.in.EncryptUseCase;
 import com.bizconnect.application.port.in.NotiUseCase;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.security.GeneralSecurityException;
@@ -23,7 +24,7 @@ public class NotiController {
     }
 
     @PostMapping("/siteStatus")
-    public void siteStatusNoti(@RequestBody Map<String , String> responseData) throws GeneralSecurityException {
+    public ResponseEntity<?> siteStatusNoti(@RequestBody Map<String, String> responseData) throws GeneralSecurityException {
         System.out.println("요청 응답 : " + responseData.get("agencyId"));
         System.out.println("요청 응답 : " + responseData.get("siteId"));
         System.out.println("요청 응답 : " + responseData.get("siteStatus"));
@@ -42,7 +43,11 @@ public class NotiController {
 
         String requestStatusSiteData = encryptUseCase.mapToJSONString(requestStatusSiteMap);
         //targetUrl : 가맹점 NotiURL 입니다.
-        notiUseCase.sendNotification("http://127.0.0.1:8080" + "/agency/sample/notifyStatusSite.jsp", requestStatusSiteData);
+        // notiUseCase.sendNotification("http://127.0.0.1:8080" + "/agency/sample/notifyStatusSite.jsp", requestStatusSiteData);
+
+        // 클라이언트에게 응답을 기대하지 않는 경우에도 "Success" 응답을 제공
+        return ResponseEntity.ok("Success");
     }
+
 
 }

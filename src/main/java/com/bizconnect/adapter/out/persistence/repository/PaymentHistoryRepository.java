@@ -7,15 +7,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import javax.validation.constraints.NotBlank;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 public interface PaymentHistoryRepository extends JpaRepository<PaymentJpaEntity, String> {
-    Optional<PaymentJpaEntity> findByAgencyIdAndSiteIdAndStartDateAndEndDateAndRateSelAndPaymentType(
+
+    List<PaymentJpaEntity> findByAgencyIdAndSiteIdAndTrTrace(
             @NotBlank String agencyId,
             @NotBlank String siteId,
-            @NotBlank Date startDate,
-            @NotBlank Date endDate,
-            String rateSel,
-            String paymentType
+            @NotBlank String trTrace
     );
 }
