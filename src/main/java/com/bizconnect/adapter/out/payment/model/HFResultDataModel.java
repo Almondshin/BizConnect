@@ -2,9 +2,11 @@ package com.bizconnect.adapter.out.payment.model;
 
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 
 @Getter
 @Setter
+@ToString
 public class HFResultDataModel {
     private String mchtId;             //상점아이디
     private String outStatCd;          //결과코드

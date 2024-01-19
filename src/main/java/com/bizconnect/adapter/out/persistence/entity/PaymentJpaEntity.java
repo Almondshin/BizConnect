@@ -55,6 +55,11 @@ public class PaymentJpaEntity {
     @Column(name = "RCPT_NAME")
     private String rcptName;
 
+    @Column(name = "BILL_KEY")
+    private String billKey;
+    @Column(name = "BILL_KEY_EXPIREDATE")
+    private String billKeyExpireDate;
+
     @Column(name = "VBANK_NAME")
     private String vbankName;
     @Column(name = "VBANK_ACCOUNT")

@@ -20,13 +20,13 @@ public class PaymentHistoryDataModel {
     private String amount;
     private String offer;
     private int useCount;
+    private String paymentStatus;
 
     private Date trDate;
     private Date startDate;
     private Date endDate;
 
     private String rcptName;
-    private String paymentStatus;
 
     private String vbankName;
     private String vbankAccount;

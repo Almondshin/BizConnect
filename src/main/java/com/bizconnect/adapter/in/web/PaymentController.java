@@ -46,8 +46,6 @@ public class PaymentController {
     }
 
 
-
-
     /**
      * 결제 정보 요청
      *
@@ -80,7 +78,9 @@ public class PaymentController {
                 return siteStatusResponse;
             }
 
-            checkExtraCount(responseMessage, paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
+            if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
+                checkExtraCount(responseMessage, paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
+            }
 
 
             logger.info("[Retrieved agencyId] : [" + clientInfo.getAgencyId() + "]");
@@ -177,7 +177,6 @@ public class PaymentController {
                 nextEndDate.setTime(endDate);
                 nextEndDate.add(Calendar.DATE, 1);
 
-                System.out.println(sdf.format(nextEndDate.getTime()));
                 return sdf.format(nextEndDate.getTime());
             }
         } else if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
@@ -187,19 +186,14 @@ public class PaymentController {
     }
 
 
-    public void checkExtraCount(Map<String, Object> responseMessage, List<PaymentHistoryDataModel> list){
-        if (list.size() > 2){
+    public void checkExtraCount(Map<String, Object> responseMessage, List<PaymentHistoryDataModel> list) {
+        if (list.size() > 2) {
             int excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
-            System.out.println("초과건수 : " + Math.abs(excessCount));
-            System.out.println("초과 금액 : " + Math.abs(excessCount) * 50 * 1.1);
             responseMessage.put("excessAmount", Math.abs(excessCount) * 50 * 1.1);
         } else {
             responseMessage.put("excessAmount", 0);
         }
     }
-
-
-
 
 
 }

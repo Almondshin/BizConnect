@@ -103,6 +103,8 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setStartDate(paymentHistory.getStartDate());
         entity.setEndDate(paymentHistory.getEndDate());
         entity.setRcptName(paymentHistory.getRcptName());
+        entity.setBillKey(paymentHistory.getBillKey());
+        entity.setBillKeyExpireDate(paymentHistory.getBillKeyExpireDate());
         entity.setVbankName(paymentHistory.getVbankName());
         entity.setVbankAccount(paymentHistory.getVbankAccount());
         entity.setVbankExpireDate(paymentHistory.getVbankExpireDate());
@@ -123,11 +125,11 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         paymentHistoryDataModel.setAmount(entity.getAmount());
         paymentHistoryDataModel.setOffer(entity.getOffer());
         paymentHistoryDataModel.setUseCount(entity.getUseCount());
+        paymentHistoryDataModel.setPaymentStatus(entity.getPaymentStatus());
         paymentHistoryDataModel.setTrDate(entity.getTrDate());
         paymentHistoryDataModel.setStartDate(entity.getStartDate());
         paymentHistoryDataModel.setEndDate(entity.getEndDate());
         paymentHistoryDataModel.setRcptName(entity.getRcptName());
-        paymentHistoryDataModel.setPaymentStatus(entity.getPaymentStatus());
         paymentHistoryDataModel.setVbankName(entity.getVbankName());
         paymentHistoryDataModel.setVbankAccount(entity.getVbankAccount());
         paymentHistoryDataModel.setVbankExpireDate(entity.getVbankExpireDate());

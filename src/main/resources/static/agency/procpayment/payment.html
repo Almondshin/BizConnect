@@ -6,7 +6,7 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
     <script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
-    <script src="/agency/procpayment/js/common.js"></script>
+    <script src="./js/common.js"></script>
 </head>
 <body>
 <h1>결제요청</h1>
@@ -43,20 +43,18 @@
     </tr>
     <tr>
         <td>
-            <div style="display: flex; height: 20px" id="vbank_proc">
-                <div style="display: inline-flex; flex-direction: column; height: 100%;">
-                    <button onclick="pay('vbank')" style="flex:auto">무통장 입금</button>
-                </div>
+            <div style="display: flex; height: 20px; align-items: center;" id="vbank_proc">
+                <button onclick="pay('vbank')" style="flex:auto; white-space: nowrap;">무통장 입금</button>
             </div>
         </td>
         <td>
-            <div style="display: flex; height: 20px" id="card_proc">
-                <div style="display: inline-flex; flex-direction: column; height: 100%;">
-                    <button onclick="pay('card')" style="flex:auto">신용카드 결제 요청</button>
-                </div>
+            <div style="display: flex; height: 20px; align-items: center;" id="card_proc">
+                <button onclick="pay('card')" style="flex:0.5; white-space: nowrap;">신용 카드 결제</button>
+                <button onclick="pay('card_auto')" style="flex:0.5; white-space: nowrap;">정기 결제</button>
             </div>
         </td>
     </tr>
+
 </table>
 
 

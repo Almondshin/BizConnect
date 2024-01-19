@@ -91,13 +91,7 @@ public class PaymentService implements PaymentUseCase {
             throw new RuntimeException(e);
         }
 
-        List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
-        int excessCount;
-        double excessAmount = 0;
-        if (list.size() > 2){
-            excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
-            excessAmount = Math.abs(excessCount) * 50 * 1.1;
-        }
+
 
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
@@ -109,16 +103,16 @@ public class PaymentService implements PaymentUseCase {
         int dataMonth = productType.getMonth();
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
-        price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1 + excessAmount);
+        price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
 
         if (productType.getMonth() == 1) {
             if (durations <= 15) {
                 endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth());
                 offer = (baseOffer) + (baseOffer * durations / lastDate);
-                price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1 + excessAmount);
+                price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
             } else {
                 offer = (baseOffer * durations / lastDate);
-                price = (((double) (basePrice * durations) / lastDate) * 1.1 + excessAmount);
+                price = (((double) (basePrice * durations) / lastDate) * 1.1);
             }
         } else {
             endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth() - 1);
@@ -127,6 +121,16 @@ public class PaymentService implements PaymentUseCase {
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
             endDateByCal.add(Calendar.MONTH, 1);
+            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
+            int excessCount;
+            double excessAmount = 0;
+
+            if (list.size() > 2){
+                excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
+                excessAmount = Math.abs(excessCount) * 50 * 1.1;
+            }
+
+            price += excessAmount;
         }
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
 

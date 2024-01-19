@@ -15,55 +15,10 @@ import java.util.Map;
 
 @Service
 public class ConnectHectoFinancialService {
+
     @Autowired
     Constant constant;
-
     Logger logger = LoggerFactory.getLogger("ConnectHectoFinancialService");
-
-    public void encryptParams(String[] ENCRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY) {
-        try {
-            for (int i = 0; i < ENCRYPT_PARAMS.length; i++) {
-                String aesPlain = REQ_BODY.get(ENCRYPT_PARAMS[i]);
-                if ((aesPlain != null) && !aesPlain.isEmpty()) {
-                    byte[] aesCipherRaw = EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, aesPlain);
-                    String aesCipher = EncryptUtil.encodeBase64(aesCipherRaw);
-
-                    REQ_BODY.put(ENCRYPT_PARAMS[i], aesCipher); //암호화 결과 값 세팅
-                    logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] " + ENCRYPT_PARAMS[i] + "[" + aesPlain + "] ---> [" + aesCipher + "]");
-//                    System.out.println("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] " + ENCRYPT_PARAMS[i] + "[" + aesPlain + "] ---> [" + aesCipher + "]");
-                }
-            }
-        }
-        catch (Exception e) {
-            e.printStackTrace();
-            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] AES256 Encrypt Fail! : " + e.toString());
-//            System.out.println("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] AES256 Encrypt Fail! : " + e.toString());
-        }
-    }
-
-    public void decryptParams(String[] DECRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> respParam) {
-        try {
-            for (int i = 0; i < DECRYPT_PARAMS.length; i++) {
-                if (respParam.containsKey(DECRYPT_PARAMS[i])) {
-                    String aesCipher = (respParam.get(DECRYPT_PARAMS[i])).trim();
-                    if (!("".equals(aesCipher))) {
-                        System.out.println("for each aesCipher : " + aesCipher);
-                        byte[] aesCipherRaw = EncryptUtil.decodeBase64(aesCipher);
-                        String aesPlain = new String(EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, aesCipherRaw), "UTF-8");
-
-                        respParam.put(DECRYPT_PARAMS[i], aesPlain);//복호화된 데이터로 세팅
-                        logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] " + DECRYPT_PARAMS[i] + "[" + aesCipher + "] ---> [" + aesPlain + "]");
-//                        System.out.println(("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] " + DECRYPT_PARAMS[i] + "[" + aesCipher + "] ---> [" + aesPlain + "]"));
-                    }
-                }
-            }
-        }
-        catch (Exception e) {
-            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] AES256 Decrypt Fail! : " + e.toString());
-//            System.out.println("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] AES256 Decrypt Fail! : " + e.toString());
-        }
-    }
-
 
     public void hashPkt(Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY) {
         String hashPlain = "";
@@ -74,11 +29,9 @@ public class ConnectHectoFinancialService {
         }
         catch (Exception e) {
             logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
-//            System.out.println(("[" + REQ_HEADER.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString()));
         }
         finally {
             logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
-//            System.out.println(("[" + REQ_HEADER.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]"));
             REQ_BODY.put("pktHash", hashCipher); //해쉬 결과 값 세팅
         }
     }

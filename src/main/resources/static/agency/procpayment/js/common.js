@@ -25,6 +25,7 @@ const agencyId = searchParams.get('agencyId');
 const siteId = searchParams.get('siteId');
 const startDate = searchParams.get('startDate');
 const rateSel = searchParams.get('rateSel');
+const openType = searchParams.get('openType');
 
 
 $.ajax({
@@ -195,6 +196,9 @@ function pay(type) {
     var mchtId;
     if (type === "card") {
         mchtId = "nxca_jt_il"
+    } else if (type === "card_auto") {
+        mchtId = "nxca_jt_gu"
+        method = "card";
     }
     // vbank
     else {
@@ -246,6 +250,23 @@ function pay(type) {
     }
 
 
+    let uiType = "";
+
+    switch (openType){
+        case "redirect" :{
+            uiType = "self";
+            break;
+        }
+        case "popup" : {
+            uiType = "popup";
+            break;
+        }
+        default : {
+            uiType = "popup";
+            break;
+        }
+    }
+
     $.ajax({
         type       : "POST",
         url        : profileSpecificPaymentUrl + "/agency/payment/setPaymentSiteInfo",
@@ -271,10 +292,11 @@ function pay(type) {
                     mchtCustNm: response.encParams.mchtCustNm,
                     notiUrl   : profileSpecificUrl + "/agency/payment/api/result/noti",
                     nextUrl   : profileSpecificUrl + "/agency/payment/api/result/next",
-                    cancUrl   : "http://example.com/cancUrl",
+                    cancUrl   : profileSpecificUrl + "/agency/payment/api/result/cancel",
                     pktHash   : response.hashCipher,
                     ui        : {
-                        type  : "popup",   //popup, iframe, self, blank
+                        // type  : "popup",   //popup, iframe, self, blank
+                        type  : uiType,   //popup, iframe, self, blank
                         width : "430",   //popup창의 너비
                         height: "660"   //popup창의 높이
                     }

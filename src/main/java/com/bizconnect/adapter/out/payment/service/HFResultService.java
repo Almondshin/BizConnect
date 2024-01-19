@@ -28,6 +28,7 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
@@ -42,7 +43,6 @@ public class HFResultService {
 
     private final NotiUseCase notiUseCase;
     private final EncryptUseCase encryptUseCase;
-    private final ConnectHectoFinancialService connectHectoFinancialService;
 
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
@@ -52,13 +52,12 @@ public class HFResultService {
 
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, NotiUseCase notiUseCase, EncryptUseCase encryptUseCase, ConnectHectoFinancialService connectHectoFinancialService) {
+    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, NotiUseCase notiUseCase, EncryptUseCase encryptUseCase) {
         this.constant = constant;
         this.savePaymentDataPort = savePaymentDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
         this.notiUseCase = notiUseCase;
         this.encryptUseCase = encryptUseCase;
-        this.connectHectoFinancialService = connectHectoFinancialService;
     }
 
     public String nextCardData(HFDataModel hfDataModel) throws IOException {
@@ -284,38 +283,23 @@ public class HFResultService {
                     switch (responseParam.get("method")) {
                         case "CA": {
                             resp = true;
-                            PaymentHistory paymentHistory = new PaymentHistory(
-                                    responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                                    responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
-                                    agencyId,
-                                    siteId,
-                                    responseParam.get("method"),        //결제수단
-                                    rateSel,
-                                    responseParam.get("trdAmt"),        //결제금액
-                                    offer,
-                                    EnumPaymentStatus.ACTIVE.getCode(),
-                                    originalFormat.parse(responseParam.get("trdDtm")),         //거래일
-                                    startDate,
-                                    endDate,
-                                    regDate
-                            );
-                            System.out.println("0021 card paymentHistory : " + paymentHistory);
-                            Map<String, String> jsonData = new HashMap<>();
-                            jsonData.put("agencyId", agencyId);
-                            jsonData.put("siteId", siteId);
-                            jsonData.put("trdNum", responseParam.get("mchtTrdNo"));
+                            String billKey = responseParam.get("billKey");
+                            String billKeyExpireDate = responseParam.get("billKeyExpireDate");
+                            PaymentHistory paymentHistory;
+                            if (billKey != null && billKeyExpireDate != null) {
+                                paymentHistory = createRegularPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, startDate, endDate, regDate);
+                            } else {
+                                paymentHistory = createDefaultPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, startDate, endDate, regDate);
+                            }
 
-                            Map<String, String> notifyPaymentData = new HashMap<>();
-                            notifyPaymentData.put("agencyId", agencyId);
-                            notifyPaymentData.put("siteId", siteId);
-                            notifyPaymentData.put("startDate", sdf.format(startDate));
-                            notifyPaymentData.put("endDate", sdf.format(endDate));
-                            notifyPaymentData.put("rateSel", rateSel);
-                            notifyPaymentData.put("salesPrice", responseParam.get("trdAmt"));
+                            System.out.println("0021 card paymentHistory : " + paymentHistory);
+                            // Prepare JSON data for notifications
+                            Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, responseParam.get("mchtTrdNo"));
+                            Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, rateSel, responseParam.get("trdAmt"));
 
                             savePaymentDataPort.insertPayment(paymentHistory);
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
-                            saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
+                            saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
                             //가맹점Noti + AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
@@ -324,44 +308,15 @@ public class HFResultService {
                         }
                         case "VA": {
                             resp = true;
-                            PaymentHistory paymentHistory = new PaymentHistory(
-                                    responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                                    responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
-                                    agencyId,
-                                    siteId,
-                                    responseParam.get("method"),        //결제수단
-                                    rateSel,
-                                    responseParam.get("trdAmt"),        //결제금액
-                                    offer,
-                                    EnumPaymentStatus.ACTIVE.getCode(),
-                                    originalFormat.parse(responseParam.get("trdDtm")),       //거래일
-                                    responseParam.get("AcntPrintNm"),
-                                    responseParam.get("bankNm"),
-                                    responseParam.get("bankCd"),
-                                    responseParam.get("vAcntNo"),
-                                    originalFormat.parse(responseParam.get("expireDt")),
-                                    startDate,
-                                    endDate,
-                                    regDate,
-                                    modDate
-                            );
+                            PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, EnumPaymentStatus.ACTIVE.getCode(), offer, startDate, endDate, regDate, modDate);
                             System.out.println("0021 vBank paymentHistory : " + paymentHistory);
-                            Map<String, String> jsonData = new HashMap<>();
-                            jsonData.put("agencyId", agencyId);
-                            jsonData.put("siteId", siteId);
-                            jsonData.put("trdNum", responseParam.get("mchtTrdNo"));
-
-                            Map<String, String> notifyPaymentData = new HashMap<>();
-                            notifyPaymentData.put("agencyId", agencyId);
-                            notifyPaymentData.put("siteId", siteId);
-                            notifyPaymentData.put("startDate", sdf.format(startDate));
-                            notifyPaymentData.put("endDate", sdf.format(endDate));
-                            notifyPaymentData.put("rateSel", rateSel);
-                            notifyPaymentData.put("salesPrice", responseParam.get("trdAmt"));
+                            // Prepare JSON data for notifications
+                            Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, responseParam.get("mchtTrdNo"));
+                            Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, rateSel, responseParam.get("trdAmt"));
 
                             savePaymentDataPort.updatePayment(paymentHistory);
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
-                            saveAgencyDataPort.updateAgency(new Agency(agencyId,siteId),new Client(rateSel,startDate,endDate));
+                            saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
                             //가맹점Noti + AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
@@ -370,27 +325,7 @@ public class HFResultService {
                         }
                     }
                 } else if ("0051".equals(outStatCd)) {
-                    PaymentHistory paymentHistory = new PaymentHistory(
-                            responseParam.get("mchtTrdNo"),     //상점에서 생성한 TradeNum
-                            responseParam.get("trdNo"),         //헥토파이낸셜 TradeNum
-                            agencyId,
-                            siteId,
-                            responseParam.get("method"),        //결제수단
-                            rateSel,
-                            responseParam.get("trdAmt"),        //결제금액
-                            offer,
-                            EnumPaymentStatus.NOT_DEPOSITED.getCode(),    //결제상태
-                            null,        //거래일
-                            responseParam.get("AcntPrintNm"),
-                            responseParam.get("bankNm"),
-                            responseParam.get("bankCd"),
-                            responseParam.get("vAcntNo"),
-                            originalFormat.parse(responseParam.get("expireDt")),
-                            startDate,
-                            endDate,
-                            regDate,
-                            null
-                    );
+                    PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, EnumPaymentStatus.NOT_DEPOSITED.getCode(), offer, startDate, endDate, regDate, null);
                     System.out.println("0051 vBank paymentHistory : " + paymentHistory);
                     savePaymentDataPort.insertPayment(paymentHistory);
                     resp = true;
@@ -451,11 +386,121 @@ public class HFResultService {
         String[] DECRYPT_PARAMS = {"mchtCustId", "trdAmt", "vtlAcntNo"};
 
 
-        connectHectoFinancialService.decryptParams(DECRYPT_PARAMS, responseParams, responseParams);
+        decryptParams(DECRYPT_PARAMS, responseParams, responseParams);
 
         System.out.println("responseParams " + responseParams);
         return responseParams;
     }
+
+    public void decryptParams(String[] DECRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> respParam) {
+        try {
+            for (int i = 0; i < DECRYPT_PARAMS.length; i++) {
+                if (respParam.containsKey(DECRYPT_PARAMS[i])) {
+                    String aesCipher = (respParam.get(DECRYPT_PARAMS[i])).trim();
+                    if (!("".equals(aesCipher))) {
+                        System.out.println("for each aesCipher : " + aesCipher);
+                        byte[] aesCipherRaw = EncryptUtil.decodeBase64(aesCipher);
+                        String aesPlain = new String(EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, aesCipherRaw), "UTF-8");
+
+                        respParam.put(DECRYPT_PARAMS[i], aesPlain);//복호화된 데이터로 세팅
+                        logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] " + DECRYPT_PARAMS[i] + "[" + aesCipher + "] ---> [" + aesPlain + "]");
+                    }
+                }
+            }
+        } catch (Exception e) {
+            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] AES256 Decrypt Fail! : " + e.toString());
+        }
+    }
+
+
+    private PaymentHistory createRegularPaymentHistory(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date startDate, Date endDate, Date regDate) throws ParseException {
+        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return new PaymentHistory(
+                responseParam.get("mchtTrdNo"),
+                responseParam.get("trdNo"),
+                agencyId,
+                siteId,
+                responseParam.get("method"),
+                rateSel,
+                responseParam.get("trdAmt"),
+                offer,
+                EnumPaymentStatus.ACTIVE.getCode(),
+                originalFormat.parse(responseParam.get("trdDtm")),
+                startDate,
+                endDate,
+                responseParam.get("billKey"),
+                responseParam.get("billKeyExpireDate"),
+                regDate
+        );
+    }
+
+    private PaymentHistory createDefaultPaymentHistory(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, Date startDate, Date endDate, Date regDate) throws ParseException {
+        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return new PaymentHistory(
+                responseParam.get("mchtTrdNo"),
+                responseParam.get("trdNo"),
+                agencyId,
+                siteId,
+                responseParam.get("method"),
+                rateSel,
+                responseParam.get("trdAmt"),
+                offer,
+                EnumPaymentStatus.ACTIVE.getCode(),
+                originalFormat.parse(responseParam.get("trdDtm")),
+                startDate,
+                endDate,
+                regDate
+        );
+    }
+
+
+    private PaymentHistory createVirtualAccountPaymentHistory(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, String paymentStatus, Date startDate, Date endDate, Date regDate, Date modDate) throws ParseException {
+        SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
+        return new PaymentHistory(
+                responseParam.get("mchtTrdNo"),
+                responseParam.get("trdNo"),
+                agencyId,
+                siteId,
+                responseParam.get("method"),
+                rateSel,
+                responseParam.get("trdAmt"),
+                offer,
+                paymentStatus,
+                originalFormat.parse(responseParam.get("trdDtm")),
+                responseParam.get("AcntPrintNm"),
+                responseParam.get("bankNm"),
+                responseParam.get("bankCd"),
+                responseParam.get("vAcntNo"),
+                originalFormat.parse(responseParam.get("expireDt")),
+                startDate,
+                endDate,
+                regDate,
+                modDate
+        );
+    }
+
+
+    private Map<String, String> prepareJsonDataForNotification(String agencyId, String siteId, String trdNum) {
+        Map<String, String> jsonData = new HashMap<>();
+        jsonData.put("agencyId", agencyId);
+        jsonData.put("siteId", siteId);
+        jsonData.put("trdNum", trdNum);
+        return jsonData;
+    }
+
+    private Map<String, String> prepareNotifyPaymentData(String agencyId, String siteId, Date startDate, Date endDate, String rateSel, String salesPrice) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Map<String, String> notifyPaymentData = new HashMap<>();
+        notifyPaymentData.put("agencyId", agencyId);
+        notifyPaymentData.put("siteId", siteId);
+        notifyPaymentData.put("startDate", sdf.format(startDate));
+        notifyPaymentData.put("endDate", sdf.format(endDate));
+        notifyPaymentData.put("rateSel", rateSel);
+        notifyPaymentData.put("salesPrice", salesPrice);
+        return notifyPaymentData;
+    }
 }
+
+
 
 
