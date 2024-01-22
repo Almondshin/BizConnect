@@ -27,6 +27,8 @@ const startDate = searchParams.get('startDate');
 const rateSel = searchParams.get('rateSel');
 const openType = searchParams.get('openType');
 
+var companyName, bizNumber, ceoName;
+
 
 $.ajax({
     type       : 'POST',
@@ -43,6 +45,13 @@ $.ajax({
         }
         if (response.profilePaymentUrl != null) {
             profileSpecificPaymentUrl = response.profilePaymentUrl;
+        }
+
+        if (response.clientInfo != null) {
+            [companyName, bizNumber, ceoName]  = response.clientInfo.split(",");
+            document.querySelector("#companyName").value = companyName;
+            document.querySelector("#bizNumber").value = bizNumber;
+            document.querySelector("#ceoName").value = ceoName;
         }
 
         if (response.excessAmount != null) {
@@ -79,6 +88,8 @@ $.ajax({
 var productTypeList = [];
 console.log(productTypeList);
 
+
+
 function populateSelect(productTypes) {
     const select = document.getElementById('productTypeSelect'); // select 요소를 선택합니다.
 
@@ -87,7 +98,7 @@ function populateSelect(productTypes) {
         option.textContent = `${product.name} - ${parseInt(product.price).toLocaleString()}원`; // 표시될 텍스트를 설정합니다.
         option.value = product.type; // option의 value를 설정합니다.
 
-         // 필요하다면 추가 데이터를 속성으로 저장할 수 있습니다.
+        // 필요하다면 추가 데이터를 속성으로 저장할 수 있습니다.
         option.setAttribute('data-basic-offer', product.basicOffer);
         option.setAttribute('data-month', product.month);
         option.setAttribute('data-price', product.price);
@@ -226,7 +237,7 @@ function pay(type) {
     var mchtEName = "dreamsecurity"
     var pmtPrdtNm = productName + " (" + startDate + " - " + endDate + ")";
 
-    const mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value;
+    const mchtParam = "agencyId=" + agencyId + "&siteId=" + siteId + "&startDate=" + startDate + "&endDate=" + endDate + "&rateSel=" + selectedOption.value + "&offer=" + document.getElementById("offer").value + "&companyName=" + companyName + "&bizNumber=" + bizNumber + "&ceoName=" + ceoName;
 
     var data = {
         mchtId              : mchtId,
@@ -252,8 +263,8 @@ function pay(type) {
 
     let uiType = "";
 
-    switch (openType){
-        case "redirect" :{
+    switch (openType) {
+        case "redirect" : {
             uiType = "self";
             break;
         }
@@ -312,4 +323,5 @@ function pay(type) {
             alert("에러 발생");
         },
     })
+
 }

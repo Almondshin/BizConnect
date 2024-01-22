@@ -5,11 +5,50 @@
     <title>Title</title>
 </head>
 <body>
- 결과 페이지 입니다
+결과 페이지 입니다
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script type="text/javascript" src="https://tbnpg.settlebank.co.kr/resources/js/v1/SettlePG_v1.2.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.0.0/crypto-js.min.js"></script>
 <script>
+    var params = new URLSearchParams(location.search);
+    var data = params.get("data");
 
+    var companyName, bizNumber, ceoName;
+    $.ajax({
+        type       : "POST",
+        url        : location.origin + "/agency/payment/api/result/decrypt",
+        contentType: "application/json",
+        dataType   : "json",
+        data       : JSON.stringify({"data": data}),
+        success    : function (response) {
+            if(response.clientInfo != null){
+                [companyName, bizNumber, ceoName]  = response.clientInfo.split(",");
+                document.querySelector("#companyName").value = companyName;
+                document.querySelector("#bizNumber").value = bizNumber;
+                document.querySelector("#ceoName").value = ceoName;
+                console.log(response);
+            }
+        }
+    })
 </script>
 
 <div>계약서 다운로드</div>
+<ul>
+    <li>
+        <strong>상호명:</strong>
+        <input readonly="readonly" type="text" id="companyName" name="companyName" value="">
+    </li>
+
+    <li>
+        <strong>사업자번호:</strong>
+        <input readonly="readonly" type="text" id="bizNumber" name="bizNumber" value="">
+    </li>
+
+    <li>
+        <strong>대표자명:</strong>
+        <input readonly="readonly" type="text" id="ceoName" name="ceoName" value="">
+    </li>
+</ul>
+
 </body>
 </html>

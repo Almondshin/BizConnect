@@ -38,60 +38,25 @@ public class PaymentService implements PaymentUseCase {
     // TODO
     // 연장결제 시 체크기능 추가 필요
     @Override
-    public void checkMchtParams(PaymentDataModel paymentDataModel) {
+    public void checkMchtParams(PaymentDataModel paymentDataModel) throws ParseException {
         int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        String agencyId = "";
-        String siteId = "";
-        String rateSel = "";
-        int offer;
-        double price;
-        int clientOffer = 0;
-        String endDate = "";
-        String clientEndDate = "";
-
         String[] pairs = paymentDataModel.getMchtParam().split("&");
 
-        parseParams(new String[] {"agencyId","siteId","rateSel","startDate","endDate","offer"});
+        Map<String, String> parseParams = parseParams(pairs);
 
-        try {
-            for (String pair : pairs) {
-                String[] keyValue = pair.split("=");
-                if (keyValue.length == 2) {
-                    switch (keyValue[0]) {
-                        case "agencyId":
-                            agencyId = keyValue[1];
-                            break;
-                        case "siteId":
-                            siteId = keyValue[1];
-                            break;
-                        case "rateSel": {
-                            rateSel = keyValue[1];
-                            break;
-                        }
-                        case "startDate": {
-                            startDateByCal.setTime(sdf.parse(keyValue[1]));
-                            break;
-                        }
-                        case "endDate": {
-                            clientEndDate = keyValue[1];
-                            break;
-                        }
-                        case "offer": {
-                            clientOffer = Integer.parseInt(keyValue[1]);
-                            break;
-                        }
-                    }
-                }
-            }
-        } catch (ParseException e) {
-            throw new RuntimeException(e);
-        }
-
-
+        String agencyId = parseParams.get("agencyId");
+        String siteId = parseParams.get("siteId");
+        String rateSel = parseParams.get("rateSel");
+        startDateByCal.setTime(sdf.parse(parseParams.get("startDate")));
+        int offer;
+        double price;
+        int clientOffer = Integer.parseInt(parseParams.get("offer"));;
+        String endDate = "";
+        String clientEndDate = parseParams.get("endDate");
 
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
@@ -119,15 +84,22 @@ public class PaymentService implements PaymentUseCase {
         }
 
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
+
+
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            endDateByCal.add(Calendar.MONTH, 1);
             List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
+
+            endDateByCal.setTime(info.get().getEndDate());
+            endDateByCal.add(Calendar.MONTH, 1);
+
             int excessCount;
             double excessAmount = 0;
 
             if (list.size() > 2){
-                excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
-                excessAmount = Math.abs(excessCount) * 50 * 1.1;
+                excessCount = Integer.parseInt(list.get(1).getOffer()) - list.get(1).getUseCount();
+                if (excessCount < 0){
+                    excessAmount = Math.abs(excessCount) * 50 * 1.1;
+                }
             }
 
             price += excessAmount;
@@ -135,6 +107,14 @@ public class PaymentService implements PaymentUseCase {
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
 
         endDate = sdf.format(endDateByCal.getTime());
+        System.out.println(offer);
+        System.out.println(clientOffer);
+        System.out.println((int) Math.floor(price));
+        System.out.println(clientPrice);
+        System.out.println(endDate);
+        System.out.println(clientEndDate);
+        System.out.println(agencyId);
+        System.out.println(siteId);
         if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }
@@ -189,6 +169,7 @@ public class PaymentService implements PaymentUseCase {
     public HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel) {
         String aesKey = constant.AES256_KEY;
         HashMap<String, String> params = convertToMap(paymentDataModel);
+        System.out.println("encode Base 64 " + paymentDataModel);
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();

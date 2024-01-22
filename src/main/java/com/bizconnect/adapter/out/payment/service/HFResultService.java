@@ -236,13 +236,6 @@ public class HFResultService {
         if (hashCipher.equals(pktHash)) {
             logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
 
-            String[] pairs = responseParam.get("mchtParam").split("&");
-            String agencyId = null;
-            String siteId = null;
-            Date startDate = null;
-            Date endDate = null;
-            String rateSel = null;
-            String offer = null;
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
             SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
@@ -250,33 +243,17 @@ public class HFResultService {
             Date regDate = cal.getTime();
             Date modDate = cal.getTime();
 
+            String[] pairs = responseParam.get("mchtParam").split("&");
+
+            Map<String, String> parseParams = parseParams(pairs);
+
             try {
-                // 분리된 문자열 처리
-                for (String pair : pairs) {
-                    String[] keyValue = pair.split("=");
-                    if (keyValue.length == 2) {
-                        switch (keyValue[0]) {
-                            case "agencyId":
-                                agencyId = keyValue[1];
-                                break;
-                            case "siteId":
-                                siteId = keyValue[1];
-                                break;
-                            case "startDate":
-                                startDate = sdf.parse(keyValue[1]);
-                                break;
-                            case "endDate":
-                                endDate = sdf.parse(keyValue[1]);
-                                break;
-                            case "rateSel":
-                                rateSel = keyValue[1];
-                                break;
-                            case "offer":
-                                offer = keyValue[1];
-                                break;
-                        }
-                    }
-                }
+                String agencyId = parseParams.get("agencyId");
+                String siteId = parseParams.get("siteId");
+                Date startDate = sdf.parse(parseParams.get("startDate"));
+                Date endDate = sdf.parse(parseParams.get("endDate"));
+                String rateSel = parseParams.get("rateSel");
+                String offer = parseParams.get("offer");
 
                 if ("0021".equals(outStatCd)) {
                     System.out.println("outStatCd equals 0021");
@@ -286,7 +263,7 @@ public class HFResultService {
                             String billKey = responseParam.get("billKey");
                             String billKeyExpireDate = responseParam.get("billKeyExpireDate");
                             PaymentHistory paymentHistory;
-                            if (billKey != null && billKeyExpireDate != null) {
+                            if (billKey != null && !billKey.isEmpty()) {
                                 paymentHistory = createRegularPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, startDate, endDate, regDate);
                             } else {
                                 paymentHistory = createDefaultPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, startDate, endDate, regDate);
@@ -499,6 +476,19 @@ public class HFResultService {
         notifyPaymentData.put("salesPrice", salesPrice);
         return notifyPaymentData;
     }
+
+
+    private Map<String, String> parseParams(String[] pairs) {
+        Map<String, String> parsedParams = new HashMap<>();
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                parsedParams.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return parsedParams;
+    }
+
 }
 
 

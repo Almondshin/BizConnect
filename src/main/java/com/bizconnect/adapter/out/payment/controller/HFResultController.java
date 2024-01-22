@@ -17,10 +17,7 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.util.Arrays;
-import java.util.Base64;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 @RestController
 @RequestMapping(value = {"/agency/payment/api/result", "/payment/api/result"})
@@ -43,10 +40,9 @@ public class HFResultController {
     public void next(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
         Set<String> keySet = request.getParameterMap().keySet();
-        for(String key: keySet) {
+        for (String key : keySet) {
             System.out.println("[Next] : " + key + ": " + request.getParameter(key));
         }
-
 
         String method = request.getParameter("method");
         HFDataModel card = new HFDataModel(request.getParameter("mchtTrdNo"), request.getParameter("pointTrdNo"), request.getParameter("trdNo"), request.getParameter("vtlAcntNo"), request.getParameter("mchtCustId"), request.getParameter("fnNm"), request.getParameter("method"), request.getParameter("authNo"), request.getParameter("trdAmt"), request.getParameter("pointTrdAmt"), request.getParameter("cardTrdAmt"), request.getParameter("outRsltMsg"), request.getParameter("mchtParam"), request.getParameter("outStatCd"), request.getParameter("outRsltCd"), request.getParameter("intMon"), request.getParameter("authDt"), request.getParameter("mchtId"), request.getParameter("fnCd"));
@@ -59,14 +55,25 @@ public class HFResultController {
         if (method.equals("vbank")) {
             hfResultService.nextVBankData(vbank);
         }
-        response.sendRedirect(profileSpecificUrl + "/agency/payment/end.html");
+
+        Map<String, String> res_params = new LinkedHashMap<>();
+
+        String[] pairs = request.getParameter("mchtParam").split("&");
+        Map<String, String> parseParams = parseParams(pairs);
+        res_params.put("clientInfo", parseParams.get("companyName") + "," + parseParams.get("bizNumber")+ "," +parseParams.get("ceoName"));
+
+        ObjectMapper objectMapper = new ObjectMapper();
+        String data = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(res_params).getBytes());
+
+        System.out.println("profileSpecificUrl : " + profileSpecificUrl);
+        response.sendRedirect(profileSpecificUrl + "/agency/payment/end.html?data=" + data);
     }
 
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
     @PostMapping(value = "/noti")
     public String noti(HttpServletRequest request) {
         Set<String> keySet = request.getParameterMap().keySet();
-        for(String key: keySet) {
+        for (String key : keySet) {
             System.out.println("[Noti] : " + key + ": " + request.getParameter(key));
         }
 
@@ -126,6 +133,17 @@ public class HFResultController {
             resMap = hfResultService.decryptData(resultDataModel);
         }
         return objectMapper.writeValueAsString(resMap);
+    }
+
+    private Map<String, String> parseParams(String[] pairs) {
+        Map<String, String> parsedParams = new HashMap<>();
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                parsedParams.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return parsedParams;
     }
 
 }
