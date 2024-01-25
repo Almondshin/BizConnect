@@ -12,7 +12,7 @@ import java.util.Map;
 
 @Slf4j
 @RestController
-@RequestMapping(value = {"/agency/noti"})
+@RequestMapping(value = {"/agency/noti", "/noti"})
 public class NotiController {
 
     private final EncryptUseCase encryptUseCase;

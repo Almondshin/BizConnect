@@ -60,6 +60,13 @@ public class AgencyJpaEntity {
 	private String settleManagerName;
 	@Column(name = "SETTLE_MANAGER_PHONE_NUMBER")
 	private String settleManagerPhoneNumber;
+	@Column(name = "SETTLE_MANAGER_TEL_NUMBER")
+	private String settleManagerTelNumber;
 	@Column(name = "SETTLE_MANAGER_EMAIL")
 	private String settleManagerEmail;
+
+	@Column(name = "SERVICE_USE_AGREE")
+	private String serviceUseAgree;
+	@Column(name = "PRIVATE_COL_AGREE")
+	private String privateColAgree;
 }

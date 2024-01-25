@@ -8,11 +8,15 @@ import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
+import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.bizconnect.application.port.out.LoadPaymentDataPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.text.ParseException;
@@ -35,13 +39,19 @@ public class PaymentService implements PaymentUseCase {
     }
 
 
-    // TODO
-    // 연장결제 시 체크기능 추가 필요
+    //TODO
+    // [중요!] 최적화
     @Override
     public void checkMchtParams(PaymentDataModel paymentDataModel) throws ParseException {
         int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
+        Calendar clientCal = Calendar.getInstance();
+
+        Calendar yesterDayCal = Calendar.getInstance();
+        yesterDayCal.add(Calendar.DATE, -1);
+        Date yesterday = yesterDayCal.getTime();
+
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         String[] pairs = paymentDataModel.getMchtParam().split("&");
@@ -51,6 +61,9 @@ public class PaymentService implements PaymentUseCase {
         String agencyId = parseParams.get("agencyId");
         String siteId = parseParams.get("siteId");
         String rateSel = parseParams.get("rateSel");
+        if (sdf.parse(parseParams.get("startDate")).before(yesterday)){
+            throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
+        }
         startDateByCal.setTime(sdf.parse(parseParams.get("startDate")));
         int offer;
         double price;
@@ -62,6 +75,11 @@ public class PaymentService implements PaymentUseCase {
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
+
+        if (parseParams.get("clientStartDate") != null){
+            clientCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
+            startDate = clientCal.get(Calendar.DATE);
+        }
         int durations = lastDate - startDate + 1;
         int baseOffer = productType.getBasicOffer() / productType.getMonth();
         int basePrice = productType.getPrice() / productType.getMonth();
@@ -85,12 +103,22 @@ public class PaymentService implements PaymentUseCase {
 
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
 
-
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
             List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
 
-            endDateByCal.setTime(info.get().getEndDate());
-            endDateByCal.add(Calendar.MONTH, 1);
+            if (sdf.parse(parseParams.get("startDate")).before(info.get().getEndDate())){
+                throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
+            }
+
+            if (parseParams.get("clientStartDate") != null){
+                endDateByCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
+            } else {
+                endDateByCal.setTime(sdf.parse(parseParams.get("startDate")));
+            }
+
+            if (durations <= 15){
+                endDateByCal.add(Calendar.MONTH, 1);
+            }
 
             int excessCount;
             double excessAmount = 0;
@@ -101,20 +129,11 @@ public class PaymentService implements PaymentUseCase {
                     excessAmount = Math.abs(excessCount) * 50 * 1.1;
                 }
             }
-
             price += excessAmount;
         }
-        endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
 
+        endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
         endDate = sdf.format(endDateByCal.getTime());
-        System.out.println(offer);
-        System.out.println(clientOffer);
-        System.out.println((int) Math.floor(price));
-        System.out.println(clientPrice);
-        System.out.println(endDate);
-        System.out.println(clientEndDate);
-        System.out.println(agencyId);
-        System.out.println(siteId);
         if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }
@@ -127,17 +146,6 @@ public class PaymentService implements PaymentUseCase {
         logger.info("[endDate] : [" + endDate + "]");
         logger.info("[offer] : [" + offer + "]");
         logger.info("[price] : [" + (int) Math.floor(price) + "]");
-    }
-
-    private Map<String, String> parseParams(String[] pairs) {
-        Map<String, String> parsedParams = new HashMap<>();
-        for (String pair : pairs) {
-            String[] keyValue = pair.split("=");
-            if (keyValue.length == 2) {
-                parsedParams.put(keyValue[0], keyValue[1]);
-            }
-        }
-        return parsedParams;
     }
 
     @Override
@@ -211,6 +219,17 @@ public class PaymentService implements PaymentUseCase {
         map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
         map.put("mchtParam", paymentDataModel.getMchtParam());
         return map;
+    }
+
+    private Map<String, String> parseParams(String[] pairs) {
+        Map<String, String> parsedParams = new HashMap<>();
+        for (String pair : pairs) {
+            String[] keyValue = pair.split("=");
+            if (keyValue.length == 2) {
+                parsedParams.put(keyValue[0], keyValue[1]);
+            }
+        }
+        return parsedParams;
     }
 
 }

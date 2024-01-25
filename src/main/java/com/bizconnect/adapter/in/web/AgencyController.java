@@ -2,9 +2,11 @@ package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.application.domain.enums.EnumAgency;
+import com.bizconnect.application.domain.enums.EnumAgree;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.in.EncryptUseCase;
+import com.bizconnect.application.port.in.NotiUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.text.SimpleDateFormat;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Objects;
-import java.util.Optional;
+import java.util.*;
 
 @Slf4j
 @RestController
@@ -33,6 +32,7 @@ public class AgencyController {
     private static final int DAYS_BEFORE_EXPIRATION = 15;
     private final AgencyUseCase agencyUseCase;
     private final EncryptUseCase encryptUseCase;
+    private final NotiUseCase notiUseCase;
 
 
     @Value("${external.url}")
@@ -41,11 +41,15 @@ public class AgencyController {
     @Value("${external.payment.url}")
     private String profileSpecificPaymentUrl;
 
+    @Value("${external.admin.url}")
+    private String profileSpecificAdminUrl;
+
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public AgencyController(AgencyUseCase agencyUseCase, EncryptUseCase encryptUseCase) {
+    public AgencyController(AgencyUseCase agencyUseCase, EncryptUseCase encryptUseCase, NotiUseCase notiUseCase) {
         this.agencyUseCase = agencyUseCase;
         this.encryptUseCase = encryptUseCase;
+        this.notiUseCase = notiUseCase;
     }
 
     /**
@@ -142,6 +146,17 @@ public class AgencyController {
         jsonData.put("rateSel", decryptInfo.getRateSel());
         jsonData.put("startDate", startDate);
 
+        jsonData.put("settleManagerName", decryptInfo.getSettleManagerName());
+        jsonData.put("settleManagerPhoneNumber", decryptInfo.getSettleManagerPhoneNumber());
+        jsonData.put("settleManagerTelNumber", decryptInfo.getSettleManagerTelNumber());
+        jsonData.put("settleManagerEmail", decryptInfo.getSettleManagerEmail());
+        jsonData.put("serviceUseAgree", decryptInfo.getServiceUseAgree());
+        jsonData.put("privateColAgree", decryptInfo.getPrivateColAgree());
+
+        ResponseEntity<?> validateResponse = validateRequiredValues(decryptInfo, responseMessage);
+        if (validateResponse != null) {
+            return validateResponse;
+        }
 
         String encryptedHmacValue = clientDataModel.getVerifyInfo();
         String originalMessage = objectMapper.writeValueAsString(jsonData);
@@ -208,13 +223,16 @@ public class AgencyController {
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, hmacKeyString);
         boolean isVerifiedMsgType = verifyReceivedMessageType("cancel", clientDataModel.getMsgType(), clientDataModel.getAgencyId());
 
-
         //TODO
         // 웹 관리도구로  해당 가맹점을 전달하여, 해지한 가맹점 정보를 Mail로 전달할 수 있도록 요청하는 기능 추가
 
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
+
+        jsonData.put("agencyId", clientDataModel.getAgencyId());
+        String cancelMessage = objectMapper.writeValueAsString(jsonData);
+        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/cancel", cancelMessage);
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
         logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
@@ -289,6 +307,38 @@ public class AgencyController {
     }
 
 
+    public ResponseEntity<?> validateRequiredValues(ClientDataModel clientDataModel, Map<String, String> responseMessage) {
+        String privateColAgree = clientDataModel.getPrivateColAgree();
+        String serviceUseAgree = clientDataModel.getServiceUseAgree();
+
+        if (privateColAgree.equals(EnumAgree.DISAGREE.getCode()) || serviceUseAgree.equals(EnumAgree.DISAGREE.getCode())) {
+            responseMessage.put("resultMsg", "서비스 이용약관 미동의");
+            responseMessage.put("resultCode", "9999");
+            return ResponseEntity.ok(responseMessage);
+        }
+
+        Map<String, String> requiredFields = new LinkedHashMap<>();
+        requiredFields.put("siteName", clientDataModel.getSiteName());
+        requiredFields.put("companyName", clientDataModel.getCompanyName());
+        requiredFields.put("bizNumber", clientDataModel.getBizNumber());
+        requiredFields.put("ceoName", clientDataModel.getCeoName());
+        requiredFields.put("phoneNumber", clientDataModel.getPhoneNumber());
+        requiredFields.put("address", clientDataModel.getAddress());
+        requiredFields.put("companySite", clientDataModel.getCompanySite());
+        requiredFields.put("settleManagerName", clientDataModel.getSettleManagerName());
+        requiredFields.put("settleManagerPhoneNumber", clientDataModel.getSettleManagerPhoneNumber());
+        requiredFields.put("settleManagerTelNumber", clientDataModel.getSettleManagerTelNumber());
+        requiredFields.put("settleManagerEmail", clientDataModel.getSettleManagerEmail());
 
 
+        for (Map.Entry<String, String> field : requiredFields.entrySet()) {
+            if (field.getValue() == null || field.getValue().isEmpty()) {
+                responseMessage.put("resultMsg", field.getKey() + " 필드가 비어 있습니다.");
+                responseMessage.put("resultCode", "9999");
+                return ResponseEntity.ok(responseMessage);
+            }
+        }
+
+        return null;
+    }
 }

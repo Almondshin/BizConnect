@@ -50,7 +50,7 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String paymentStatus, Date trDate, Date startDate, Date endDate, String billKey, String billKeyExpireDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, String billKey, String billKeyExpireDate, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
@@ -59,6 +59,7 @@ public class PaymentHistory {
         this.rateSel = rateSel;
         this.amount = amount;
         this.offer = offer;
+        this.trTrace = trTrace;
         this.paymentStatus = paymentStatus;
         this.trDate = trDate;
         this.startDate = startDate;
@@ -68,7 +69,7 @@ public class PaymentHistory {
         this.regDate = regDate;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String paymentStatus, Date trDate, Date startDate, Date endDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, Date regDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
@@ -77,6 +78,7 @@ public class PaymentHistory {
         this.rateSel = rateSel;
         this.amount = amount;
         this.offer = offer;
+        this.trTrace = trTrace;
         this.paymentStatus = paymentStatus;
         this.trDate = trDate;
         this.startDate = startDate;
@@ -85,7 +87,7 @@ public class PaymentHistory {
     }
 
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String paymentStatus, Date trDate, String rcptName, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date startDate, Date endDate, Date regDate, Date modDate) {
+    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, String rcptName, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date startDate, Date endDate, Date regDate, Date modDate) {
         this.tradeNum = tradeNum;
         this.hfTradeNum = hfTradeNum;
         this.agencyId = agencyId;
@@ -94,6 +96,7 @@ public class PaymentHistory {
         this.rateSel = rateSel;
         this.amount = amount;
         this.offer = offer;
+        this.trTrace = trTrace;
         this.paymentStatus = paymentStatus;
         this.trDate = trDate;
         this.rcptName = rcptName;

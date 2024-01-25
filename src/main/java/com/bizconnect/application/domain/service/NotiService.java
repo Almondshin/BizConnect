@@ -34,8 +34,6 @@ public class NotiService implements NotiUseCase {
             System.out.println("전달 URL 체크 : " + url);
             System.out.println("전달 data 체크 : " + responseData);
 
-            System.out.println("제휴사에 NOTI 발송");
-
             return response.toString();
         } catch (Exception e) {
             e.printStackTrace();

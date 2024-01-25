@@ -65,7 +65,6 @@ public class HFResultController {
         ObjectMapper objectMapper = new ObjectMapper();
         String data = Base64.getEncoder().encodeToString(objectMapper.writeValueAsString(res_params).getBytes());
 
-        System.out.println("profileSpecificUrl : " + profileSpecificUrl);
         response.sendRedirect(profileSpecificUrl + "/agency/payment/end.html?data=" + data);
     }
 

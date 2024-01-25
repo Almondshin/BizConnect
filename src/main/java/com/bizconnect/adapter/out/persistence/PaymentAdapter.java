@@ -98,6 +98,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setRateSel(paymentHistory.getRateSel());
         entity.setAmount(paymentHistory.getAmount());
         entity.setOffer(paymentHistory.getOffer());
+        entity.setTrTrace(paymentHistory.getTrTrace());
         entity.setPaymentStatus(paymentHistory.getPaymentStatus());
         entity.setTrDate(paymentHistory.getTrDate());
         entity.setStartDate(paymentHistory.getStartDate());

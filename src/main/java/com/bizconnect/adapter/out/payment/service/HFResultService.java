@@ -5,6 +5,7 @@ import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumPaymentStatus;
+import com.bizconnect.application.domain.enums.EnumTradeTrace;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
@@ -285,7 +286,7 @@ public class HFResultService {
                         }
                         case "VA": {
                             resp = true;
-                            PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, EnumPaymentStatus.ACTIVE.getCode(), offer, startDate, endDate, regDate, modDate);
+                            PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, EnumPaymentStatus.ACTIVE.getCode(), startDate, endDate, regDate, modDate);
                             System.out.println("0021 vBank paymentHistory : " + paymentHistory);
                             // Prepare JSON data for notifications
                             Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, responseParam.get("mchtTrdNo"));
@@ -302,7 +303,7 @@ public class HFResultService {
                         }
                     }
                 } else if ("0051".equals(outStatCd)) {
-                    PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, EnumPaymentStatus.NOT_DEPOSITED.getCode(), offer, startDate, endDate, regDate, null);
+                    PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, EnumPaymentStatus.NOT_DEPOSITED.getCode(), startDate, endDate, regDate, null);
                     System.out.println("0051 vBank paymentHistory : " + paymentHistory);
                     savePaymentDataPort.insertPayment(paymentHistory);
                     resp = true;
@@ -401,6 +402,7 @@ public class HFResultService {
                 rateSel,
                 responseParam.get("trdAmt"),
                 offer,
+                EnumTradeTrace.USED.getCode(),
                 EnumPaymentStatus.ACTIVE.getCode(),
                 originalFormat.parse(responseParam.get("trdDtm")),
                 startDate,
@@ -422,6 +424,7 @@ public class HFResultService {
                 rateSel,
                 responseParam.get("trdAmt"),
                 offer,
+                EnumTradeTrace.USED.getCode(),
                 EnumPaymentStatus.ACTIVE.getCode(),
                 originalFormat.parse(responseParam.get("trdDtm")),
                 startDate,
@@ -429,7 +432,6 @@ public class HFResultService {
                 regDate
         );
     }
-
 
     private PaymentHistory createVirtualAccountPaymentHistory(Map<String, String> responseParam, String agencyId, String siteId, String rateSel, String offer, String paymentStatus, Date startDate, Date endDate, Date regDate, Date modDate) throws ParseException {
         SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
@@ -442,6 +444,7 @@ public class HFResultService {
                 rateSel,
                 responseParam.get("trdAmt"),
                 offer,
+                EnumTradeTrace.USED.getCode(),
                 paymentStatus,
                 originalFormat.parse(responseParam.get("trdDtm")),
                 responseParam.get("AcntPrintNm"),
@@ -476,6 +479,7 @@ public class HFResultService {
         notifyPaymentData.put("salesPrice", salesPrice);
         return notifyPaymentData;
     }
+
 
 
     private Map<String, String> parseParams(String[] pairs) {

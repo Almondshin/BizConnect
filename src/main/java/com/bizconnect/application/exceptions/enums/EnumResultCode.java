@@ -7,7 +7,7 @@ public enum EnumResultCode {
     DuplicateMember("2999", "이미 사용중인 아이디입니다."),
     PendingApprovalStatus("3800", "제휴사 승인대기 상태입니다."),
     PendingTelcoApprovalStatus("3810", "통신사 승인대기 상태입니다."),
-    NoExtension("3988", "연장 결제 가능 기간이 아닙니다."),
+    NoExtension("3988", "결제 가능 기간이 아닙니다."),
     UnregisteredAgency("3999", "등록되지 않은 가맹점입니다."),
     SuspendedSiteId("4999", "이용정지된 사이트 아이디입니다.");
 

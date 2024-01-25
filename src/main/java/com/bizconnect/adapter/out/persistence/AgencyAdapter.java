@@ -8,7 +8,7 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
+import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
 import com.bizconnect.application.exceptions.exceptions.UnregisteredAgencyException;
 import com.bizconnect.application.port.out.LoadAgencyDataPort;

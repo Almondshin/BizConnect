@@ -1,4 +1,4 @@
-package com.bizconnect.application.exceptions.enums;
+package com.bizconnect.application.domain.enums;
 
 public enum EnumSiteStatus {
     ACTIVE("Y" , "사이트 사용중"),

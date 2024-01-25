@@ -59,6 +59,8 @@ public class AgencyService implements AgencyUseCase {
                     enumData.put("price", String.valueOf(enumProductType.getPrice()));
                     enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
                     enumData.put("month", String.valueOf(enumProductType.getMonth()));
+                    enumData.put("feePerCase", String.valueOf(enumProductType.getFeePerCase()));
+                    enumData.put("excessFeePerCase", String.valueOf(enumProductType.getExcessFeePerCase()));
                     enumValues.add(enumData);
                 }
             } else {
@@ -67,6 +69,8 @@ public class AgencyService implements AgencyUseCase {
                 enumData.put("price", String.valueOf(enumProductType.getPrice()));
                 enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
                 enumData.put("month", String.valueOf(enumProductType.getMonth()));
+                enumData.put("feePerCase", String.valueOf(enumProductType.getFeePerCase()));
+                enumData.put("excessFeePerCase", String.valueOf(enumProductType.getExcessFeePerCase()));
                 enumValues.add(enumData);
             }
         }
@@ -94,7 +98,9 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getRateSel(),
                 clientDataModel.getSiteStatus(),
                 clientDataModel.getStartDate(),
-                clientDataModel.getEndDate()
+                clientDataModel.getEndDate(),
+                clientDataModel.getServiceUseAgree(),
+                clientDataModel.getPrivateColAgree()
         );
     }
 
@@ -102,6 +108,7 @@ public class AgencyService implements AgencyUseCase {
         return new SettleManager(
                 clientDataModel.getSettleManagerName(),
                 clientDataModel.getSettleManagerPhoneNumber(),
+                clientDataModel.getSettleManagerTelNumber(),
                 clientDataModel.getSettleManagerEmail()
         );
     }

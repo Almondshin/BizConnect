@@ -5,7 +5,7 @@ import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.exceptions.enums.EnumSiteStatus;
+import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.port.in.AgencyUseCase;

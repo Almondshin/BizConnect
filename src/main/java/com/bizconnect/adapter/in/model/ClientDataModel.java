@@ -35,7 +35,11 @@ public class ClientDataModel {
 
     private String settleManagerName;
     private String settleManagerPhoneNumber;
+    private String settleManagerTelNumber;
     private String settleManagerEmail;
+
+    private String serviceUseAgree;
+    private String privateColAgree;
 
     private String msgType;
     private String encryptData;
