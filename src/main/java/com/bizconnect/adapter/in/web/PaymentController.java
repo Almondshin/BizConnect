@@ -1,8 +1,8 @@
 package com.bizconnect.adapter.in.web;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
+import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.domain.enums.EnumSiteStatus;
@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Slf4j
@@ -31,6 +33,7 @@ public class PaymentController {
 
     private static final int DAYS_BEFORE_EXPIRATION = 15;
     private final AgencyUseCase agencyUseCase;
+    private final Constant constant;
     private final PaymentUseCase paymentUseCase;
 
     @Value("${external.url}")
@@ -41,8 +44,9 @@ public class PaymentController {
 
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
-    public PaymentController(AgencyUseCase agencyUseCase, PaymentUseCase paymentUseCase) {
+    public PaymentController(AgencyUseCase agencyUseCase, Constant constant, PaymentUseCase paymentUseCase) {
         this.agencyUseCase = agencyUseCase;
+        this.constant = constant;
         this.paymentUseCase = paymentUseCase;
     }
 
@@ -89,12 +93,11 @@ public class PaymentController {
             logger.info("[Retrieved startDate] : [" + clientInfo.getStartDate() + "]");
             logger.info("[Retrieved endDate] : [" + clientInfo.getEndDate() + "]");
 
-            responseMessage.put("clientInfo", clientInfo.getCompanyName() +","+ clientInfo.getBizNumber() +","+ clientInfo.getCeoName());
+            responseMessage.put("clientInfo", clientInfo.getCompanyName() + "," + clientInfo.getBizNumber() + "," + clientInfo.getCeoName());
 
             responseMessage.put("rateSel", rateSel);
             responseMessage.put("startDate", startDate);
         }
-
 
 
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
@@ -112,20 +115,43 @@ public class PaymentController {
 
 
     @PostMapping("/setPaymentSiteInfo")
-    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody PaymentDataModel paymentDataModel) throws ParseException {
+    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel /*PaymentDataModel paymentDataModel*/) throws ParseException {
         Map<String, Object> responseMessage = new HashMap<>();
-        paymentUseCase.checkMchtParams(paymentDataModel);
+        LocalDateTime ldt = LocalDateTime.now();
+        DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
+        DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
+        String tradeNum = paymentUseCase.makeTradeNum();
+
+
+        paymentUseCase.checkMchtParams(clientDataModel);
+
+
+
+        String trdDt = ldt.format(dateFormatter);
+        String trdTm = ldt.format(timeFormatter);
+        String mchtId;
+        if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
+            mchtId = constant.PG_MID;
+        } else {
+            mchtId = constant.PG_MID2;
+        }
+
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
-        responseMessage.put("hashCipher", paymentUseCase.aes256EncryptEcb(paymentDataModel));
-        responseMessage.put("encParams", paymentUseCase.encodeBase64(paymentDataModel));
+        responseMessage.put("mchtId", mchtId);
+        responseMessage.put("method", clientDataModel.getMethod());
+        responseMessage.put("trdDt", trdDt);
+        responseMessage.put("trdTm", trdTm);
+        responseMessage.put("mchtTrdNo", tradeNum);
+        responseMessage.put("trdAmt", clientDataModel.getSalesPrice());
+        responseMessage.put("hashCipher", paymentUseCase.aes256EncryptEcb(clientDataModel, tradeNum, trdDt, trdTm));
+        responseMessage.put("encParams", paymentUseCase.encodeBase64(clientDataModel, tradeNum));
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
         logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
         logger.info("E ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ E");
         return ResponseEntity.ok(responseMessage);
     }
-
 
 
     private ResponseEntity<?> decideSiteStatus(Map<String, Object> responseMessage, ClientDataModel clientInfo) {

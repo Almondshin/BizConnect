@@ -31,7 +31,9 @@ public class ClientDataModel {
 
     private Date endDate;
     private String salesPrice;
+    private String offer;
     private String method;
+
 
     private String settleManagerName;
     private String settleManagerPhoneNumber;

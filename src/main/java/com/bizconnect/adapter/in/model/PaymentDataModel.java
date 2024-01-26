@@ -36,7 +36,7 @@ public class PaymentDataModel {
         this.plainTrdAmt = plainTrdAmt;
     }
 
-    public PaymentDataModel(String plainTrdAmt, String plainMchtCustNm, String plainCphoneNo, String plainEmail, String plainMchtCustId, String plainTaxAmt, String plainVatAmt, String plainTaxFreeAmt, String plainSvcAmt, String plainClipCustNm, String plainClipCustCi, String plainClipCustPhoneNo) {
+    public PaymentDataModel(String plainTrdAmt, String plainMchtCustNm, String plainCphoneNo, String plainEmail, String plainMchtCustId, String plainTaxAmt, String plainVatAmt, String plainTaxFreeAmt, String plainSvcAmt, String plainClipCustNm, String plainClipCustCi, String plainClipCustPhoneNo, String mchtParam) {
         this.plainTrdAmt = plainTrdAmt;
         this.plainMchtCustNm = plainMchtCustNm;
         this.plainCphoneNo = plainCphoneNo;
@@ -49,6 +49,7 @@ public class PaymentDataModel {
         this.plainClipCustNm = plainClipCustNm;
         this.plainClipCustCi = plainClipCustCi;
         this.plainClipCustPhoneNo = plainClipCustPhoneNo;
+        this.mchtParam = mchtParam;
     }
 
     public String getHashPlain() {

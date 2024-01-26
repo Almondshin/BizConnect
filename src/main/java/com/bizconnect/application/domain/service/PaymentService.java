@@ -19,8 +19,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
@@ -42,8 +46,8 @@ public class PaymentService implements PaymentUseCase {
     //TODO
     // [중요!] 최적화
     @Override
-    public void checkMchtParams(PaymentDataModel paymentDataModel) throws ParseException {
-        int clientPrice = Integer.parseInt(paymentDataModel.getPlainTrdAmt());
+    public void checkMchtParams(ClientDataModel clientDataModel) throws ParseException {
+        int clientPrice = Integer.parseInt(clientDataModel.getSalesPrice());
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
         Calendar clientCal = Calendar.getInstance();
@@ -54,32 +58,34 @@ public class PaymentService implements PaymentUseCase {
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
-        String[] pairs = paymentDataModel.getMchtParam().split("&");
+//        String[] pairs = paymentDataModel.getMchtParam().split("&");
+//
+//        Map<String, String> parseParams = parseParams(pairs);
 
-        Map<String, String> parseParams = parseParams(pairs);
 
-        String agencyId = parseParams.get("agencyId");
-        String siteId = parseParams.get("siteId");
-        String rateSel = parseParams.get("rateSel");
-        if (sdf.parse(parseParams.get("startDate")).before(yesterday)){
+        String agencyId = clientDataModel.getAgencyId();
+        String siteId = clientDataModel.getSiteId();
+        String rateSel = clientDataModel.getRateSel();
+        if (sdf.parse(sdf.format(clientDataModel.getStartDate())).before(yesterday)) {
             throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
         }
-        startDateByCal.setTime(sdf.parse(parseParams.get("startDate")));
+        startDateByCal.setTime(sdf.parse(sdf.format(clientDataModel.getStartDate())));
         int offer;
         double price;
-        int clientOffer = Integer.parseInt(parseParams.get("offer"));;
+        int clientOffer = Integer.parseInt(clientDataModel.getOffer());
         String endDate = "";
-        String clientEndDate = parseParams.get("endDate");
+        String clientEndDate = sdf.format(clientDataModel.getEndDate());
 
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
 
-        if (parseParams.get("clientStartDate") != null){
-            clientCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
-            startDate = clientCal.get(Calendar.DATE);
-        }
+//        if (parseParams.get("clientStartDate") != null){
+//            clientCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
+//            startDate = clientCal.get(Calendar.DATE);
+//        }
+
         int durations = lastDate - startDate + 1;
         int baseOffer = productType.getBasicOffer() / productType.getMonth();
         int basePrice = productType.getPrice() / productType.getMonth();
@@ -104,28 +110,28 @@ public class PaymentService implements PaymentUseCase {
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
 
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId,siteId);
+            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId, siteId);
 
-            if (sdf.parse(parseParams.get("startDate")).before(info.get().getEndDate())){
+            if (sdf.parse(sdf.format(clientDataModel.getStartDate())).before(info.get().getEndDate())) {
                 throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
             }
 
-            if (parseParams.get("clientStartDate") != null){
-                endDateByCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
-            } else {
-                endDateByCal.setTime(sdf.parse(parseParams.get("startDate")));
-            }
+//            if (parseParams.get("clientStartDate") != null){
+//                endDateByCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
+//            } else {
+            endDateByCal.setTime(sdf.parse(sdf.format(clientDataModel.getStartDate())));
+//            }
 
-            if (durations <= 15){
+            if (durations <= 15) {
                 endDateByCal.add(Calendar.MONTH, 1);
             }
 
             int excessCount;
             double excessAmount = 0;
 
-            if (list.size() > 2){
+            if (list.size() > 2) {
                 excessCount = Integer.parseInt(list.get(1).getOffer()) - list.get(1).getUseCount();
-                if (excessCount < 0){
+                if (excessCount < 0) {
                     excessAmount = Math.abs(excessCount) * 50 * 1.1;
                 }
             }
@@ -141,7 +147,7 @@ public class PaymentService implements PaymentUseCase {
         logger.info("S ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ S");
         logger.info("[agencyId] : [" + agencyId + "]");
         logger.info("[siteId] : [" + siteId + "]");
-        logger.info("[rateSel] : [" + productType.getType() + ", "+productType.getName() + "]");
+        logger.info("[rateSel] : [" + productType.getType() + ", " + productType.getName() + "]");
         logger.info("[startDate] : [" + sdf.format(startDateByCal.getTime()) + "]");
         logger.info("[endDate] : [" + endDate + "]");
         logger.info("[offer] : [" + offer + "]");
@@ -149,35 +155,45 @@ public class PaymentService implements PaymentUseCase {
     }
 
     @Override
-    public String aes256EncryptEcb(PaymentDataModel paymentDataModel) {
+    public String aes256EncryptEcb(ClientDataModel clientDataModel , String tradeNum, String trdDt, String trdTm) {
         String licenseKey = constant.LICENSE_KEY;
-        String hashPlain = new PaymentDataModel(
-                paymentDataModel.getMchtId(),
-                paymentDataModel.getMethod(),
-                paymentDataModel.getMchtTrdNo(),
-                paymentDataModel.getTrdDt(),
-                paymentDataModel.getTrdTm(),
-                paymentDataModel.getPlainTrdAmt()
-        ).getHashPlain() + licenseKey;
+        String mchtId;
+        if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
+            mchtId = constant.PG_MID;
+        } else {
+            mchtId = constant.PG_MID2;
+        }
 
+        String hashPlain = new PaymentDataModel(
+                mchtId,
+                clientDataModel.getMethod(),
+                tradeNum,
+                trdDt,
+                trdTm,
+                clientDataModel.getSalesPrice()
+        ).getHashPlain() + licenseKey;
         String hashCipher = "";
         /** SHA256 해쉬 처리 */
         try {
             hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
         } catch (Exception e) {
-            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+            logger.error("[" + tradeNum + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
         } finally {
-            logger.info("[" + paymentDataModel.getMchtTrdNo() + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+            logger.info("[" + tradeNum + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
         }
-
         return hashCipher;
+
     }
 
     @Override
-    public HashMap<String, String> encodeBase64(PaymentDataModel paymentDataModel) {
+    public HashMap<String, String> encodeBase64(ClientDataModel clientDataModel, String tradeNum) {
         String aesKey = constant.AES256_KEY;
-        HashMap<String, String> params = convertToMap(paymentDataModel);
-        System.out.println("encode Base 64 " + paymentDataModel);
+//        HashMap<String, String> params = convertToMap(clientDataModel);
+        HashMap<String, String> params = new HashMap<>();
+        params.put("trdAmt", clientDataModel.getSalesPrice());
+//        params.put("mchtParam", clientDataModel.g());
+
+        System.out.println("encode Base 64 " + clientDataModel);
         try {
             for (Map.Entry<String, String> entry : params.entrySet()) {
                 String key = entry.getKey();
@@ -189,34 +205,63 @@ public class PaymentService implements PaymentUseCase {
                     String aesCipher = EncryptUtil.encodeBase64(aesCipherRaw);
 
                     params.put(key, aesCipher);//암호화된 데이터로 세팅
-                    logger.info("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
+                    logger.info("[" + tradeNum + "][AES256 Encrypt] " + key + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
         } catch (Exception e) {
-            logger.error("[" + paymentDataModel.getMchtTrdNo() + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
+            logger.error("[" + tradeNum + "][AES256 Encrypt] AES256 Fail! : " + e.toString());
         }
         return params;
     }
 
     @Override
-    public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId,String siteId) {
-        return loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId,siteId));
+    public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId, String siteId) {
+        return loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId));
+    }
+
+    @Override
+    public String makeTradeNum() {
+        SecureRandom ran = null;
+        LocalDateTime ldt = LocalDateTime.now();
+        try {
+            ran = SecureRandom.getInstanceStrong();
+            int randomNum = ran.nextInt(9999);
+            String formattedRandomNum = String.format("%04d", randomNum);
+            return "PAYMENT" + ldt.getYear() + ldt.getMonthValue() + ldt.getDayOfMonth()
+                    + ldt.getHour() + ldt.getMinute() + ldt.getSecond() + formattedRandomNum;
+        } catch (NoSuchAlgorithmException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();
+//        map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
+//        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
+//        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
+//        map.put("email", paymentDataModel.getPlainEmail());
+//        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
+//        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
+//        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
+//        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
+//        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
+//        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
+//        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
+//        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
+//        map.put("mchtParam", paymentDataModel.getMchtParam());
+
         map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
-        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
-        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
-        map.put("email", paymentDataModel.getPlainEmail());
-        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
-        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
-        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
-        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
-        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
-        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
-        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
-        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
+//        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
+//        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
+//        map.put("email", paymentDataModel.getPlainEmail());
+//        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
+//        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
+//        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
+//        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
+//        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
+//        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
+//        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
+//        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
         map.put("mchtParam", paymentDataModel.getMchtParam());
         return map;
     }
