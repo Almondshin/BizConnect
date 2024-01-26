@@ -151,6 +151,22 @@
                             placeholder="서비스 희망 게시일을 선택하세요."
                     />
                 </div>
+
+                <div class="info-item input-content-wrap calendar">
+                    <label class="info-item-label" for="service-datepicker">서비스 종료일</label>
+                    <input
+                            class="info-item-input"
+                            type="text"
+                            id="datepicker_end"
+                            readonly="readonly"
+                            name="service-datepicker"
+                            pattern="\d{4}-\d{2}-\d{2}"
+                            title="서비스 희망 게시일을 선택하세요."
+                            required
+                            aria-describedby="service-datepicker"
+                            placeholder="서비스 희망 게시일을 선택하세요."
+                    />
+                </div>
             </div>
         </div>
     </article>
@@ -178,12 +194,17 @@
             <div class="content-box content-grid">
                 <div class="info-item">
                     <p class="info-item-label">상품</p>
-                    <p class="info-item-text" id="selectedProductName">(주)드림컴퍼니</p>
+                    <p class="info-item-text" id="selectedProductName">상품을 선택해주세요.</p>
                 </div>
+
                 <div class="info-item">
                     <p class="info-item-label">정기결제</p>
                     <p class="info-item-text" id="info_text_autopay"></p>
                     <button class="btn_purple" onclick="popupOpen(2)">상품변경</button>
+                </div>
+                <div class="info-item">
+                    <p class="info-item-label">결제 금액</p>
+                    <p class="info-item-text" id="selectedProductPrice"></p>
                 </div>
                 <div class="info-item input-content-wrap">
                     <h4 class="info-item-label">결제수단</h4>

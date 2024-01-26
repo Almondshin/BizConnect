@@ -134,6 +134,7 @@ var process = {
         }
 
         selectEndDate = selectEndDate.toISOString().slice(0, 10);
+        selectStartDate = selectStartDate.toISOString().slice(0, 10);
         process.data.endDate = selectEndDate;
         // document.querySelector("#endDate").value = last.getFullYear() + "-" + ((last.getMonth() + 1) < 10 ? "0" + (last.getMonth() + 1) : (last.getMonth() + 1)) + "-" + last.getDate();
 
@@ -150,6 +151,16 @@ var process = {
         }
         process.data.salesPrice = Math.floor(price * duration * 1.1).toString()
         process.data.offer = Math.floor(offer * duration).toString()
+        this.selectedProduct.startDate = selectStartDate;
+        this.selectedProduct.endDate = selectEndDate;
+
+        document.getElementById('datepicker_end').value = this.selectedProduct.endDate;
+
+        const calculatedPrice = Math.floor(price * duration * 1.1);
+        const formattedPrice = calculatedPrice.toLocaleString();
+        const offerPrice = Math.floor(offer * duration);
+        document.querySelector("#selectedProductPrice").innerText = formattedPrice + " 원 " + "(" + offerPrice.toLocaleString() + " 건)";
+
         console.log(`선택일 : ${currentDate.toISOString().slice(0, 10)} 선택월 말일 : ${currentLastDate.toISOString().slice(0, 10)} 종료일 : ${selectEndDate}
                     \n가격 : ${Math.floor(price * duration * 1.1)} 제공건수 : ${Math.floor(offer * duration)}`)
     }
@@ -181,7 +192,7 @@ var process = {
                 // env       : "https://npg.settlebank.co.kr",   //결제서버 URL
                 mchtName  : mchtName,
                 mchtEName : mchtEName,
-                pmtPrdtNm : this.selectedProduct.productName,
+                pmtPrdtNm : this.selectedProduct.productName + "(" + this.selectedProduct.startDate +"-"+ this.selectedProduct.endDate + ")",
                 mchtId    : response.mchtId,
                 method    : response.method,
                 trdDt     : response.trdDt,
