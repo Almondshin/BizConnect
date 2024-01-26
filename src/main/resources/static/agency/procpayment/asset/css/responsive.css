@@ -7,6 +7,9 @@
         align-items: flex-start;
         gap: 8px;
     }
+    .container header h1 {
+        font-size: 1.5rem;
+    }
     /*  */
     .info-item .info-item-label {
         min-width: 80px;

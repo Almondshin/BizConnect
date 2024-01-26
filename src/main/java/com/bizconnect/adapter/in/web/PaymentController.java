@@ -122,18 +122,15 @@ public class PaymentController {
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
         String tradeNum = paymentUseCase.makeTradeNum();
 
-
         paymentUseCase.checkMchtParams(clientDataModel);
-
-
 
         String trdDt = ldt.format(dateFormatter);
         String trdTm = ldt.format(timeFormatter);
         String mchtId;
         if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
-            mchtId = constant.PG_MID;
+            mchtId = constant.PG_MID_AUTO;
         } else {
-            mchtId = constant.PG_MID2;
+            mchtId = constant.PG_MID;
         }
 
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());

@@ -74,7 +74,10 @@
             </svg>
             <div class="subtitle-box">
                 <h2>신청정보를 확인해 주세요.</h2>
-                <p>신청정보를 확인하시고, '신청완료' 버튼을 클릭하세요. <br/>통신사 심사 필요 서류 및 절차 안내를 위한 연락을 드리겠습니다.</p>
+                <p>
+                    희망 게시일에서 선택한 날 부터 이용과 과금이 시작됩니다.<br/>
+                    결제 시 하단의 안내사항을 꼭 확인해주세요.
+                </p>
             </div>
         </div>
     </header>
@@ -151,22 +154,6 @@
                             placeholder="서비스 희망 게시일을 선택하세요."
                     />
                 </div>
-
-                <div class="info-item input-content-wrap calendar">
-                    <label class="info-item-label" for="service-datepicker">서비스 종료일</label>
-                    <input
-                            class="info-item-input"
-                            type="text"
-                            id="datepicker_end"
-                            readonly="readonly"
-                            name="service-datepicker"
-                            pattern="\d{4}-\d{2}-\d{2}"
-                            title="서비스 희망 게시일을 선택하세요."
-                            required
-                            aria-describedby="service-datepicker"
-                            placeholder="서비스 희망 게시일을 선택하세요."
-                    />
-                </div>
             </div>
         </div>
     </article>
@@ -194,24 +181,28 @@
             <div class="content-box content-grid">
                 <div class="info-item">
                     <p class="info-item-label">상품</p>
-                    <p class="info-item-text" id="selectedProductName">상품을 선택해주세요.</p>
+                    <p class="info-item-text" id="info_product_name">(주)드림컴퍼니</p>
+                </div>
+                <div class="info-item">
+                    <p class="info-item-label">정기결제</p>
+                    <p class="info-item-text" id="info_text_autopay">사용</p>
+                    <button class="btn_purple" id="selectProductPopUpOpen">상품변경</button>
                 </div>
 
                 <div class="info-item">
-                    <p class="info-item-label">정기결제</p>
-                    <p class="info-item-text" id="info_text_autopay"></p>
-                    <button class="btn_purple" onclick="popupOpen(2)">상품변경</button>
+                    <p class="info-item-label">결제수단</p>
+                    <div class="info-itme-howtopay">
+                        <label for="deposit"><input type="radio" name="howtopay" id="deposit" value="vbank" checked/>무통장입금</label>
+                        <label for="creditcard"><input type="radio" name="howtopay" id="creditcard"
+                                                       value="card"/>신용카드</label>
+                    </div>
                 </div>
                 <div class="info-item">
-                    <p class="info-item-label">결제 금액</p>
-                    <p class="info-item-text" id="selectedProductPrice"></p>
+                    <p class="info-item-label">결제금액</p>
+                    <p class="info-item-text" id="info_totalprice">100,000원 (1234건)</p>
                 </div>
-                <div class="info-item input-content-wrap">
-                    <h4 class="info-item-label">결제수단</h4>
-                    <div class="info-itme-howtopay">
-                        <label for="deposit"><input type="radio" name="howtopay" id="deposit" value="vbank"/>무통장입금</label>
-                        <label for="creditcard"><input type="radio" name="howtopay" id="creditcard" value="card"/>신용카드</label>
-                    </div>
+                <div class="info-item info-item-100w">
+                    <p class="info-item-text">희망게시일로 부터 일할 계산되어 첫달 금액이 선택하신 상품의 금액과 다를 수 있습니다.</p>
                 </div>
                 <div class="information-text-box">
                     <p>
@@ -231,13 +222,13 @@
                     <br/>
                     <strong> 계산방식예시 </strong>
                     <br/>
-                    <br/>
                     <p>
                         신청 서비스 상품 : 라이트, 신청기간 : 1개월<br/>
                         서비스 희망개시일 : 1/3, 서비스 종료일 : 1/31, 서비스일수 : 29일(1월)<br/>
                         라이트(10,000원) x (월간서비스일수(29)/월간일수(31) = 9,354<br/>
                         서비스 제공 기간이 15일 이하일 경우 익월 마지막 날까지 금액이 책정 됩니다.<br/>
-                        -고객센터 : 02-2233-5533(320) -이메일 : mok@dreamsecurity.com<br/>
+                        -고객센터 : 02-2233-5533(320) <br/>
+                        -이메일 : mok@dreamsecurity.com<br/>
                     </p>
                 </div>
             </div>
@@ -246,7 +237,7 @@
     <!-- btn_row -->
     <footer>
         <button class="btn_gray">취소</button>
-        <button class="btn_purple" id="payment" onclick="payProgress()">결제진행</button>
+        <button class="btn_purple" id="payment">결제진행</button>
     </footer>
 </section>
 
@@ -281,7 +272,7 @@
             <p>서비스 시작일을 입력해 주세요.</p>
         </div>
         <div class="popup_footer">
-            <button onclick="popupClose(1)">발급 취소하기</button>
+            <button id="cancelPayment">발급 취소하기</button>
         </div>
     </article>
     <article id="modal_products" class="modal_wrap">
@@ -292,7 +283,7 @@
         <div class="modal_body">
             <div class="modal_text">
                 <h5>월정액 요금</h5>
-                <p>1개월 단위로 결제되여 사용하는 요금입니다.</p>
+                <p>정기결제를 사용하세요! 월 마다 결제하는 수고로움을 덜어드립니다.</p>
                 <strong>(VAT 별도)</strong>
             </div>
             <div class="table_wrapper">
@@ -314,27 +305,20 @@
                 </table>
             </div>
 
-            <div class="product_botton_text">
-                <div>
-                    <div id="toggle_btn_monthlyautopay" class="toggle_btn" tabindex="0">
-                        <div class="toggle_bar blue purple"></div>
-                        <div class="toggle_circle"></div>
-                    </div>
-                    <p>정기결제여부</p>
-                </div>
+            <div class="product_bottom_text">
                 <p>전월 초과수수료는 자동으로 차월 기본료와 합산되어 부과됩니다.</p>
             </div>
         </div>
         <div class="modal_footer">
-            <button onclick="popupClose()" class="btn_gray">취소</button>
-            <button onclick="popupClose()" class="btn_purple">상품변경</button>
+            <button id="cancelSelectProduct" class="btn_gray">취소</button>
+            <button id="selectProduct" class="btn_purple">상품변경</button>
         </div>
     </article>
 </section>
 
 <!-- js -->
-<script src="asset/js/dummyData.js"></script>
 <script src="asset/js/common.js"></script>
+<script src="asset/js/dummyData.js"></script>
 <script src="asset/js/datepicker.js"></script>
 <script src="asset/js/popup.js"></script>
 <script src="asset/js/config.js"></script>
@@ -344,8 +328,32 @@
     window.onload = function () {
         contentBoxList = document.querySelectorAll(".content-box");
         responsiveLayout();
-        setInformation_4(page4_data);
-        init();
+        // 개발팀 리소스 구분
+        if (typeof PROCESS_FLAG !== "undefined") {
+            init();
+
+        }
+        else {
+            setInformation_4(userData);
+            setProductTable(productDatalist)
+            setPayment();
+            document.querySelector("#selectProductPopUpOpen").addEventListener("click", function () {
+                popupOpen(2)
+            })
+            document.querySelector("#cancelSelectProduct").addEventListener("click", function () {
+                popupClose()
+            })
+            document.querySelector("#selectProduct").addEventListener("click", function () {
+                selectProduct()
+            })
+            document.querySelector("#payment").addEventListener("click", function () {
+                payProgress()
+            })
+            document.querySelector("#cancelPayment").addEventListener("click", function () {
+                popupClose()
+            })
+
+        }
     };
 </script>
 </body>

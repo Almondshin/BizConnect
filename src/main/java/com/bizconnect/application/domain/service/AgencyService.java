@@ -2,6 +2,7 @@ package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.application.domain.enums.EnumAgency;
+import com.bizconnect.application.domain.enums.EnumProductAutoType;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
@@ -19,7 +20,6 @@ import java.util.*;
 public class AgencyService implements AgencyUseCase {
     private final LoadAgencyDataPort loadAgencyDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
-
 
 
     public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort) {
@@ -47,6 +47,7 @@ public class AgencyService implements AgencyUseCase {
     @Override
     public List<Map<String, String>> getProductTypes(String agencyId) {
         EnumProductType[] enumProductTypes = EnumProductType.values();
+        EnumProductAutoType[] enumProductAutoTypes = EnumProductAutoType.values();
         List<Map<String, String>> enumValues = new ArrayList<>();
 
         for (EnumProductType enumProductType : enumProductTypes) {
@@ -74,10 +75,23 @@ public class AgencyService implements AgencyUseCase {
                 enumValues.add(enumData);
             }
         }
+
+        for (EnumProductAutoType enumProductAutoType : enumProductAutoTypes) {
+            Map<String, String> enumData = new HashMap<>();
+            //제휴사가 스퀘어스인 경우, 1개월짜리 상품만 제공됨.
+            if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
+                enumData.put("type", enumProductAutoType.getType());
+                enumData.put("name", enumProductAutoType.getName());
+                enumData.put("price", String.valueOf(enumProductAutoType.getPrice()));
+                enumData.put("basicOffer", String.valueOf(enumProductAutoType.getBasicOffer()));
+                enumData.put("month", String.valueOf(enumProductAutoType.getMonth()));
+                enumData.put("feePerCase", String.valueOf(enumProductAutoType.getFeePerCase()));
+                enumData.put("excessFeePerCase", String.valueOf(enumProductAutoType.getExcessFeePerCase()));
+                enumValues.add(enumData);
+            }
+        }
         return enumValues;
     }
-
-
 
 
     private Agency convertToAgency(ClientDataModel clientDataModel) {

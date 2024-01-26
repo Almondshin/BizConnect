@@ -10,11 +10,7 @@ function popupOpen (popNum) {
         }
         case 2: {
             $("#modal_products").addClass("active");
-            setProductTable(page4_1_tableData);
-            break;
-        }
-        case 3: {
-            $("#modal_products").addClass("active");
+            // setProductTable(productDatalist);
             break;
         }
     }
@@ -28,6 +24,12 @@ function popupClose (popNum) {
     switch (popNum) {
         case 1: {
             $("#datepicker").focus();
+            break;
         }
+        // case 2: {
+        //     setPayment(getSelectedProduct());
+        //     setProductCode(getSelectedProduct().productCode);
+        //     break;
+        // }
     }
 }

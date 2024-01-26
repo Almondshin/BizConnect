@@ -34,11 +34,9 @@ var datepicker_default = {
     yearRange: "c-99:c+99",
     showOtherMonths: true,
     selectOtherMonths: true,
-    onSelect: function () {
-        if (Object.keys(process.selectedProduct).length !== 0) {
-            process.select();
-        }
-    }
+    onSelect: function (dateString) {
+        setPayment();
+    },
 };
 
 datepicker_default.closeText = "선택";

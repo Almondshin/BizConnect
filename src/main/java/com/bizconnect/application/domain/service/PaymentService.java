@@ -6,6 +6,7 @@ import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
+import com.bizconnect.application.domain.enums.EnumProductAutoType;
 import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
@@ -78,6 +79,7 @@ public class PaymentService implements PaymentUseCase {
 
         // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
         EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
+
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
 
@@ -159,9 +161,9 @@ public class PaymentService implements PaymentUseCase {
         String licenseKey = constant.LICENSE_KEY;
         String mchtId;
         if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
-            mchtId = constant.PG_MID;
+            mchtId = constant.PG_MID_AUTO;
         } else {
-            mchtId = constant.PG_MID2;
+            mchtId = constant.PG_MID;
         }
 
         String hashPlain = new PaymentDataModel(

@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @ConfigurationProperties(prefix = "hectofinancial")
 public class Constant {
     public String PG_MID;
-    public String PG_MID2;
+    public String PG_MID_AUTO;
     public String PG_CANCEL_MID;
     public String LICENSE_KEY;
     public String AES256_KEY;
