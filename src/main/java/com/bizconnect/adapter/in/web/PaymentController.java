@@ -62,8 +62,6 @@ public class PaymentController {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Optional<ClientDataModel> optClientInfo = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId(), clientDataModel.getRateSel(), clientDataModel.getStartDate()));
         List<Map<String, String>> productTypes = agencyUseCase.getProductTypes(clientDataModel.getAgencyId());
-
-
         Map<String, Object> responseMessage = new HashMap<>();
 
         logger.info("S ------------------------------[AGENCY] - [getPaymentInfo] ------------------------------ S");
@@ -74,7 +72,7 @@ public class PaymentController {
 
         if (optClientInfo.isPresent()) {
             ClientDataModel clientInfo = optClientInfo.get();
-            System.out.println(clientInfo);
+
             String rateSel = decideRateSel(clientInfo, clientDataModel);
             String startDate = decideStartDate(sdf, clientInfo, clientDataModel);
 
@@ -86,7 +84,6 @@ public class PaymentController {
             if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
                 checkExtraCount(responseMessage, paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
             }
-
 
             logger.info("[Retrieved agencyId] : [" + clientInfo.getAgencyId() + "]");
             logger.info("[Retrieved siteId] : [" + clientInfo.getSiteId() + "]");
@@ -115,20 +112,24 @@ public class PaymentController {
 
 
     @PostMapping("/setPaymentSiteInfo")
-    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel /*PaymentDataModel paymentDataModel*/) throws ParseException {
+    public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
         Map<String, Object> responseMessage = new HashMap<>();
         LocalDateTime ldt = LocalDateTime.now();
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
         String tradeNum = paymentUseCase.makeTradeNum();
-
-        paymentUseCase.checkMchtParams(clientDataModel);
-
+        try {
+            paymentUseCase.checkMchtParams(clientDataModel);
+        } catch (ParseException e) {
+            throw new RuntimeException(e);
+        }
         String trdDt = ldt.format(dateFormatter);
         String trdTm = ldt.format(timeFormatter);
         String mchtId;
         if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
             mchtId = constant.PG_MID_AUTO;
+        } else if (clientDataModel.getMethod().equals("card")) {
+            mchtId = constant.PG_MID_CARD;
         } else {
             mchtId = constant.PG_MID;
         }
@@ -146,8 +147,17 @@ public class PaymentController {
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
         logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");
+        logger.info(responseMessage.toString());
         logger.info("E ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ E");
         return ResponseEntity.ok(responseMessage);
+    }
+
+    @PostMapping("/setDuckPaymentSiteInfo")
+    public ResponseEntity<?> setPaymentDuck(@RequestBody String duck) {
+        System.out.println("====== " + duck + " ======");
+        System.out.println("====== " + duck + " ======");
+        System.out.println("====== " + duck + " ======");
+        return ResponseEntity.ok(duck);
     }
 
 
@@ -164,14 +174,18 @@ public class PaymentController {
         return null;
     }
 
+
     private String decideRateSel(ClientDataModel clientInfo, ClientDataModel clientDataModel) {
-        return clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty() ? clientDataModel.getRateSel() :
-                clientInfo.getRateSel() != null ? clientInfo.getRateSel() : null;
+        //TODO
+        // AGENCY에 해당하는 상품리스트가 맞는지 체크하는 기능 추가.
+        // AGENCY_INFO_KEY 테이블 AGENCY_PRODUCT_TYPE 컬럼 (상품 리스트)확인
+        return clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty() ? clientDataModel.getRateSel() : clientInfo.getRateSel() != null ? clientInfo.getRateSel() : null;
     }
 
     private String decideStartDate(SimpleDateFormat sdf, ClientDataModel clientInfo, ClientDataModel clientDataModel) {
         Date startDateClient = clientDataModel.getStartDate();
         Date startDateInfo = clientInfo.getStartDate();
+
         if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
             if (startDateClient != null) {
                 return sdf.format(startDateClient);
@@ -190,9 +204,13 @@ public class PaymentController {
             calendar.add(Calendar.DAY_OF_MONTH, -DAYS_BEFORE_EXPIRATION);
             Date fifteenDaysBeforeExpiration = calendar.getTime();
 
+            Calendar yesterDayCal = Calendar.getInstance();
+            yesterDayCal.add(Calendar.DATE, -1);
+            Date yesterday = yesterDayCal.getTime();
+
             if (startDateClient != null) {
                 // 요청된 시작일이 제공된 경우, 그 시작일은 만료일로부터 15일 전 이후여야 함
-                if (startDateClient.after(fifteenDaysBeforeExpiration)) {
+                if (startDateClient.after(fifteenDaysBeforeExpiration) && startDateClient.after(yesterday)) {
                     return sdf.format(startDateClient);
                 } else {
                     // 잘못된 시작일을 처리하는 방법을 여기서 처리 (예외 던지기 등)

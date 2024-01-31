@@ -30,6 +30,7 @@ import java.util.*;
 
 @Service
 public class PaymentService implements PaymentUseCase {
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
 
     private final Constant constant;
     private final AgencyService agencyService;
@@ -48,21 +49,15 @@ public class PaymentService implements PaymentUseCase {
     // [중요!] 최적화
     @Override
     public void checkMchtParams(ClientDataModel clientDataModel) throws ParseException {
-        int clientPrice = Integer.parseInt(clientDataModel.getSalesPrice());
+        String clientPrice = clientDataModel.getSalesPrice();
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
-        Calendar clientCal = Calendar.getInstance();
 
         Calendar yesterDayCal = Calendar.getInstance();
         yesterDayCal.add(Calendar.DATE, -1);
         Date yesterday = yesterDayCal.getTime();
 
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
-//        String[] pairs = paymentDataModel.getMchtParam().split("&");
-//
-//        Map<String, String> parseParams = parseParams(pairs);
-
 
         String agencyId = clientDataModel.getAgencyId();
         String siteId = clientDataModel.getSiteId();
@@ -82,11 +77,6 @@ public class PaymentService implements PaymentUseCase {
 
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
-
-//        if (parseParams.get("clientStartDate") != null){
-//            clientCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
-//            startDate = clientCal.get(Calendar.DATE);
-//        }
 
         int durations = lastDate - startDate + 1;
         int baseOffer = productType.getBasicOffer() / productType.getMonth();
@@ -118,11 +108,7 @@ public class PaymentService implements PaymentUseCase {
                 throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
             }
 
-//            if (parseParams.get("clientStartDate") != null){
-//                endDateByCal.setTime(sdf.parse(parseParams.get("clientStartDate")));
-//            } else {
             endDateByCal.setTime(sdf.parse(sdf.format(clientDataModel.getStartDate())));
-//            }
 
             if (durations <= 15) {
                 endDateByCal.add(Calendar.MONTH, 1);
@@ -142,7 +128,7 @@ public class PaymentService implements PaymentUseCase {
 
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
         endDate = sdf.format(endDateByCal.getTime());
-        if (offer != clientOffer || (int) Math.floor(price) != clientPrice || !endDate.equals(clientEndDate)) {
+        if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.equals(clientEndDate)) {
             throw new ValueException(offer, clientOffer, (int) Math.floor(price), clientPrice, endDate, clientEndDate, agencyId, siteId);
         }
 
@@ -162,7 +148,9 @@ public class PaymentService implements PaymentUseCase {
         String mchtId;
         if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
             mchtId = constant.PG_MID_AUTO;
-        } else {
+        } else if (clientDataModel.getMethod().equals("card")){
+            mchtId = constant.PG_MID_CARD;
+        }else {
             mchtId = constant.PG_MID;
         }
 
@@ -193,7 +181,6 @@ public class PaymentService implements PaymentUseCase {
 //        HashMap<String, String> params = convertToMap(clientDataModel);
         HashMap<String, String> params = new HashMap<>();
         params.put("trdAmt", clientDataModel.getSalesPrice());
-//        params.put("mchtParam", clientDataModel.g());
 
         System.out.println("encode Base 64 " + clientDataModel);
         try {
@@ -221,20 +208,15 @@ public class PaymentService implements PaymentUseCase {
         return loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId));
     }
 
+
     @Override
     public String makeTradeNum() {
-        SecureRandom ran = null;
-        LocalDateTime ldt = LocalDateTime.now();
-        try {
-            ran = SecureRandom.getInstanceStrong();
-            int randomNum = ran.nextInt(9999);
-            String formattedRandomNum = String.format("%04d", randomNum);
-            return "PAYMENT" + ldt.getYear() + ldt.getMonthValue() + ldt.getDayOfMonth()
-                    + ldt.getHour() + ldt.getMinute() + ldt.getSecond() + formattedRandomNum;
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
+        Random random = new Random();
+        int randomNum = random.nextInt(10000);
+        String formattedRandomNum = String.format("%04d", randomNum);
+        return "PAYMENT" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
     }
+
 
     public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
         HashMap<String, String> map = new HashMap<>();

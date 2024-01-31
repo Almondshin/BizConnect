@@ -1,23 +1,31 @@
 package com.bizconnect.application.domain.service;
 
+import com.bizconnect.application.domain.model.AgencyInfoKey;
 import com.bizconnect.application.port.in.EncryptUseCase;
+import com.bizconnect.application.port.out.LoadEncryptDataPort;
+import com.dreamsecurity.jcaos.asn1.H;
+import com.dsmdb.japi.MagicDBAPI;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.stereotype.Service;
 
-import javax.crypto.*;
+import javax.crypto.Cipher;
+import javax.crypto.Mac;
 import javax.crypto.spec.IvParameterSpec;
 import javax.crypto.spec.SecretKeySpec;
 import java.nio.charset.StandardCharsets;
 import java.security.GeneralSecurityException;
-import java.security.InvalidAlgorithmParameterException;
-import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
-import java.util.Arrays;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 public class EncryptDataService implements EncryptUseCase {
+    private final LoadEncryptDataPort loadEncryptDataPort;
+
+    public EncryptDataService(LoadEncryptDataPort loadEncryptDataPort) {
+        this.loadEncryptDataPort = loadEncryptDataPort;
+    }
 
     /**
      * AES 암호화를 사용하여 데이터를 복호화합니다.
@@ -26,12 +34,10 @@ public class EncryptDataService implements EncryptUseCase {
      * @return 복호화된 데이터 바이트 배열
      */
     @Override
-    public byte[] decryptData(String targetDecode) throws GeneralSecurityException {
-        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
-        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
-
-        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
-        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+    public byte[] decryptData(String agencyId, String targetDecode) throws GeneralSecurityException {
+        Map<String,String> keyIv = dbDecrypt(agencyId);
+        byte[] key = Base64.getDecoder().decode(keyIv.get("agencyKey"));
+        byte[] iv = Base64.getDecoder().decode(keyIv.get("agencyIv"));
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
@@ -48,12 +54,10 @@ public class EncryptDataService implements EncryptUseCase {
      * @return 암호화된 데이터 문자열
      */
     @Override
-    public String encryptData(String targetEncode) throws GeneralSecurityException {
-        String AES_CBC_256_KEY = "tmT6HUMU+3FW/RR5fxU05PbaZCrJkZ1wP/k6pfZnSj8=";
-        String AES_CBC_256_IV = "/SwvI/9aT7RiMmfm8CfP4g==";
-
-        byte[] key = Base64.getDecoder().decode(AES_CBC_256_KEY);
-        byte[] iv = Base64.getDecoder().decode(AES_CBC_256_IV);
+    public String encryptData(String agencyId, String targetEncode) throws GeneralSecurityException {
+        Map<String,String> keyIv = dbDecrypt(agencyId);
+        byte[] key = Base64.getDecoder().decode(keyIv.get("agencyKey"));
+        byte[] iv = Base64.getDecoder().decode(keyIv.get("agencyIv"));
         SecretKeySpec secretKeySpec = new SecretKeySpec(key, "AES");
         IvParameterSpec ivParameterSpec = new IvParameterSpec(iv);
 
@@ -104,5 +108,20 @@ public class EncryptDataService implements EncryptUseCase {
             e.printStackTrace();
             return null;
         }
+    }
+
+    public Map<String, String> dbDecrypt(String agencyId){
+        Optional<AgencyInfoKey> agencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
+        String AES_CBC_256_KEY = "";
+        String AES_CBC_256_IV = "";
+        if (agencyInfoKey.isPresent()) {
+            AgencyInfoKey infoKey = agencyInfoKey.get();
+            AES_CBC_256_KEY = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyKey().trim());
+            AES_CBC_256_IV = MagicDBAPI.decrypt("mokDBEnc", infoKey.getAgencyIv().trim());
+        }
+        Map<String, String> result = new HashMap<>();
+        result.put("agencyKey", AES_CBC_256_KEY);
+        result.put("agencyIv", AES_CBC_256_IV);
+        return result;
     }
 }

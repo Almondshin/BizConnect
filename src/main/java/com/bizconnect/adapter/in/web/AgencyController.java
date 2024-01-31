@@ -28,8 +28,6 @@ import java.util.*;
 @RestController
 @RequestMapping(value = {"/agency", "/"})
 public class AgencyController {
-
-    private static final int DAYS_BEFORE_EXPIRATION = 15;
     private final AgencyUseCase agencyUseCase;
     private final EncryptUseCase encryptUseCase;
     private final NotiUseCase notiUseCase;
@@ -62,7 +60,7 @@ public class AgencyController {
     @PostMapping("/getSiteStatus")
     public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
         String resultCode = EnumResultCode.SUCCESS.getCode();
@@ -98,7 +96,7 @@ public class AgencyController {
         responseMessage.put("resultCode", resultCode);
         responseMessage.put("resultMsg", resultMsg);
         responseMessage.put("msgType", "SiteInfo");
-        responseMessage.put("encryptData", encryptUseCase.encryptData(Objects.requireNonNull(originalData)));
+        responseMessage.put("encryptData", encryptUseCase.encryptData(clientDataModel.getAgencyId(), Objects.requireNonNull(originalData)));
         responseMessage.put("verifyInfo", encryptUseCase.hmacSHA256(originalData, keyString));
 
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
@@ -115,13 +113,18 @@ public class AgencyController {
     /**
      * 이용기관 정보등록 요청
      *
-     * @param clientDataModel { agencyId(제휴사 ID), msgType(등록요청 암호화 메세지타입), encryptData(암호화된 JSON타입 데이터), verifyInfo(HMAC 무결성 검증 데이터) } 전달
+     * @param clientDataModel {
+     *                        agencyId(제휴사 ID),
+     *                        msgType(등록요청 암호화 메세지타입),
+     *                        encryptData(암호화된 JSON타입 데이터),
+     *                        verifyInfo(HMAC 무결성 검증 데이터)
+     *                        } 전달
      * @return resultCode (응답결과코드), resultMsg(응답상태메세지), msgType(등록요청 암호화 메세지타입), encryptData(암호화된 JSON타입 데이터), verifyInfo(HMAC 무결성 검증 데이터) 전달
      */
     @PostMapping("/regSiteInfo")
     public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
-        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
 
@@ -201,7 +204,7 @@ public class AgencyController {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, String> responseMessage = new HashMap<>();
 
-        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getEncryptData());
+        byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
         ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
 
         agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
@@ -311,11 +314,14 @@ public class AgencyController {
         String privateColAgree = clientDataModel.getPrivateColAgree();
         String serviceUseAgree = clientDataModel.getServiceUseAgree();
 
-        if (privateColAgree.equals(EnumAgree.DISAGREE.getCode()) || serviceUseAgree.equals(EnumAgree.DISAGREE.getCode())) {
+
+        if ((privateColAgree.equals(EnumAgree.DISAGREE.getCode()) && !serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))
+                || (!privateColAgree.equals(EnumAgree.DISAGREE.getCode()) &&  serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))) {
             responseMessage.put("resultMsg", "서비스 이용약관 미동의");
             responseMessage.put("resultCode", "9999");
             return ResponseEntity.ok(responseMessage);
         }
+
 
         Map<String, String> requiredFields = new LinkedHashMap<>();
         requiredFields.put("siteName", clientDataModel.getSiteName());

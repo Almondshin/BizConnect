@@ -191,10 +191,9 @@
 
                 <div class="info-item">
                     <p class="info-item-label">결제수단</p>
-                    <div class="info-itme-howtopay">
+                    <div class="info-item-howtopay">
                         <label for="deposit"><input type="radio" name="howtopay" id="deposit" value="vbank" checked/>무통장입금</label>
-                        <label for="creditcard"><input type="radio" name="howtopay" id="creditcard"
-                                                       value="card"/>신용카드</label>
+                        <label for="creditcard"><input type="radio" name="howtopay" id="creditcard" value="card"/>신용카드</label>
                     </div>
                 </div>
                 <div class="info-item">
@@ -269,7 +268,8 @@
                     </g>
                 </g>
             </svg>
-            <p>서비스 시작일을 입력해 주세요.</p>
+            <p class="popup_main_text">팝업 메인텍스트 영역입니다.</p>
+            <p class="popup_sub_text">팝업 서브텍스트 영역입니다.</p>
         </div>
         <div class="popup_footer">
             <button id="cancelPayment">발급 취소하기</button>
@@ -332,8 +332,7 @@
         if (typeof PROCESS_FLAG !== "undefined") {
             init();
 
-        }
-        else {
+        } else {
             setInformation_4(userData);
             setProductTable(productDatalist)
             setPayment();

@@ -4,6 +4,8 @@ import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
+import com.bizconnect.adapter.out.payment.utils.StringUtil;
 import com.bizconnect.application.domain.enums.EnumPaymentStatus;
 import com.bizconnect.application.domain.enums.EnumTradeTrace;
 import com.bizconnect.application.domain.model.Agency;
@@ -15,6 +17,7 @@ import com.bizconnect.application.port.out.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.SavePaymentDataPort;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -236,9 +239,7 @@ public class HFResultService {
          */
         if (hashCipher.equals(pktHash)) {
             logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[TRUE]");
-
             SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-            SimpleDateFormat originalFormat = new SimpleDateFormat("yyyyMMddHHmmss");
 
             Calendar cal = Calendar.getInstance();
             Date regDate = cal.getTime();
@@ -248,6 +249,9 @@ public class HFResultService {
 
             Map<String, String> parseParams = parseParams(pairs);
 
+            System.out.println(parseParams);
+            //TODO
+            // parseParams로 가져오는 데이터가 없음 확인필요
             try {
                 String agencyId = parseParams.get("agencyId");
                 String siteId = parseParams.get("siteId");
@@ -306,6 +310,8 @@ public class HFResultService {
                     PaymentHistory paymentHistory = createVirtualAccountPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, EnumPaymentStatus.NOT_DEPOSITED.getCode(), startDate, endDate, regDate, null);
                     System.out.println("0051 vBank paymentHistory : " + paymentHistory);
                     savePaymentDataPort.insertPayment(paymentHistory);
+                    //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
+                    saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
                     resp = true;
                 } else {
                     resp = false;
@@ -368,6 +374,57 @@ public class HFResultService {
 
         System.out.println("responseParams " + responseParams);
         return responseParams;
+    }
+
+    public Map<String, String> requestBillKeyAPI(Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY, Map<String, String> RES_HEADER, Map<String, String> RES_BODY) {
+        // params, data 이름은 세틀로 전달되야 하는 값이니 변경하지 마십시오.
+        Map<String, Object> reqParam = new HashMap<>();
+        reqParam.put("params", REQ_HEADER);
+        reqParam.put("data", REQ_BODY);
+        String requestUrl = "";
+
+        requestUrl = constant.SERVER_URL + "/spay/APICardActionPay.do";
+
+        Map<String, String> respParam = new HashMap<>();
+        try {
+            HttpClientUtil httpClientUtil = new HttpClientUtil();
+            // send_api ( API호출 URL, 전송될데이터, 연결 타임아웃, 수신 타임아웃 )
+            String resData = httpClientUtil.sendApi(requestUrl, reqParam, constant.CONN_TIMEOUT, constant.READ_TIMEOUT);
+            // 응답 파라미터 파싱
+            JSONObject resp = JSONObject.fromObject(resData);
+            JSONObject respHeader = resp.has("params") ? resp.getJSONObject("params") : null;
+            JSONObject respBody = resp.has("data") ? resp.getJSONObject("data") : null;
+            // 응답 파라미터 세팅(헤더)
+            if (respHeader != null) {
+                for (String key : RES_HEADER.keySet()) {
+                    respParam.put(key, StringUtil.isNull(respHeader.has(key) ? respHeader.getString(key) : ""));
+                }
+            }
+            else {
+                for (String key : RES_HEADER.keySet()) {
+                    respParam.put(key, "");
+                }
+            }
+            // 응답 파라미터 세팅(바디)
+            if (respBody != null) {
+                for (String key : RES_BODY.keySet()) {
+                    respParam.put(key, StringUtil.isNull(respBody.has(key) ? respBody.getString(key) : ""));
+                }
+            }
+            else {
+                for (String key : RES_BODY.keySet()) {
+                    respParam.put(key, "");
+                }
+            }
+        }
+        catch (Exception e) {
+            respParam.put("outStatCd", "0031");
+            respParam.put("outRsltCd", "9999");
+            respParam.put("outRsltMsg", "[Response Parsing Error]" + e.toString());
+            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][Response Parsing Error]" + e.toString());
+        }
+
+        return respParam;
     }
 
     public void decryptParams(String[] DECRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> respParam) {

@@ -181,11 +181,11 @@ body {
     width: 120px;
     font-size: 1rem;
 }
-.info-itme-howtopay {
+.info-item-howtopay {
     display: flex;
     gap: 16px;
 }
-.info-itme-howtopay label {
+.info-item-howtopay label {
     display: flex;
     gap: 8px;
     font-size: 1rem;

@@ -1,20 +1,17 @@
 const preInputParameter = {
-    agencyId: "",
-    siteId: "",
+    agencyId : "",
+    siteId   : "",
     startDate: "",
-    rateSel: "",
-    openType: "",
+    rateSel  : "",
+    openType : "",
 }
-
-var openType = "";
 
 const init = function () {
     document.querySelector("#selectProductPopUpOpen").addEventListener("click", function () {
         popupOpen(2)
     })
     document.querySelector("#selectProduct").addEventListener("click", function () {
-        process.setProduct();
-        selectProduct()
+        process.selectProduct();
     })
     document.querySelector("#cancelSelectProduct").addEventListener("click", function () {
         popupClose()
@@ -23,64 +20,75 @@ const init = function () {
         payProgress()
         process.setPaymentSiteInfo();
     })
+    document.querySelector("#cancelPayment").addEventListener("click", function () {
+        popupClose()
+    })
 
     process.data.agencyId = utils.getParam("agencyId");
     process.data.siteId = utils.getParam("siteId");
     process.data.startDate = utils.getParam("startDate");
     process.data.rateSel = utils.getParam("rateSel");
 
-    openType = utils.getParam("openType");
-
     for (let key in preInputParameter) {
         preInputParameter[key] = utils.getParam(key)
-    }
-
-    if (preInputParameter.rateSel !== "") {
-        setProductCode(preInputParameter.rateSel);
-    }
-
-    if (preInputParameter.startDate !== "") {
-        document.querySelector("#datepicker").value = preInputParameter.startDate;
     }
 
     process.getPaymentInfo();
 }
 
 const process = {
-    data: {
-        agencyId: "",
-        siteId: "",
-        startDate: "",
-        endDate: "",
-        rateSel: "",
+    data                : {
+        agencyId  : "",
+        siteId    : "",
+        startDate : "",
+        endDate   : "",
+        rateSel   : "",
         salesPrice: "",
-        method: ""
+        method    : ""
     }
-    , selectedProduct: {}
-    , getPaymentInfo: function () {
+    , selectedProduct   : {}
+    , getPaymentInfo    : function () {
         const request = new XMLHttpRequest();
-        request.open("POST", profileSpecificUrl + "/agency/payment/getPaymentInfo", false);
+        // request.open("POST", BASE_URL + "/agency/payment/getPaymentInfo", false);
+        request.open("POST", "/agency/payment/getPaymentInfo", false);
         request.setRequestHeader("Content-type", "application/json");
 
         request.onreadystatechange = function () {
             let response = {
-                listSel: "",
-                clientInfo:"",
-                profileUrl:"",
-                profilePaymentUrl:"",
+                listSel          : "",
+                clientInfo       : "",
+                profileUrl       : "",
+                profilePaymentUrl: "",
+                resultCode       : ""
             }
             response = JSON.parse(this.response);
+            console.log(response);
+            if (response.resultCode !== "2000") {
+                alert(JSON.stringify(response))
+                console.log(response);
+                return;
+            }
 
-            [companyName, bizNumber, ceoName]  = response.clientInfo.split(",");
+            [companyName, bizNumber, ceoName] = response.clientInfo.split(",");
             setInformation_4({
                 companyName: companyName,
-                bizNum: bizNumber,
-                userName: ceoName
+                bizNum     : bizNumber,
+                userName   : ceoName
             })
 
-            if (response.startDate != null) {
-                document.querySelector("#datepicker").value = response.startDate;
-            }
+            productDatalist = [];
+            Array.prototype.forEach.call(response.listSel, function (el, index) {
+                productDatalist[index] = {
+                    productCode            : el.type,
+                    productName            : el.name,
+                    productPrice           : el.price,
+                    productDuration        : el.month,
+                    productCount           : el.basicOffer,
+                    productFeePerCase      : el.feePerCase,
+                    productExcessFeePerCase: el.excessFeePerCase,
+                    productAutopay         : el.type.indexOf("autopay") > -1 ? true : false,
+                }
+            })
 
             if (response.profileUrl != null) {
                 profileSpecificUrl = response.profileUrl;
@@ -89,37 +97,53 @@ const process = {
                 profileSpecificPaymentUrl = response.profilePaymentUrl;
             }
 
-            productDatalist = [];
-            Array.prototype.forEach.call(response.listSel, function (el, index) {
-                productDatalist[index] = {
-                    productCode: el.type,
-                    productName: el.name,
-                    productPrice: el.price,
-                    productDuration: el.month,
-                    productCount: el.basicOffer,
-                    productFeePerCase: el.feePerCase,
-                    productExcessFeePerCase: el.excessFeePerCase,
-                    productAutopay: el.type.indexOf("autopay") > -1 ? true : false,
-                }
-            })
+
+            if (response.startDate !== "" && response.startDate != null) {
+                document.querySelector("#datepicker").value = response.startDate;
+            }
+
+            if (preInputParameter.startDate !== "" && preInputParameter.startDate != null) {
+                document.querySelector("#datepicker").value = preInputParameter.startDate;
+            }
+
+            calcPrice = process.select;
 
             setProductTable(productDatalist)
-            calcPrice = process.select;
-            if (preInputParameter.rateSel !== "") {
-                userData.productCode = preInputParameter.rateSel;
-                process.setProduct();
+
+            if (response.rateSel != null && response.rateSel !== "") {
+                setProductCode(response.rateSel);
+                selectProduct();
+                process.selectProduct();
                 setPayment();
             }
+            if (preInputParameter.rateSel !== "") {
+                setProductCode(preInputParameter.rateSel);
+                selectProduct();
+                process.selectProduct();
+                setPayment();
+            }
+
+
+            // if (response.rateSel != null && response.rateSel !== "") {
+            //     process.setProduct();
+            //     setPayment();
+            // }
+            // if (preInputParameter.rateSel !== "") {
+            //     process.setProduct();
+            //     setPayment();
+            // }
         }
         let data = {
-            agencyId: process.data.agencyId,
-            siteId: process.data.siteId,
+            agencyId : process.data.agencyId,
+            siteId   : process.data.siteId,
+            startDate: process.data.startDate,
+            rateSel  : process.data.rateSel
         }
         request.send(JSON.stringify(data))
     }
     , setPaymentSiteInfo: function () {
         let request = new XMLHttpRequest();
-        request.open("POST", profileSpecificUrl + "/agency/payment/setPaymentSiteInfo", false);
+        request.open("POST", profileSpecificPaymentUrl + "/agency/payment/setPaymentSiteInfo", false);
         request.setRequestHeader("Content-type", "application/json");
         request.onreadystatechange = function () {
             process.HFPayment(JSON.parse(this.response))
@@ -129,50 +153,81 @@ const process = {
         process.data.startDate = document.querySelector("#datepicker").value;
         process.data.rateSel = process.selectedProduct.productCode;
         console.log(JSON.stringify(process.data))
+        if (JSON.stringify(process.data.rateSel) == null) {
+            alert("상품을 선택해주세요.")
+            return;
+        }
         request.send(JSON.stringify(process.data));
     }
-    , HFPayment: function (response) {
+    , HFPayment         : function (response) {
         if (response.resultCode === "2000") {
             var mchtName = "드림시큐리티"
             var mchtEName = "Dreamsecurity"
+            var type = "popup"
 
-            let uiType = "";
-
-            switch (openType) {
+            switch (preInputParameter.openType) {
                 case "redirect" : {
-                    uiType = "self";
+                    type = "self";
                     break;
                 }
                 case "popup" : {
-                    uiType = "popup";
+                    type = "popup";
                     break;
                 }
                 default : {
-                    uiType = "popup";
+                    type = "popup";
                     break;
                 }
             }
-            console.log(response.mchtId)
+
+            const autopayText = document.querySelector("#info_text_autopay");
+            let autopayYN;
+            switch (autopayText.value) {
+                case "사용" : {
+                    autopayYN = "Y"
+                    break;
+                }
+                case "사용" : {
+                    autopayYN = "N"
+                    break;
+                }
+            }
+
+            const mchtParams =
+                "agencyId=" + process.data.agencyId +
+                "&siteId=" + process.data.siteId +
+                "&startDate=" + process.data.startDate +
+                "&endDate=" + process.data.endDate +
+                "&rateSel=" + this.selectedProduct.productCode +
+                "&offer=" + process.data.offer +
+                "&productName=" + this.selectedProduct.productName +
+                "&autopayYN=" + autopayYN +
+                "&companyName=" + companyName +
+                "&bizNumber=" + bizNumber;
+
+            console.log(mchtParams)
+
 
             SETTLE_PG.pay({
-                env       : "https://tbnpg.settlebank.co.kr",   //결제서버 URL
+                env: "https://tbnpg.settlebank.co.kr",   //결제서버 URL
                 // env       : "https://npg.settlebank.co.kr",   //결제서버 URL
-                mchtName  : mchtName,
-                mchtEName : mchtEName,
-                pmtPrdtNm : this.selectedProduct.productName + "(" + this.selectedProduct.startDate +"-"+ this.selectedProduct.endDate + ")",
-                mchtId    : response.mchtId,
-                method    : response.method,
-                trdDt     : response.trdDt,
-                trdTm     : response.trdTm,
-                mchtTrdNo : response.mchtTrdNo,
-                trdAmt    : response.encParams.trdAmt,
-                pktHash   : response.hashCipher,
-                notiUrl   : profileSpecificUrl + "/agency/payment/api/result/noti",
-                nextUrl   : profileSpecificUrl + "/agency/payment/api/result/next",
-                cancUrl   : profileSpecificUrl + "/agency/payment/api/result/cancel",
-                ui        : {
+                mchtName : mchtName,
+                mchtEName: mchtEName,
+                mchtParam: mchtParams,
+                pmtPrdtNm: this.selectedProduct.productName + "( " + process.data.startDate + " - " + process.data.endDate + " )",
+                mchtId   : response.mchtId,
+                method   : response.method,
+                trdDt    : response.trdDt,
+                trdTm    : response.trdTm,
+                mchtTrdNo: response.mchtTrdNo,
+                trdAmt   : response.encParams.trdAmt,
+                pktHash  : response.hashCipher,
+                notiUrl  : profileSpecificUrl + "/agency/payment/api/result/noti",
+                nextUrl  : profileSpecificUrl + "/agency/payment/api/result/next",
+                cancUrl  : profileSpecificUrl + "/agency/payment/api/result/cancel",
+                ui       : {
                     // type  : "popup",   //popup, iframe, self, blank
-                    type  : uiType,   //popup, iframe, self, blank
+                    type  : type,   //popup, iframe, self, blank
                     width : "430",   //popup창의 너비
                     height: "660"   //popup창의 높이
                 }
@@ -180,12 +235,12 @@ const process = {
                 //iframe인 경우 전달된 결제 완료 후 응답 파라미터 처리
                 console.log(rsp);
             });
-        } else{
+        } else {
             alert(JSON.stringify(response))
             console.log(response);
         }
     }
-    , select: function () {
+    , select            : function () {
         var price = parseInt(process.selectedProduct.productPrice)
         var duration = parseInt(process.selectedProduct.productDuration);
         var offer = parseInt(process.selectedProduct.productCount);
@@ -204,19 +259,18 @@ const process = {
             if (remainDate <= 14) {
                 endDate = new Date(endDate.setMonth(endDate.getMonth() + 2));
                 endDate = new Date(endDate.setDate(0));
-            }
-            else {
+
+            } else {
                 endDate = new Date(endDate.setMonth(endDate.getMonth() + 1));
                 endDate = new Date(endDate.setDate(0));
             }
-        }
-        else {
+        } else {
             endDate = new Date(endDate.setMonth(endDate.getMonth() + duration));
             endDate = new Date(endDate.setDate(0));
+
         }
 
         endDate = endDate.toISOString().slice(0, 10);
-
 
         process.data.endDate = endDate;
         // document.querySelector("#endDate").value = last.getFullYear() + "-" + ((last.getMonth() + 1) < 10 ? "0" + (last.getMonth() + 1) : (last.getMonth() + 1)) + "-" + last.getDate();
@@ -224,12 +278,10 @@ const process = {
         if (duration === 1) {
             if (remainDate <= 14) {
                 duration = (remainDate / currentLastDate.getDate()) + 1;
-            }
-            else {
+            } else {
                 duration = (remainDate / currentLastDate.getDate());
             }
-        }
-        else {
+        } else {
             duration = ((remainDate / currentLastDate.getDate()) + (duration - 1)) / duration;
         }
         process.data.salesPrice = Math.floor(price * duration * 1.1).toString()
@@ -240,25 +292,58 @@ const process = {
 
         return `${process.data.salesPrice.toLocaleString()}원 (${process.data.offer.toLocaleString()}건)`
     }
-    , setProduct: function () {
-        var index = document.querySelector("input[name=product_select]:checked").dataset.index
+    , selectProduct     : function () {
+        if (!document.querySelector("input[name=product_select]:checked")) {
+            alert("상품을 선택해주세요.")
+            return;
+        }
+        let index = document.querySelector("input[name=product_select]:checked").dataset.index
         process.selectedProduct = productDatalist[index];
+        setPayment()
     }
 }
 
 const utils = {
     getParam: function (name) {
-        var search = location.search.substring(location.search.indexOf("?") + 1);
-        var value;
+        // let search = location.search.substring(location.search.indexOf("?") + 1);
+        // let value;
 
-        search = search.split("&");
+        // search = search.split("&");
 
-        for (var i = 0; i < search.length; i++) {
-            var temp = search[i].split("=");
-            if (temp[0] === name) {
-                value = temp[1];
-            }
-        }
-        return value !== undefined ? decodeURIComponent(value) : value;
+        // for (let i = 0; i < search.length; i++) {
+        //     let temp = search[i].split("=");
+        //     if (temp[0] === name) {
+        //         value = temp[1];
+        //     }
+        // }
+
+        // for (let item of search) {
+        //     let temp = item.split("=")
+        //     value = temp[0] === name ? temp[1] : ""
+        // }
+
+        // return value !== undefined ? decodeURIComponent(value) : value;
+
+        let params = new URLSearchParams(location.search);
+        let value = params.get(name)
+        return value == null ? "" : decodeURIComponent(value);
     }
+}
+
+const thankYouParameter = {
+    productName: "", bizNumber: "", companyName: "", startDate: "", autoPay: "",
+}
+
+const thankYouInit = function () {
+    for (let key in thankYouParameter) {
+        thankYouParameter[key] = utils.getParam(key)
+    }
+
+    setInformation_5({
+        bizNum     : thankYouParameter.bizNumber,
+        companyName: thankYouParameter.companyName,
+        startDate  : thankYouParameter.startDate,
+        autoPay    : thankYouParameter.autoPay === "Y" ? "사용" : "미사용",
+        productName: thankYouParameter.productName
+    });
 }

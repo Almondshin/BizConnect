@@ -4,7 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum EnumAgency {
-    SQUARES("SQUARES", "스퀘어스", "SiteStatus", "RegAgencySiteInfo", "CancelSiteInfo"),
+    SQUARES("squares", "스퀘어스", "SiteStatus", "RegAgencySiteInfo", "CancelSiteInfo"),
     CAFE24("CAFE24" , "카페24","", "","");
 
     private final String code;

@@ -31,7 +31,7 @@ public class NotifyTest {
         notifyPaymentSiteInfoMap.put("salesPrice", "10000");
         String plainData = mapToJSONString(notifyPaymentSiteInfoMap);
 
-        String agencyId = "SQUARES";
+        String agencyId = "squares";
         String msgType = "NotifyPaymentSiteInfo";
         String encryptData = encryptData(plainData);
         String verifyInfo = hmacSHA256(plainData, agencyId);
@@ -53,7 +53,7 @@ public class NotifyTest {
         notifyStatusSiteMap.put("siteStatus", "Y");
         String plainData = mapToJSONString(notifyStatusSiteMap);
 
-        String agencyId = "SQUARES";
+        String agencyId = "squares";
         String msgType = "NotifyStatusSite";
         String encryptData = encryptData(plainData);
         String verifyInfo = hmacSHA256(plainData, agencyId);

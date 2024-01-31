@@ -4,13 +4,13 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>드림시큐리티 - 인증서비스 신청 (4. 통신사 심사후 결제 ui)</title>
-        <script src="./src/js/jquery-3.1.1.min.js"></script>
+        <script src="asset/js/jquery/jquery-ui-1.13.2.min.js"></script>
+        <script src="asset/js/jquery/jquery-3.6.4.js"></script>
         <!-- css -->
-        <link rel="stylesheet" href="./src/css/reset.css" />
-        <link rel="stylesheet" href="./src/font/pretendard.css" />
-        <link rel="stylesheet" href="./src/css/datepicker.min.css" />
-        <link rel="stylesheet" href="./src/css/common.css" />
-        <link rel="stylesheet" href="./src/css/responsive.css" />
+        <link rel="stylesheet" href="asset/css/reset.css" />
+        <link rel="stylesheet" href="asset/font/pretendard.css" />
+        <link rel="stylesheet" href="asset/css/common.css" />
+        <link rel="stylesheet" href="asset/css/responsive.css" />
     </head>
     <!-- 4. 통신사 심사 후 결제 UI -->
     <body>
@@ -123,15 +123,47 @@
         </section>
 
         <!-- js -->
-        <script src="./src/js/dummyData.js"></script>
-        <script src="./src/js/common.js"></script>
+        <script src="asset/js/dummyData.js"></script>
+        <script src="asset/js/common.js"></script>
         <script>
             var contentBoxList;
             window.onload = function () {
                 contentBoxList = document.querySelectorAll(".content-box");
                 responsiveLayout();
-                setInformation_5(page5data);
+
+                if (typeof PROCESS_FLAG !== "undefined") {
+                    thankYouInit();
+                }
+                else {
+                    setInformation_5(page5data);
+                }
+
             };
+        </script>
+        <script>
+            var params = new URLSearchParams(location.search);
+            var data = params.get("data");
+
+            var companyName, bizNumber, ceoName;
+            $.ajax({
+                type       : "POST",
+                url        : location.origin + "/agency/payment/api/result/decrypt",
+                contentType: "application/json",
+                dataType   : "json",
+                data       : JSON.stringify({"data": data}),
+                success    : function (response) {
+                    document.querySelector("#info_company_name").innerText = response.companyName;
+                    document.querySelector("#info_biz_num").innerText = response.bizNumber;
+                    document.querySelector("#info_product_name").innerText = response.productName;
+                    document.querySelector("#info_start_date").innerText = response.startDate;
+                    if (response.autopayYN === "Y"){
+                        document.querySelector("#info_autopay").innerText = "사용"
+                    }else{
+                        document.querySelector("#info_autopay").innerText = "미사용"
+                    }
+                    console.log(response);
+                }
+            })
         </script>
     </body>
 </html>

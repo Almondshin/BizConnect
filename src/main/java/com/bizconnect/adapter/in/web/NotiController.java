@@ -32,7 +32,7 @@ public class NotiController {
         String plainData = encryptUseCase.mapToJSONString(responseData);
 
         String msgType = "NotifyStatusSite";
-        String encryptData = encryptUseCase.encryptData(plainData);
+        String encryptData = encryptUseCase.encryptData(responseData.get("agencyId"), plainData);
         String verifyInfo = encryptUseCase.hmacSHA256(plainData, responseData.get("agencyId"));
 
         Map<String, String> requestStatusSiteMap = new HashMap<>();

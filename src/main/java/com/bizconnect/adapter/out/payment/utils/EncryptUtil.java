@@ -16,18 +16,17 @@ public class EncryptUtil {
 		String resultStr = null;
 		byte[] resultByte = null;
 
-		
 		try {
 			// AES256 Encrypt -> Base64 Encode
 			encrypt = aes256EncryptEcb("pgSettle30y739r82jtd709yOfZ2yK5K", "세틀뱅크");
 			resultStr = encodeBase64(encrypt);
 			System.out.println("encrypt aes256 result:" + resultStr);
-	
+
 			// Base64 Decode -> AES256 Decrypt
 			decrypt = decodeBase64(resultStr);
 			resultByte = aes256DecryptEcb("pgSettle30y739r82jtd709yOfZ2yK5K", decrypt);
 			System.out.println("decrypt aes256 result: " + new String(resultByte, "UTF-8"));
-	
+
 			// SHA256 Hash
 			String hashStr = "test";
 			System.out.println("sha256 result :: " + digestSHA256(hashStr));
@@ -35,7 +34,7 @@ public class EncryptUtil {
 		catch(Exception e) {
 			System.out.println(e.toString());
 		}
-		
+
 	}
 
 	// AES256 암호화 -> Base64 인코딩

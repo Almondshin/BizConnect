@@ -1,0 +1,20 @@
+package com.bizconnect.application.domain.model;
+
+import lombok.Getter;
+import lombok.Setter;
+
+import java.util.Date;
+
+@Getter
+@Setter
+public class AgencyInfoKey {
+
+  private String agencyId;
+  private String siteName;
+  private String agencyUrl;
+  private String agencyKey;
+  private String agencyIv;
+  private Date regDate;
+  private Date modDate;
+
+}

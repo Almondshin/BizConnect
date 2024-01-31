@@ -9,13 +9,13 @@ public class ValueException extends RuntimeException{
     private final int offer;
     private final int clientOffer;
     private final int price;
-    private final int clientPrice;
+    private final String clientPrice;
     private final String endDate;
     private final String clientEndDate;
     private final String agencyId;
     private final String siteId;
 
-    public ValueException(int offer, int clientOffer, int price, int clientPrice, String endDate, String clientEndDate, String agencyId, String siteId) {
+    public ValueException(int offer, int clientOffer, int price, String clientPrice, String endDate, String clientEndDate, String agencyId, String siteId) {
         this.offer = offer;
         this.clientOffer = clientOffer;
         this.price = price;

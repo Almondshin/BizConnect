@@ -47,6 +47,13 @@ public class ClientDataModel {
     private String encryptData;
     private String verifyInfo;
 
+    private String refundAcntNo;
+    private String vAcntNo;
+    private String cnclAmt;
+    private String trdAmt;
+    private String vatAmt;
+    private String taxFreeAmt;
+
     private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9]+$";
 
     public ClientDataModel() {
@@ -69,6 +76,16 @@ public class ClientDataModel {
         this.rateSel = rateSel;
         this.startDate = startDate;
     }
+
+    public ClientDataModel(String refundAcntNo, String vAcntNo, String cnclAmt, String trdAmt, String vatAmt, String taxFreeAmt) {
+        this.refundAcntNo = refundAcntNo;
+        this.vAcntNo = vAcntNo;
+        this.cnclAmt = cnclAmt;
+        this.trdAmt = trdAmt;
+        this.vatAmt = vatAmt;
+        this.taxFreeAmt = taxFreeAmt;
+    }
+
 
     private boolean isValidAgencyId(String agencyId) {
         return agencyId.matches(AGENCY_SITE_ID_PATTERN);
