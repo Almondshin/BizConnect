@@ -3,10 +3,7 @@ package com.bizconnect.application.domain.enums;
 import lombok.Getter;
 
 @Getter
-public enum EnumProductAutoType {
-
-    ;
-
+public enum EnumProductAutoType {;
     private final String type;
     private final String name;
     private final int price;

@@ -35,7 +35,9 @@ var datepicker_default = {
     showOtherMonths: true,
     selectOtherMonths: true,
     onSelect: function (dateString) {
+        if (getProductCode() !== "") {
         setPayment();
+        }
     },
 };
 

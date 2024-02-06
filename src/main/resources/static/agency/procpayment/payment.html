@@ -191,7 +191,7 @@
 
                 <div class="info-item">
                     <p class="info-item-label">결제수단</p>
-                    <div class="info-item-howtopay">
+                    <div class="info-itme-howtopay">
                         <label for="deposit"><input type="radio" name="howtopay" id="deposit" value="vbank" checked/>무통장입금</label>
                         <label for="creditcard"><input type="radio" name="howtopay" id="creditcard" value="card"/>신용카드</label>
                     </div>
@@ -272,7 +272,7 @@
             <p class="popup_sub_text">팝업 서브텍스트 영역입니다.</p>
         </div>
         <div class="popup_footer">
-            <button id="cancelPayment">발급 취소하기</button>
+            <button class="popup_btn" id="cancelPayment">발급 취소하기</button>
         </div>
     </article>
     <article id="modal_products" class="modal_wrap">
@@ -318,7 +318,7 @@
 
 <!-- js -->
 <script src="asset/js/common.js"></script>
-<script src="asset/js/dummyData.js"></script>
+<script src="asset/js/dummyData2.js"></script>
 <script src="asset/js/datepicker.js"></script>
 <script src="asset/js/popup.js"></script>
 <script src="asset/js/config.js"></script>
@@ -335,7 +335,6 @@
         } else {
             setInformation_4(userData);
             setProductTable(productDatalist)
-            setPayment();
             document.querySelector("#selectProductPopUpOpen").addEventListener("click", function () {
                 popupOpen(2)
             })
@@ -343,7 +342,7 @@
                 popupClose()
             })
             document.querySelector("#selectProduct").addEventListener("click", function () {
-                selectProduct()
+                setPayment()
             })
             document.querySelector("#payment").addEventListener("click", function () {
                 payProgress()

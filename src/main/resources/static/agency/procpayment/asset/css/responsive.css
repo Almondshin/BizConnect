@@ -11,6 +11,9 @@
         font-size: 1.5rem;
     }
     /*  */
+    .sub-title-wrap {
+        flex-direction: column;
+    }
     .info-item .info-item-label {
         min-width: 80px;
     }
@@ -71,5 +74,12 @@
     }
     .info-item button {
         width: 100%;
+    }
+    .info-item.input-content-wrap.input_address input {
+        min-width: auto;
+    }
+    .info-item.input-content-wrap.input_address button {
+        width: 100%;
+        height: 40px;
     }
 }

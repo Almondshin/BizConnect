@@ -13,12 +13,12 @@ const init = function () {
     document.querySelector("#selectProduct").addEventListener("click", function () {
         process.selectProduct();
     })
-    document.querySelector("#cancelSelectProduct").addEventListener("click", function () {
-        popupClose()
-    })
     document.querySelector("#payment").addEventListener("click", function () {
         payProgress()
         process.setPaymentSiteInfo();
+    })
+    document.querySelector("#cancelSelectProduct").addEventListener("click", function () {
+        popupClose()
     })
     document.querySelector("#cancelPayment").addEventListener("click", function () {
         popupClose()
@@ -64,8 +64,11 @@ const process = {
             response = JSON.parse(this.response);
             console.log(response);
             if (response.resultCode !== "2000") {
-                alert(JSON.stringify(response))
-                console.log(response);
+                process.alert({
+                    main: response.resultMsg,
+                    sub : "오류코드 : " + response.resultCode,
+                    btn : "확인"
+                })
                 return;
             }
 
@@ -139,7 +142,11 @@ const process = {
             startDate: process.data.startDate,
             rateSel  : process.data.rateSel
         }
-        request.send(JSON.stringify(data))
+        try {
+            request.send(JSON.stringify(data))
+        } catch (error) {
+            alert("서버 통신 불가")
+        }
     }
     , setPaymentSiteInfo: function () {
         let request = new XMLHttpRequest();
@@ -153,8 +160,13 @@ const process = {
         process.data.startDate = document.querySelector("#datepicker").value;
         process.data.rateSel = process.selectedProduct.productCode;
         console.log(JSON.stringify(process.data))
+
         if (JSON.stringify(process.data.rateSel) == null) {
-            alert("상품을 선택해주세요.")
+            process.alert({
+                main: "상품을 선택해주세요.",
+                sub : "",
+                btn : "확인"
+            })
             return;
         }
         request.send(JSON.stringify(process.data));
@@ -226,7 +238,6 @@ const process = {
                 nextUrl  : profileSpecificUrl + "/agency/payment/api/result/next",
                 cancUrl  : profileSpecificUrl + "/agency/payment/api/result/cancel",
                 ui       : {
-                    // type  : "popup",   //popup, iframe, self, blank
                     type  : type,   //popup, iframe, self, blank
                     width : "430",   //popup창의 너비
                     height: "660"   //popup창의 높이
@@ -236,8 +247,13 @@ const process = {
                 console.log(rsp);
             });
         } else {
-            alert(JSON.stringify(response))
-            console.log(response);
+            process.alert({
+                main: response.resultMsg,
+                sub : "오류코드 : " + response.resultCode,
+                btn : "확인"
+            })
+
+            console.log(JSON.stringify(response));
         }
     }
     , select            : function () {
@@ -294,12 +310,22 @@ const process = {
     }
     , selectProduct     : function () {
         if (!document.querySelector("input[name=product_select]:checked")) {
-            alert("상품을 선택해주세요.")
+            process.alert({
+                main: "상품을 선택해주세요.",
+                sub : "",
+                btn : "확인"
+            })
+            // alert("상품을 선택해주세요.")
             return;
         }
         let index = document.querySelector("input[name=product_select]:checked").dataset.index
         process.selectedProduct = productDatalist[index];
         setPayment()
+    }
+    , alert: function (obj) {
+        popupTextlist["custom"] = obj
+        setPopup("custom")
+        popupOpen(1);
     }
 }
 
@@ -347,3 +373,4 @@ const thankYouInit = function () {
         productName: thankYouParameter.productName
     });
 }
+
