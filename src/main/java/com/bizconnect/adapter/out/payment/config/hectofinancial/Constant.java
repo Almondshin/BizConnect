@@ -14,7 +14,7 @@ public class Constant {
     public String PG_CANCEL_MID;
     public String LICENSE_KEY;
     public String AES256_KEY;
-    public String SERVER_URL;
+    public String BILL_SERVER_URL;
     public int CONN_TIMEOUT;
     public int READ_TIMEOUT;
 }

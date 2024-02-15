@@ -6,22 +6,18 @@ import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
-import com.bizconnect.application.domain.enums.EnumProductAutoType;
-import com.bizconnect.application.domain.enums.EnumProductType;
 import com.bizconnect.application.domain.model.Agency;
+import com.bizconnect.application.domain.model.AgencyProducts;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
-import com.bizconnect.application.port.out.LoadPaymentDataPort;
+import com.bizconnect.application.port.out.load.LoadAgencyProductDataPort;
+import com.bizconnect.application.port.out.load.LoadPaymentDataPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.SecureRandom;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
@@ -38,10 +34,13 @@ public class PaymentService implements PaymentUseCase {
 
     private final LoadPaymentDataPort loadPaymentDataPort;
 
-    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort) {
+    private final LoadAgencyProductDataPort loadAgencyProductDataPort;
+
+    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort) {
         this.constant = constant;
         this.agencyService = agencyService;
         this.loadPaymentDataPort = loadPaymentDataPort;
+        this.loadAgencyProductDataPort = loadAgencyProductDataPort;
     }
 
 
@@ -52,7 +51,6 @@ public class PaymentService implements PaymentUseCase {
         String clientPrice = clientDataModel.getSalesPrice();
         Calendar startDateByCal = Calendar.getInstance();
         Calendar endDateByCal = Calendar.getInstance();
-
         Calendar yesterDayCal = Calendar.getInstance();
         yesterDayCal.add(Calendar.DATE, -1);
         Date yesterday = yesterDayCal.getTime();
@@ -72,23 +70,26 @@ public class PaymentService implements PaymentUseCase {
         String endDate = "";
         String clientEndDate = sdf.format(clientDataModel.getEndDate());
 
-        // enumProductType.getType이랑 rateSel이랑 같은 열거형을 찾는다.
-        EnumProductType productType = EnumProductType.getProductTypeByString(rateSel);
+
+        Optional<AgencyProducts> products = loadAgencyProductDataPort.getAgencyProductList(rateSel);
+        AgencyProducts agencyProducts = products.orElse(null);
 
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
 
         int durations = lastDate - startDate + 1;
-        int baseOffer = productType.getBasicOffer() / productType.getMonth();
-        int basePrice = productType.getPrice() / productType.getMonth();
-        int dataMonth = productType.getMonth();
+        int baseOffer = Integer.parseInt(agencyProducts.getOffer()) / Integer.parseInt(agencyProducts.getMonth());
+        int basePrice = Integer.parseInt(agencyProducts.getPrice()) /Integer.parseInt(agencyProducts.getMonth());
+        int dataMonth = Integer.parseInt(agencyProducts.getMonth());
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
         price = ((((double) (basePrice * durations) / lastDate) + (basePrice * (dataMonth - 1))) * 1.1);
 
-        if (productType.getMonth() == 1) {
-            if (durations <= 15) {
-                endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth());
+        endDateByCal.set(Calendar.MONTH, startDateByCal.get(Calendar.MONTH));
+        System.out.println(startDateByCal.get(Calendar.MONTH));
+        if (Integer.parseInt(agencyProducts.getMonth()) == 1) {
+            if (durations <= 14) {
+                endDateByCal.add(Calendar.MONTH,  Integer.parseInt(agencyProducts.getMonth()));
                 offer = (baseOffer) + (baseOffer * durations / lastDate);
                 price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
             } else {
@@ -96,7 +97,7 @@ public class PaymentService implements PaymentUseCase {
                 price = (((double) (basePrice * durations) / lastDate) * 1.1);
             }
         } else {
-            endDateByCal.add(Calendar.MONTH, startDateByCal.get(Calendar.MONTH) + productType.getMonth() - 1);
+            endDateByCal.add(Calendar.MONTH, Integer.parseInt(agencyProducts.getMonth()) - 1);
         }
 
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
@@ -107,12 +108,16 @@ public class PaymentService implements PaymentUseCase {
             if (sdf.parse(sdf.format(clientDataModel.getStartDate())).before(info.get().getEndDate())) {
                 throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
             }
-
             endDateByCal.setTime(sdf.parse(sdf.format(clientDataModel.getStartDate())));
 
-            if (durations <= 15) {
-                endDateByCal.add(Calendar.MONTH, 1);
+            if (agencyProducts.getMonth().equals("1")){
+                if (durations <= 14) {
+                    endDateByCal.add(Calendar.MONTH, 1);
+                }
+            } else {
+                endDateByCal.add(Calendar.MONTH, Integer.parseInt(agencyProducts.getMonth()) - 1);
             }
+
 
             int excessCount;
             double excessAmount = 0;
@@ -126,6 +131,7 @@ public class PaymentService implements PaymentUseCase {
             price += excessAmount;
         }
 
+
         endDateByCal.set(Calendar.DAY_OF_MONTH, endDateByCal.getActualMaximum(Calendar.DAY_OF_MONTH));
         endDate = sdf.format(endDateByCal.getTime());
         if (offer != clientOffer || String.valueOf(Math.floor(price)).equals(clientPrice) || !endDate.equals(clientEndDate)) {
@@ -135,7 +141,7 @@ public class PaymentService implements PaymentUseCase {
         logger.info("S ------------------------------[AGENCY] - [setPaymentSiteInfo] ------------------------------ S");
         logger.info("[agencyId] : [" + agencyId + "]");
         logger.info("[siteId] : [" + siteId + "]");
-        logger.info("[rateSel] : [" + productType.getType() + ", " + productType.getName() + "]");
+        logger.info("[rateSel] : [" + agencyProducts.getRateSel() + ", " + agencyProducts.getName() + "]");
         logger.info("[startDate] : [" + sdf.format(startDateByCal.getTime()) + "]");
         logger.info("[endDate] : [" + endDate + "]");
         logger.info("[offer] : [" + offer + "]");
@@ -153,7 +159,6 @@ public class PaymentService implements PaymentUseCase {
         }else {
             mchtId = constant.PG_MID;
         }
-
         String hashPlain = new PaymentDataModel(
                 mchtId,
                 clientDataModel.getMethod(),
@@ -214,7 +219,7 @@ public class PaymentService implements PaymentUseCase {
         Random random = new Random();
         int randomNum = random.nextInt(10000);
         String formattedRandomNum = String.format("%04d", randomNum);
-        return "PAYMENT" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
+        return "DREAMSEC" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
     }
 
 

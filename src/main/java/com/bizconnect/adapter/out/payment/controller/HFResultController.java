@@ -1,12 +1,8 @@
 package com.bizconnect.adapter.out.payment.controller;
 
-import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.service.HFResultService;
-import com.bizconnect.application.domain.service.EncryptDataService;
-import com.bizconnect.application.port.in.PaymentUseCase;
-import com.dreamsecurity.jcaos.asn1.C;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Value;
@@ -19,14 +15,12 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.util.*;
 
 @RestController
 @RequestMapping(value = {"/agency/payment/api/result", "/payment/api/result"})
 public class HFResultController {
     private final HFResultService hfResultService;
-    private final PaymentUseCase paymentUseCase;
 
     @Value("${external.url}")
     private String profileSpecificUrl;
@@ -35,15 +29,16 @@ public class HFResultController {
     private String profileSpecificPaymentUrl;
 
 
-    public HFResultController(HFResultService hfResultService, PaymentUseCase paymentUseCase) {
+    public HFResultController(HFResultService hfResultService) {
         this.hfResultService = hfResultService;
-        this.paymentUseCase = paymentUseCase;
     }
 
     // 결과 페이지 이후 콜백 S2S 안돼서 임시 처리
     @PostMapping(value = "/next")
     public void next(HttpServletRequest request, HttpServletResponse response) throws IOException {
 
+        //TODO
+        // Next 로그용
         Set<String> keySet = request.getParameterMap().keySet();
         for (String key : keySet) {
             System.out.println("[Next] : " + key + ": " + request.getParameter(key));
@@ -80,6 +75,8 @@ public class HFResultController {
     // 헥토파이낸셜 서버 요청, 현 서버 수신 - 로컬 사용 불가
     @PostMapping(value = "/noti")
     public String noti(HttpServletRequest request) {
+        //TODO
+        // Noti 로그용
         Set<String> keySet = request.getParameterMap().keySet();
         for (String key : keySet) {
             System.out.println("[Noti] : " + key + ": " + request.getParameter(key));
@@ -97,50 +94,6 @@ public class HFResultController {
         }
         return "FAIL";
     }
-
-//    @PostMapping(value = "/bill")
-//    public String requestBillKeyPayment(@RequestBody Map<String, String> requestMap) throws Exception {
-//        Date date = new Date();
-//        // 요청  파라미터(헤더)
-//        Map<String, String> REQ_HEADER = setBill_REQ_HEADER(requestMap, date);
-//        // 요청  파라미터(헤더)
-//        Map<String, String> REQ_BODY = setBill_REQ_BODY(requestMap);
-//
-//        connectHectoFinancialService.hashPktBill(REQ_HEADER, REQ_BODY);
-//
-//        // 응답 파라미터(헤더)
-//        Map<String, String> RES_HEADER = setRES_HEADER();
-//        // 응답 파라미터(바디)
-//        Map<String, String> RES_BODY = setRES_BODY();
-//
-//        // AES256 암호화 필요 파라미터
-//        String[] ENCRYPT_PARAMS = {"refundAcntNo", "vAcntNo", "cnclAmt", "trdAmt", "vatAmt", "taxFreeAmt"};
-//        // AES256 복호화 필요 파라미터
-//        String[] DECRYPT_PARAMS = {"cnclAmt", "blcAmt", "vAcntNo"};
-//
-//        // 파라미터 암호화
-////        encryptParam(ENCRYPT_PARAMS, REQ_HEADER, REQ_BODY);
-//
-//        ClientDataModel clientDataModel = new ClientDataModel(
-//                requestMap.get("refundAcntNo"),
-//                requestMap.get("vAcntNo"),
-//                requestMap.get("cnclAmt"),
-//                requestMap.get("trdAmt"),
-//                requestMap.get("vatAmt"),
-//                requestMap.get("taxFreeAmt")
-//                );
-//        String tradeNum = paymentUseCase.makeTradeNum();
-//        paymentUseCase.encodeBase64(clientDataModel,tradeNum);
-//
-//        // 취소 요청
-//        Map<String, String> respParam = hfResultService.requestBillKeyAPI(REQ_HEADER, REQ_BODY, RES_HEADER, RES_BODY);
-//
-//        // 파라미터 복호화
-//        hfResultService.decryptParams(DECRYPT_PARAMS, REQ_HEADER, respParam);
-//
-//        ObjectMapper objectMapper = new ObjectMapper();
-//        return objectMapper.writeValueAsString(respParam);
-//    }
 
     @PostMapping(value = "/cancel")
     public void cancel(HttpServletRequest request, HttpServletResponse response) throws IOException {

@@ -275,7 +275,6 @@ const process = {
             if (remainDate <= 14) {
                 endDate = new Date(endDate.setMonth(endDate.getMonth() + 2));
                 endDate = new Date(endDate.setDate(0));
-
             } else {
                 endDate = new Date(endDate.setMonth(endDate.getMonth() + 1));
                 endDate = new Date(endDate.setDate(0));

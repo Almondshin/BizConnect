@@ -19,6 +19,8 @@ public class AgencyInfoKeyJpaEntity {
   private String agencyId;
   @Column(name = "SITE_NAME")
   private String siteName;
+  @Column(name = "AGENCY_PRODUCT_TYPE")
+  private String agencyProductType;
   @Column(name = "AGENCY_URL")
   private String agencyUrl;
   @Column(name = "AGENCY_KEY")

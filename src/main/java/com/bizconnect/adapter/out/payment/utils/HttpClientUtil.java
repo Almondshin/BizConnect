@@ -59,9 +59,7 @@ public class HttpClientUtil {
 			
 			logger.info("["+trdNo+"][API Send URL]" + url);
 			logger.info("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout);
-//			System.out.println(("["+trdNo+"][API Send URL]" + url));
-//			System.out.println(("["+trdNo+"][URL Protocol]" + url.getProtocol() + " [Connect Timeout]"+connTimeout +" [Read Timeout]" + readTimeout));
-			
+
 			httpsURLConnection = (HttpsURLConnection)url.openConnection();
 			httpsURLConnection.setDoInput(true);
 			httpsURLConnection.setDoOutput(true);
@@ -75,7 +73,6 @@ public class HttpClientUtil {
 			
 			//보낼 데이터
 			logger.info("["+trdNo+"][Send Data]" + sendData);
-//			System.out.println(("["+trdNo+"][Send Data]" + sendData));
 
 			OutputStream os = null;
 			os = httpsURLConnection.getOutputStream();
@@ -85,7 +82,6 @@ public class HttpClientUtil {
 			os.close();
 			
 			logger.info("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
-//			System.out.println("["+trdNo+"][Response Code]" + httpsURLConnection.getResponseCode());
 			if(httpsURLConnection.getResponseCode() == HttpsURLConnection.HTTP_OK) {
 				DataInputStream in = new DataInputStream(httpsURLConnection.getInputStream());
 				ByteArrayOutputStream bout = new ByteArrayOutputStream();
@@ -108,12 +104,9 @@ public class HttpClientUtil {
 				
 				logger.info("["+trdNo+"][Response Data]" + resData);
 				logger.info("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
-//				System.out.println("["+trdNo+"][Response Data]" + resData);
-//				System.out.println("["+trdNo+"][Response Data] byte length : " + resData.getBytes().length);
-				
+
 			}else {
 				logger.error("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
-//				System.out.println("["+trdNo+"][Connect Error]" + httpsURLConnection.getResponseMessage());
 
 				Map<String,String> params = new HashMap<String, String>();
 				params.put("outStatCd", "0031");
@@ -133,7 +126,6 @@ public class HttpClientUtil {
 			httpsURLConnection.disconnect();
 		}catch (Exception e) {
 			logger.error("["+trdNo+"][HTTP Connect Error]" + e.toString());
-//			System.out.println("["+trdNo+"][HTTP Connect Error]" + e.toString());
 
 			Map<String,String> params = new HashMap<String, String>();
 			params.put("outStatCd", "0031");
@@ -154,7 +146,6 @@ public class HttpClientUtil {
 		}
 		
 		logger.info("["+trdNo+"]=========================END SEND API=========================");
-//		System.out.println("["+trdNo+"]=========================END SEND API=========================");
 
 		return resData;
 	}

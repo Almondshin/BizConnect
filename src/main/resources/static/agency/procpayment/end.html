@@ -5,11 +5,10 @@
     <title>Title</title>
 </head>
 <body>
-result
 <script>
     var newUrl = "/agency/procpayment/thankyou.html?data="
     var params = new URLSearchParams(location.search);
-    var data   = params.get("data");
+    var data = params.get("data");
     window.opener.location.href = newUrl + data;
     self.close();
 </script>

@@ -13,25 +13,16 @@ import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.in.EncryptUseCase;
 import com.bizconnect.application.port.in.NotiUseCase;
-import com.bizconnect.application.port.out.SaveAgencyDataPort;
-import com.bizconnect.application.port.out.SavePaymentDataPort;
-import com.fasterxml.jackson.core.JsonProcessingException;
+import com.bizconnect.application.port.out.save.SaveAgencyDataPort;
+import com.bizconnect.application.port.out.save.SavePaymentDataPort;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.web.reactive.function.BodyInserters;
-import org.springframework.web.reactive.function.client.WebClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import reactor.core.publisher.Mono;
 
-import java.io.BufferedReader;
-import java.io.DataOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -266,7 +257,6 @@ public class HFResultService {
                         case "CA": {
                             resp = true;
                             String billKey = responseParam.get("billKey");
-                            String billKeyExpireDate = responseParam.get("billKeyExpireDate");
                             PaymentHistory paymentHistory;
                             if (billKey != null && !billKey.isEmpty()) {
                                 paymentHistory = createRegularPaymentHistory(responseParam, agencyId, siteId, rateSel, offer, startDate, endDate, regDate);
@@ -376,55 +366,42 @@ public class HFResultService {
         return responseParams;
     }
 
-    public Map<String, String> requestBillKeyAPI(Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY, Map<String, String> RES_HEADER, Map<String, String> RES_BODY) {
-        // params, data 이름은 세틀로 전달되야 하는 값이니 변경하지 마십시오.
-        Map<String, Object> reqParam = new HashMap<>();
-        reqParam.put("params", REQ_HEADER);
-        reqParam.put("data", REQ_BODY);
-        String requestUrl = "";
-
-        requestUrl = constant.SERVER_URL + "/spay/APICardActionPay.do";
-
-        Map<String, String> respParam = new HashMap<>();
+    public String hashPkt(Map<String, String> requestMap) {
+        String hashPlain = "";
+        String hashCipher = "";
         try {
-            HttpClientUtil httpClientUtil = new HttpClientUtil();
-            // send_api ( API호출 URL, 전송될데이터, 연결 타임아웃, 수신 타임아웃 )
-            String resData = httpClientUtil.sendApi(requestUrl, reqParam, constant.CONN_TIMEOUT, constant.READ_TIMEOUT);
-            // 응답 파라미터 파싱
-            JSONObject resp = JSONObject.fromObject(resData);
-            JSONObject respHeader = resp.has("params") ? resp.getJSONObject("params") : null;
-            JSONObject respBody = resp.has("data") ? resp.getJSONObject("data") : null;
-            // 응답 파라미터 세팅(헤더)
-            if (respHeader != null) {
-                for (String key : RES_HEADER.keySet()) {
-                    respParam.put(key, StringUtil.isNull(respHeader.has(key) ? respHeader.getString(key) : ""));
-                }
-            }
-            else {
-                for (String key : RES_HEADER.keySet()) {
-                    respParam.put(key, "");
-                }
-            }
-            // 응답 파라미터 세팅(바디)
-            if (respBody != null) {
-                for (String key : RES_BODY.keySet()) {
-                    respParam.put(key, StringUtil.isNull(respBody.has(key) ? respBody.getString(key) : ""));
-                }
-            }
-            else {
-                for (String key : RES_BODY.keySet()) {
-                    respParam.put(key, "");
+            hashPlain = requestMap.get("trdDt")
+                    + requestMap.get("trdTm")
+                    + requestMap.get("mchtId")
+                    + requestMap.get("mchtTrdNo")
+                    + requestMap.get("trdAmt")
+                    + constant.LICENSE_KEY;
+            hashCipher = EncryptUtil.digestSHA256(hashPlain);
+        } catch (Exception e) {
+            logger.error("[" + requestMap.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+        } finally {
+            logger.info("[" + requestMap.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+        }
+        return hashCipher; //해쉬 결과 값 세팅
+    }
+
+    public void encryptParams(String[] ENCRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY) {
+        try {
+            for (int i = 0; i < ENCRYPT_PARAMS.length; i++) {
+                String aesPlain = REQ_BODY.get(ENCRYPT_PARAMS[i]);
+                if ((aesPlain != null) && !aesPlain.isEmpty()) {
+                    byte[] aesCipherRaw = EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, aesPlain);
+                    String aesCipher = EncryptUtil.encodeBase64(aesCipherRaw);
+
+                    REQ_BODY.put(ENCRYPT_PARAMS[i], aesCipher); //암호화 결과 값 세팅
+                    logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] " + ENCRYPT_PARAMS[i] + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
         }
         catch (Exception e) {
-            respParam.put("outStatCd", "0031");
-            respParam.put("outRsltCd", "9999");
-            respParam.put("outRsltMsg", "[Response Parsing Error]" + e.toString());
-            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][Response Parsing Error]" + e.toString());
+            e.printStackTrace();
+            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] AES256 Encrypt Fail! : " + e.toString());
         }
-
-        return respParam;
     }
 
     public void decryptParams(String[] DECRYPT_PARAMS, Map<String, String> REQ_HEADER, Map<String, String> respParam) {
@@ -445,6 +422,57 @@ public class HFResultService {
         } catch (Exception e) {
             logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] AES256 Decrypt Fail! : " + e.toString());
         }
+    }
+
+
+
+
+    public Map<String, String> requestBillKeyAPI(Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY, Map<String, String> RES_HEADER, Map<String, String> RES_BODY) {
+        // params, data 이름은 세틀로 전달되야 하는 값이니 변경하지 마십시오.
+        Map<String, Object> reqParam = new HashMap<>();
+        reqParam.put("params", REQ_HEADER);
+        reqParam.put("data", REQ_BODY);
+        String requestUrl = "";
+
+        requestUrl = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+
+        Map<String, String> respParam = new HashMap<>();
+        try {
+            HttpClientUtil httpClientUtil = new HttpClientUtil();
+            // send_api ( API호출 URL, 전송될데이터, 연결 타임아웃, 수신 타임아웃 )
+            String resData = httpClientUtil.sendApi(requestUrl, reqParam, constant.CONN_TIMEOUT, constant.READ_TIMEOUT);
+            // 응답 파라미터 파싱
+            JSONObject resp = JSONObject.fromObject(resData);
+            JSONObject respHeader = resp.has("params") ? resp.getJSONObject("params") : null;
+            JSONObject respBody = resp.has("data") ? resp.getJSONObject("data") : null;
+            // 응답 파라미터 세팅(헤더)
+            if (respHeader != null) {
+                for (String key : RES_HEADER.keySet()) {
+                    respParam.put(key, StringUtil.isNull(respHeader.has(key) ? respHeader.getString(key) : ""));
+                }
+            } else {
+                for (String key : RES_HEADER.keySet()) {
+                    respParam.put(key, "");
+                }
+            }
+            // 응답 파라미터 세팅(바디)
+            if (respBody != null) {
+                for (String key : RES_BODY.keySet()) {
+                    respParam.put(key, StringUtil.isNull(respBody.has(key) ? respBody.getString(key) : ""));
+                }
+            } else {
+                for (String key : RES_BODY.keySet()) {
+                    respParam.put(key, "");
+                }
+            }
+        } catch (Exception e) {
+            respParam.put("outStatCd", "0031");
+            respParam.put("outRsltCd", "9999");
+            respParam.put("outRsltMsg", "[Response Parsing Error]" + e.toString());
+            logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][Response Parsing Error]" + e.toString());
+        }
+
+        return respParam;
     }
 
 
@@ -536,7 +564,6 @@ public class HFResultService {
         notifyPaymentData.put("salesPrice", salesPrice);
         return notifyPaymentData;
     }
-
 
 
     private Map<String, String> parseParams(String[] pairs) {

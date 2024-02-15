@@ -1,19 +1,19 @@
 let requestData = {
-    info: {
+    info   : {
         companyName: "",
-        bizName: "",
-        name: "",
-        bizNum: "",
-        number: "",
-        email: "",
-        serviceUrl: "",
-        address1: "",
-        address2: "",
+        bizName    : "",
+        name       : "",
+        bizNum     : "",
+        number     : "",
+        email      : "",
+        serviceUrl : "",
+        address1   : "",
+        address2   : "",
     },
     manager: {
-        name: "",
+        name : "",
         phone: "",
-        tel: "",
+        tel  : "",
         email: "",
     },
     product: {},
@@ -65,6 +65,7 @@ function requestServiceBtn() {
         moveInfoCheckpage(true);
     }
 }
+
 function checkPattern(elemnt) {
     let boolean = false;
     switch (elemnt.id) {
@@ -124,6 +125,7 @@ function checkPattern(elemnt) {
     }
     return boolean;
 }
+
 function moveInfoCheckpage(boolean) {
     let formPage = document.querySelectorAll(".info-form-page");
     let checkPage = document.querySelectorAll(".info-check-page");
@@ -144,32 +146,34 @@ function moveInfoCheckpage(boolean) {
         }
     }
 }
+
 function setRequestData() {
     requestData = {
-        info: {
+        info   : {
             companyName: document.querySelector("#info_company_name").value,
-            bizName: document.querySelector("#info_bizName").value,
-            name: document.querySelector("#info_name").value,
-            bizNum: document.querySelector("#info_bizNum").value,
-            number: document.querySelector("#info_number").value,
-            email: document.querySelector("#info_email").value,
-            serviceUrl: document.querySelector("#info_serviceUrl").value,
-            address1: document.querySelector("#info_address1").value,
-            address2: document.querySelector("#info_address2").value,
+            bizName    : document.querySelector("#info_bizName").value,
+            name       : document.querySelector("#info_name").value,
+            bizNum     : document.querySelector("#info_bizNum").value,
+            number     : document.querySelector("#info_number").value,
+            email      : document.querySelector("#info_email").value,
+            serviceUrl : document.querySelector("#info_serviceUrl").value,
+            address1   : document.querySelector("#info_address1").value,
+            address2   : document.querySelector("#info_address2").value,
         },
         manager: {
-            name: document.querySelector("#manager_name").value,
+            name : document.querySelector("#manager_name").value,
             phone: document.querySelector("#manager_phone").value,
-            tel: document.querySelector("#manager_tel").value,
+            tel  : document.querySelector("#manager_tel").value,
             email: document.querySelector("#manager_email").value,
         },
         product: {
-            name: getProductName(requestData.product.productCode),
+            name   : getProductName(requestData.product.productCode),
             autopay: `${requestData.product.productAutopay ? "사용" : "사용하지않음"}`,
         },
     };
     setInfoCheckpage(requestData);
 }
+
 function setInfoCheckpage(obj) {
     console.log(obj);
     document.querySelector("#confirm_info_company_name").innerText = `${obj.info.companyName}`;
@@ -187,6 +191,7 @@ function setInfoCheckpage(obj) {
     document.querySelector("#confirm_product_name").innerText = `${obj.product.name}`;
     document.querySelector("#confirm_product_autopay").innerText = `${getProductAutopay(obj.product.autopay) ? "사용" : "사용하지않음"}`;
 }
+
 // 서비스 신청페이지의 input에 이벤트 부여
 function requestServiceInputInit() {
     const inputList = document.querySelectorAll(".info-item-input");
@@ -213,12 +218,12 @@ function requestServiceInputInit() {
 // 4, 4.1 페이지
 let autopay = true;
 
-function setHTMLProductName (str) {
+function setHTMLProductName(str) {
     let productName = document.querySelector("#info_product_name");
     productName.innerText = str;
 }
 
-function setHTMLProductTotalPrice (str) {
+function setHTMLProductTotalPrice(str) {
     let productTotalPrice = document.querySelector("#info_totalprice");
     productTotalPrice.innerText = str
 }
@@ -229,7 +234,7 @@ function setHTMLProductTotalPrice (str) {
  * @returns {string}
  */
 
-function calcPrice () {
+function calcPrice() {
     let obj = getSelectedProduct()
     let datepickerValue = document.querySelector("#datepicker").value.split("-");
     let year = parseInt(datepickerValue[0]);
@@ -245,7 +250,7 @@ function calcPrice () {
  * 선택된 상품명 반환
  * @returns {string|*}
  */
-function getProductName () {
+function getProductName() {
     let target = productDatalist.filter(e => {
         return e.productCode === userData.productCode
     })
@@ -257,7 +262,7 @@ function getProductName () {
  *  이용기관 정보 세팅
  * @param obj
  */
-function setInformation_4 (obj) {
+function setInformation_4(obj) {
     let companyName = document.querySelector("#info_company_name");
     let bizNum = document.querySelector("#info_biz_num");
     let userName = document.querySelector("#info_userName");
@@ -266,19 +271,18 @@ function setInformation_4 (obj) {
         companyName.innerText = obj.companyName;
         bizNum.innerText = obj.bizNum;
         userName.innerText = obj.userName;
-    }
-    else {
+    } else {
         companyName.innerText = "(주)테스트컴퍼니";
         bizNum.innerText = "748-45-007911";
         userName.innerText = "김대표";
     }
 }
 
-function setProductCode (code) {
+function setProductCode(code) {
     userData.productCode = code;
 }
 
-function getProductCode () {
+function getProductCode() {
     return userData.productCode;
 }
 
@@ -286,7 +290,7 @@ function getProductCode () {
  * 상품 테이블 HTML 생성
  * @param objArray
  */
-function setProductTable (objArray) {
+function setProductTable(objArray) {
     // 상품 변경모달내부 세팅
     let productList = document.querySelector(".product_list");
     productList.innerHTML = "";
@@ -314,7 +318,7 @@ function setProductTable (objArray) {
  *  결제 정보 설정 함수
  *  상품 선택이 되었을 세팅
  */
-function setPayment () {
+function setPayment() {
     popupClose();
 
     let index = document.querySelector("input[name=product_select]:checked").dataset.index
@@ -334,8 +338,7 @@ function setPayment () {
             element.disabled = true;
         });
         document.querySelector("#creditcard").checked = true;
-    }
-    else {
+    } else {
         paymentRadioWrapper.classList.remove("active");
         autopayText.innerText = "미사용";
         paymentRadioGroup.forEach((element) => {
@@ -344,7 +347,7 @@ function setPayment () {
     }
 }
 
-function selectProduct () {
+function selectProduct() {
     Array.prototype.forEach.call(document.querySelectorAll("input[name=product_select]"), function (el) {
         if (el.id === userData.productCode) {
             el.checked = true;
@@ -353,12 +356,12 @@ function selectProduct () {
 }
 
 // 선택된
-function getSelectedProduct () {
+function getSelectedProduct() {
     let index = document.querySelector("input[name=product_select]:checked").dataset.index;
     return productDatalist[index];
 }
 
-function getTodayDate () {
+function getTodayDate() {
     var today = new Date();
     var year = today.getFullYear();
     var month = String(today.getMonth() + 1).padStart(2, "0");
@@ -366,7 +369,7 @@ function getTodayDate () {
     return year + "-" + month + "-" + day;
 }
 
-function payProgress () {
+function payProgress() {
     let datepicker = document.querySelector("#datepicker").value;
     var datePattern = /^\d{4}-\d{2}-\d{2}$/;
     let today = getTodayDate();
@@ -377,7 +380,7 @@ function payProgress () {
     }
 }
 
-function checkDate () {
+function checkDate() {
     let patten = new RegExp("d{4}-d{2}-d{2}");
     let datepicker = document.querySelector("#datepicker");
     let today = getTodayDate();
@@ -386,7 +389,7 @@ function checkDate () {
 }
 
 // 5. thankyou 페이지 등록정보의 내용을 세팅하는 함수
-function setInformation_5 (obj) {
+function setInformation_5(obj) {
     let companyName = document.querySelector("#info_company_name");
     let bizNum = document.querySelector("#info_biz_num");
     let productName = document.querySelector("#info_product_name");
@@ -399,8 +402,7 @@ function setInformation_5 (obj) {
         productName.innerText = obj.productName;
         autoPay.innerText = obj.autoPay;
         startDate.innerText = obj.startDate;
-    }
-    else {
+    } else {
         companyName.innerText = `(주)드림컴퍼니`;
         bizNum.innerText = `748-45-007911`;
         productName.innerText = `스탠다드(96,000원 / 2000건)`;
@@ -411,14 +413,13 @@ function setInformation_5 (obj) {
 
 // 공통
 // 페이지 반응형
-function responsiveLayout () {
+function responsiveLayout() {
     if (window.innerWidth > 768) {
         contentBoxList.forEach((item, index) => {
             item.classList.add("content-grid");
             item.classList.remove("content-flex");
         });
-    }
-    else {
+    } else {
         contentBoxList.forEach((item, index) => {
             item.classList.add("content-flex");
             item.classList.remove("content-grid");

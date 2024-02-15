@@ -3,6 +3,8 @@ package com.bizconnect.adapter.in.web;
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
+import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.domain.enums.EnumSiteStatus;
@@ -10,6 +12,7 @@ import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdExc
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.in.PaymentUseCase;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -91,7 +94,6 @@ public class PaymentController {
             logger.info("[Retrieved endDate] : [" + clientInfo.getEndDate() + "]");
 
             responseMessage.put("clientInfo", clientInfo.getCompanyName() + "," + clientInfo.getBizNumber() + "," + clientInfo.getCeoName());
-
             responseMessage.put("rateSel", rateSel);
             responseMessage.put("startDate", startDate);
         }
@@ -161,6 +163,66 @@ public class PaymentController {
     }
 
 
+    @PostMapping(value = "/bill")
+    public void requestBillKeyPayment(@RequestBody Map<String, String> requestMap) {
+        Map<String, Object> requestData = new HashMap<>();
+        Map<String, String> params = new HashMap<>();
+
+        String ver = "0A19";
+        String method = "CA";
+        String bizType = "B0";
+        String encCd = "23";
+        String mchtId = constant.PG_MID_AUTO;
+        String mchtTrdNo = "DREAMSEC" + UUID.randomUUID().toString().replace("-", "");
+        LocalDateTime now = LocalDateTime.now();
+        String trdDt = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String trdTm = now.toLocalTime().format(DateTimeFormatter.ofPattern("HHmmss"));
+
+        params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
+        params.put("ver", ver); // 버전 (고정값)
+        params.put("method", method); // 결제수단 (고정값)
+        params.put("bizType", bizType); // 업무 구분 코드 (고정값)
+        params.put("encCd", encCd);   // 암호화 구분 코드 (고정값)
+        params.put("mchtTrdNo", mchtTrdNo); // 상점 주문번호
+        params.put("trdDt", trdDt); // 주문 날짜
+        params.put("trdTm", trdTm);   // 주문 시간
+
+        System.out.println(requestMap.get("siteId"));
+        System.out.println(requestMap.get("billKey"));
+        System.out.println(requestMap.get("trdAmt"));
+        System.out.println(requestMap.get("pmtprdNm"));
+
+        //TODO
+        // 정기결제 요청 데이터 생성
+        //
+        Map<String, String> data = new HashMap<>();
+        String billKey = "SBILL_PGCAnxca_jt_gu20249964770206160258";
+
+        data.put("pmtprdNm", "테스트상품");
+        data.put("mchtCustNm", "드림시큐리티");
+        data.put("mchtCustId", "Dreamsecurity");
+        data.put("billKey", billKey);
+        data.put("instmtMon", "00"); // 할부개월
+        data.put("crcCd", "KRW");
+        data.put("trdAmt", "1000");
+        try {
+            data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
+            data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+        requestData.put("params", params);
+        requestData.put("data", data);
+        String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+
+        HttpClientUtil httpClientUtil = new HttpClientUtil();
+        String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
+        System.out.println(resData);
+    }
+
+
     private ResponseEntity<?> decideSiteStatus(Map<String, Object> responseMessage, ClientDataModel clientInfo) {
         if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
             responseMessage.put("resultCode", EnumResultCode.PendingTelcoApprovalStatus.getCode());
@@ -176,9 +238,6 @@ public class PaymentController {
 
 
     private String decideRateSel(ClientDataModel clientInfo, ClientDataModel clientDataModel) {
-        //TODO
-        // AGENCY에 해당하는 상품리스트가 맞는지 체크하는 기능 추가.
-        // AGENCY_INFO_KEY 테이블 AGENCY_PRODUCT_TYPE 컬럼 (상품 리스트)확인
         return clientDataModel.getRateSel() != null && !clientDataModel.getRateSel().isEmpty() ? clientDataModel.getRateSel() : clientInfo.getRateSel() != null ? clientInfo.getRateSel() : null;
     }
 

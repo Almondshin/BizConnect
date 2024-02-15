@@ -1,17 +1,14 @@
 package com.bizconnect.application.domain.service;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.application.domain.enums.EnumAgency;
-import com.bizconnect.application.domain.enums.EnumProductAutoType;
-import com.bizconnect.application.domain.enums.EnumProductType;
-import com.bizconnect.application.domain.model.Agency;
-import com.bizconnect.application.domain.model.Client;
-import com.bizconnect.application.domain.model.SettleManager;
+import com.bizconnect.application.domain.model.*;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NullAgencyIdSiteIdException;
 import com.bizconnect.application.port.in.AgencyUseCase;
-import com.bizconnect.application.port.out.LoadAgencyDataPort;
-import com.bizconnect.application.port.out.SaveAgencyDataPort;
+import com.bizconnect.application.port.out.load.LoadAgencyDataPort;
+import com.bizconnect.application.port.out.load.LoadAgencyProductDataPort;
+import com.bizconnect.application.port.out.load.LoadEncryptDataPort;
+import com.bizconnect.application.port.out.save.SaveAgencyDataPort;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -20,11 +17,14 @@ import java.util.*;
 public class AgencyService implements AgencyUseCase {
     private final LoadAgencyDataPort loadAgencyDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
+    private final LoadEncryptDataPort loadEncryptDataPort;
+    private final LoadAgencyProductDataPort loadAgencyProductDataPort;
 
-
-    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort) {
+    public AgencyService(LoadAgencyDataPort loadAgencyDataPort, SaveAgencyDataPort saveAgencyDataPort, LoadEncryptDataPort loadEncryptDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort) {
         this.loadAgencyDataPort = loadAgencyDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
+        this.loadEncryptDataPort = loadEncryptDataPort;
+        this.loadAgencyProductDataPort = loadAgencyProductDataPort;
     }
 
     @Override
@@ -46,51 +46,29 @@ public class AgencyService implements AgencyUseCase {
 
     @Override
     public List<Map<String, String>> getProductTypes(String agencyId) {
-        EnumProductType[] enumProductTypes = EnumProductType.values();
-        EnumProductAutoType[] enumProductAutoTypes = EnumProductAutoType.values();
-        List<Map<String, String>> enumValues = new ArrayList<>();
+        Optional<AgencyInfoKey> optAgencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
+        List<Map<String, String>> productsList = new ArrayList<>();
 
-        for (EnumProductType enumProductType : enumProductTypes) {
-            Map<String, String> enumData = new HashMap<>();
-            //제휴사가 스퀘어스인 경우, 1개월짜리 상품만 제공됨.
-            if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
-                if (enumProductType.getMonth() == 1) {  // Check if the month is 1
-                    enumData.put("type", enumProductType.getType());
-                    enumData.put("name", enumProductType.getName());
-                    enumData.put("price", String.valueOf(enumProductType.getPrice()));
-                    enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
-                    enumData.put("month", String.valueOf(enumProductType.getMonth()));
-                    enumData.put("feePerCase", String.valueOf(enumProductType.getFeePerCase()));
-                    enumData.put("excessFeePerCase", String.valueOf(enumProductType.getExcessFeePerCase()));
-                    enumValues.add(enumData);
+        if (optAgencyInfoKey.isPresent()) {
+            AgencyInfoKey agencyInfoKey = optAgencyInfoKey.get();
+            String[] productTypes = agencyInfoKey.getAgencyProductType().split(",");
+            System.out.println(Arrays.toString(productTypes));
+            for (String productType : productTypes) {
+                Map<String, String> enumData = new HashMap<>();
+                if (loadAgencyProductDataPort.getAgencyProductList(productType).isPresent()) {
+                    AgencyProducts agencyProducts = loadAgencyProductDataPort.getAgencyProductList(productType).get();
+                    enumData.put("type", agencyProducts.getRateSel());
+                    enumData.put("name", agencyProducts.getName());
+                    enumData.put("price", agencyProducts.getPrice());
+                    enumData.put("basicOffer", agencyProducts.getOffer());
+                    enumData.put("month", agencyProducts.getMonth());
+                    enumData.put("feePerCase", agencyProducts.getFeePerCase());
+                    enumData.put("excessFeePerCase", agencyProducts.getExcessPerCase());
+                    productsList.add(enumData);
                 }
-            } else {
-                enumData.put("type", enumProductType.getType());
-                enumData.put("name", enumProductType.getName());
-                enumData.put("price", String.valueOf(enumProductType.getPrice()));
-                enumData.put("basicOffer", String.valueOf(enumProductType.getBasicOffer()));
-                enumData.put("month", String.valueOf(enumProductType.getMonth()));
-                enumData.put("feePerCase", String.valueOf(enumProductType.getFeePerCase()));
-                enumData.put("excessFeePerCase", String.valueOf(enumProductType.getExcessFeePerCase()));
-                enumValues.add(enumData);
             }
         }
-
-        for (EnumProductAutoType enumProductAutoType : enumProductAutoTypes) {
-            Map<String, String> enumData = new HashMap<>();
-            //제휴사가 스퀘어스인 경우, 1개월짜리 상품만 제공됨.
-            if (agencyId.equals(EnumAgency.SQUARES.getCode())) {
-                enumData.put("type", enumProductAutoType.getType());
-                enumData.put("name", enumProductAutoType.getName());
-                enumData.put("price", String.valueOf(enumProductAutoType.getPrice()));
-                enumData.put("basicOffer", String.valueOf(enumProductAutoType.getBasicOffer()));
-                enumData.put("month", String.valueOf(enumProductAutoType.getMonth()));
-                enumData.put("feePerCase", String.valueOf(enumProductAutoType.getFeePerCase()));
-                enumData.put("excessFeePerCase", String.valueOf(enumProductAutoType.getExcessFeePerCase()));
-                enumValues.add(enumData);
-            }
-        }
-        return enumValues;
+        return productsList;
     }
 
 
