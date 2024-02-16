@@ -224,14 +224,16 @@ public class PaymentController {
 
 
     private ResponseEntity<?> decideSiteStatus(Map<String, Object> responseMessage, ClientDataModel clientInfo) {
-        if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
-            responseMessage.put("resultCode", EnumResultCode.PendingTelcoApprovalStatus.getCode());
-            responseMessage.put("resultMsg", EnumResultCode.PendingTelcoApprovalStatus.getValue());
-            return ResponseEntity.ok(responseMessage);
-        } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())) {
-            responseMessage.put("resultCode", EnumResultCode.PendingApprovalStatus.getCode());
-            responseMessage.put("resultMsg", EnumResultCode.PendingApprovalStatus.getValue());
-            return ResponseEntity.ok(responseMessage);
+        if (!clientInfo.getSiteStatus().equals(EnumSiteStatus.TRADE_PENDING.getCode())){
+            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
+                responseMessage.put("resultCode", EnumResultCode.PendingTelcoApprovalStatus.getCode());
+                responseMessage.put("resultMsg", EnumResultCode.PendingTelcoApprovalStatus.getValue());
+                return ResponseEntity.ok(responseMessage);
+            } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())) {
+                responseMessage.put("resultCode", EnumResultCode.PendingApprovalStatus.getCode());
+                responseMessage.put("resultMsg", EnumResultCode.PendingApprovalStatus.getValue());
+                return ResponseEntity.ok(responseMessage);
+            }
         }
         return null;
     }
@@ -245,7 +247,9 @@ public class PaymentController {
         Date startDateClient = clientDataModel.getStartDate();
         Date startDateInfo = clientInfo.getStartDate();
 
+        // 초기 결제인 경우
         if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
+            System.out.println(1);
             if (startDateClient != null) {
                 return sdf.format(startDateClient);
             } else if (startDateInfo != null) {
@@ -253,8 +257,8 @@ public class PaymentController {
             } else {
                 return null;
             }
-        } else if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
             // 연장이 활성화된 경우
+        } else if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
             Date endDate = clientInfo.getEndDate();
 
             // 만료일로부터 15일 전 계산
@@ -280,13 +284,11 @@ public class PaymentController {
                 Calendar nextEndDate = Calendar.getInstance();
                 nextEndDate.setTime(endDate);
                 nextEndDate.add(Calendar.DATE, 1);
-
                 return sdf.format(nextEndDate.getTime());
             }
-        } else if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.NOT_EXTENDABLE.getCode())) {
+        } else {
             throw new NoExtensionException(EnumResultCode.NoExtension, clientInfo.getSiteId());
         }
-        throw new IllegalAgencyIdSiteIdException(EnumResultCode.IllegalArgument, clientDataModel.getSiteId());
     }
 
 

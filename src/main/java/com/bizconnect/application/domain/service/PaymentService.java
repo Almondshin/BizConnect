@@ -119,9 +119,12 @@ public class PaymentService implements PaymentUseCase {
             }
 
 
+            //TODO
+            // 초과금액 추가 로직 추가 필요
+            // ERP에서 초과 금액을 받아오거나 계산하거나
+            // 초과금액을 계산했을 경우 아래 ValueException에 price를 체크하는 것을 빼야함
             int excessCount;
             double excessAmount = 0;
-
             if (list.size() > 2) {
                 excessCount = Integer.parseInt(list.get(1).getOffer()) - list.get(1).getUseCount();
                 if (excessCount < 0) {

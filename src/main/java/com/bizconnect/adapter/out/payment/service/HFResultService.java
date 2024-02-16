@@ -273,8 +273,9 @@ public class HFResultService {
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
-                            //가맹점Noti + AdminNoti
+                            //AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+                            //가맹점Noti
 //                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
                             break;
                         }
@@ -290,8 +291,9 @@ public class HFResultService {
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
-                            //가맹점Noti + AdminNoti
+                            //AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+                            //가맹점Noti
 //                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
                             break;
                         }

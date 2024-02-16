@@ -21,7 +21,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
+import javax.xml.crypto.Data;
 import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.util.Date;
 import java.util.Optional;
 
 @Service
@@ -67,7 +70,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), agency.getSiteId());
         if (optionalEntity.isPresent()){
             AgencyJpaEntity entity = optionalEntity.get();
-            if (entity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())){
+            if (entity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode()) || client.getStartDate().equals(new Date())){
                 entity.setRateSel(client.getRateSel());
                 entity.setStartDate(client.getStartDate());
                 entity.setEndDate(client.getEndDate());
