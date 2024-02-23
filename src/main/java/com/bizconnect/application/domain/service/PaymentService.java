@@ -5,15 +5,23 @@ import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
+import com.bizconnect.adapter.out.persistence.entity.StatDayJpaEntity;
+import com.bizconnect.application.domain.enums.EnumBillingBase;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
-import com.bizconnect.application.domain.model.Agency;
-import com.bizconnect.application.domain.model.AgencyProducts;
+import com.bizconnect.application.domain.enums.EnumTradeTrace;
+import com.bizconnect.application.domain.model.*;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.exceptions.exceptions.ValueException;
 import com.bizconnect.application.port.in.PaymentUseCase;
+import com.bizconnect.application.port.in.StatUseCase;
 import com.bizconnect.application.port.out.load.LoadAgencyProductDataPort;
+import com.bizconnect.application.port.out.load.LoadEncryptDataPort;
 import com.bizconnect.application.port.out.load.LoadPaymentDataPort;
+import com.bizconnect.application.port.out.load.LoadStatDataPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
@@ -23,24 +31,27 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.LongStream;
 
 @Service
-public class PaymentService implements PaymentUseCase {
+public class PaymentService implements PaymentUseCase, StatUseCase {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-
     private final Constant constant;
     private final AgencyService agencyService;
     Logger logger = LoggerFactory.getLogger("HFInitController");
-
     private final LoadPaymentDataPort loadPaymentDataPort;
-
+    private final LoadEncryptDataPort loadEncryptDataPort;
     private final LoadAgencyProductDataPort loadAgencyProductDataPort;
+    private final LoadStatDataPort loadStatDataPort;
 
-    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort) {
+    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort, LoadEncryptDataPort loadEncryptDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort, LoadStatDataPort loadStatDataPort) {
         this.constant = constant;
         this.agencyService = agencyService;
         this.loadPaymentDataPort = loadPaymentDataPort;
+        this.loadEncryptDataPort = loadEncryptDataPort;
         this.loadAgencyProductDataPort = loadAgencyProductDataPort;
+        this.loadStatDataPort = loadStatDataPort;
     }
 
 
@@ -71,15 +82,14 @@ public class PaymentService implements PaymentUseCase {
         String clientEndDate = sdf.format(clientDataModel.getEndDate());
 
 
-        Optional<AgencyProducts> products = loadAgencyProductDataPort.getAgencyProductList(rateSel);
-        AgencyProducts agencyProducts = products.orElse(null);
+        AgencyProducts agencyProducts = getAgencyProductByRateSel(rateSel);
 
         int lastDate = startDateByCal.getActualMaximum(Calendar.DATE);
         int startDate = startDateByCal.get(Calendar.DATE);
 
         int durations = lastDate - startDate + 1;
         int baseOffer = Integer.parseInt(agencyProducts.getOffer()) / Integer.parseInt(agencyProducts.getMonth());
-        int basePrice = Integer.parseInt(agencyProducts.getPrice()) /Integer.parseInt(agencyProducts.getMonth());
+        int basePrice = Integer.parseInt(agencyProducts.getPrice()) / Integer.parseInt(agencyProducts.getMonth());
         int dataMonth = Integer.parseInt(agencyProducts.getMonth());
 
         offer = (baseOffer * (dataMonth - 1)) + (baseOffer * durations / lastDate);
@@ -89,7 +99,7 @@ public class PaymentService implements PaymentUseCase {
         System.out.println(startDateByCal.get(Calendar.MONTH));
         if (Integer.parseInt(agencyProducts.getMonth()) == 1) {
             if (durations <= 14) {
-                endDateByCal.add(Calendar.MONTH,  Integer.parseInt(agencyProducts.getMonth()));
+                endDateByCal.add(Calendar.MONTH, Integer.parseInt(agencyProducts.getMonth()));
                 offer = (baseOffer) + (baseOffer * durations / lastDate);
                 price = ((((double) (basePrice * durations) / lastDate) + basePrice) * 1.1);
             } else {
@@ -110,7 +120,7 @@ public class PaymentService implements PaymentUseCase {
             }
             endDateByCal.setTime(sdf.parse(sdf.format(clientDataModel.getStartDate())));
 
-            if (agencyProducts.getMonth().equals("1")){
+            if (agencyProducts.getMonth().equals("1")) {
                 if (durations <= 14) {
                     endDateByCal.add(Calendar.MONTH, 1);
                 }
@@ -118,17 +128,12 @@ public class PaymentService implements PaymentUseCase {
                 endDateByCal.add(Calendar.MONTH, Integer.parseInt(agencyProducts.getMonth()) - 1);
             }
 
-
-            //TODO
-            // 초과금액 추가 로직 추가 필요
-            // ERP에서 초과 금액을 받아오거나 계산하거나
-            // 초과금액을 계산했을 경우 아래 ValueException에 price를 체크하는 것을 빼야함
             int excessCount;
             double excessAmount = 0;
             if (list.size() > 2) {
-                excessCount = Integer.parseInt(list.get(1).getOffer()) - list.get(1).getUseCount();
+                excessCount = Integer.parseInt(list.get(1).getOffer()) - Integer.parseInt(list.get(1).getUseCount());
                 if (excessCount < 0) {
-                    excessAmount = Math.abs(excessCount) * 50 * 1.1;
+                    excessAmount = Math.abs(excessCount) * Integer.parseInt(agencyProducts.getExcessPerCase()) * 1.1;
                 }
             }
             price += excessAmount;
@@ -152,14 +157,14 @@ public class PaymentService implements PaymentUseCase {
     }
 
     @Override
-    public String aes256EncryptEcb(ClientDataModel clientDataModel , String tradeNum, String trdDt, String trdTm) {
+    public String aes256EncryptEcb(ClientDataModel clientDataModel, String tradeNum, String trdDt, String trdTm) {
         String licenseKey = constant.LICENSE_KEY;
         String mchtId;
         if (clientDataModel.getMethod().equals("card") && clientDataModel.getRateSel().contains("autopay")) {
             mchtId = constant.PG_MID_AUTO;
-        } else if (clientDataModel.getMethod().equals("card")){
+        } else if (clientDataModel.getMethod().equals("card")) {
             mchtId = constant.PG_MID_CARD;
-        }else {
+        } else {
             mchtId = constant.PG_MID;
         }
         String hashPlain = new PaymentDataModel(
@@ -213,7 +218,15 @@ public class PaymentService implements PaymentUseCase {
 
     @Override
     public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId, String siteId) {
-        return loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId));
+        List<PaymentHistory> paymentHistories = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId));
+        return paymentHistories.stream()
+                .map(this::convertClient)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public PaymentHistoryDataModel getPaymentHistoryByAgencyLastPayment(String agencyId, String siteId) {
+        return convertClient(loadPaymentDataPort.getPaymentHistoryByAgencyLastPayment(new Agency(agencyId, siteId)));
     }
 
 
@@ -225,48 +238,160 @@ public class PaymentService implements PaymentUseCase {
         return "DREAMSEC" + formatter.format(LocalDateTime.now()) + formattedRandomNum;
     }
 
-
-    public HashMap<String, String> convertToMap(PaymentDataModel paymentDataModel) {
-        HashMap<String, String> map = new HashMap<>();
-//        map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
-//        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
-//        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
-//        map.put("email", paymentDataModel.getPlainEmail());
-//        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
-//        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
-//        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
-//        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
-//        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
-//        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
-//        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
-//        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
-//        map.put("mchtParam", paymentDataModel.getMchtParam());
-
-        map.put("trdAmt", paymentDataModel.getPlainTrdAmt());
-//        map.put("mchtCustId", paymentDataModel.getPlainMchtCustId());
-//        map.put("cphoneNo", paymentDataModel.getPlainCphoneNo());
-//        map.put("email", paymentDataModel.getPlainEmail());
-//        map.put("mchtCustNm", paymentDataModel.getPlainMchtCustNm());
-//        map.put("taxAmt", paymentDataModel.getPlainTaxAmt());
-//        map.put("vatAmt", paymentDataModel.getPlainTrdAmt());
-//        map.put("taxFreeAmt", paymentDataModel.getPlainTaxFreeAmt());
-//        map.put("svcAmt", paymentDataModel.getPlainSvcAmt());
-//        map.put("clipCustNm", paymentDataModel.getPlainClipCustNm());
-//        map.put("clipCustCi", paymentDataModel.getPlainClipCustCi());
-//        map.put("clipCustPhoneNo", paymentDataModel.getPlainClipCustPhoneNo());
-        map.put("mchtParam", paymentDataModel.getMchtParam());
-        return map;
+    @Override
+    public AgencyProducts getAgencyProductByRateSel(String rateSel) {
+        return loadAgencyProductDataPort.getAgencyProductByRateSel(rateSel);
     }
 
-    private Map<String, String> parseParams(String[] pairs) {
-        Map<String, String> parsedParams = new HashMap<>();
-        for (String pair : pairs) {
-            String[] keyValue = pair.split("=");
-            if (keyValue.length == 2) {
-                parsedParams.put(keyValue[0], keyValue[1]);
-            }
+    @Override
+    public int getExcessAmount(List<PaymentHistoryDataModel> list) {
+        SimpleDateFormat convertFormat = new SimpleDateFormat("yyyyMMdd");
+
+        List<PaymentHistoryDataModel> checkedList = list.stream()
+                .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
+                .collect(Collectors.toList());
+
+        if (checkedList.size() < 2) {
+            return 0;
         }
-        return parsedParams;
+
+        //TODO
+        // 리스트에서 가져오는데이터가 가장 첫번째 데이터가 아닐 수 있음,
+        // 직전월의 데이터만 추출하도록 해야 할 가능성이 있음
+        PaymentHistoryDataModel overPaymentTarget = checkedList.get(1);
+        Date convertedStartDate = overPaymentTarget.getStartDate();
+        Date convertedEndDate = overPaymentTarget.getEndDate();
+
+        String agencyId = overPaymentTarget.getAgencyId();
+        if (agencyId == null) {
+            return 0;
+        }
+        String billingBase = loadEncryptDataPort.getAgencyInfoKey(agencyId)
+                .map(AgencyInfoKey::getBillingBase)
+                .orElse(null);
+
+        if (billingBase == null) {
+            return 0;
+        }
+
+        String startDate = convertFormat.format(convertedStartDate);
+        String endDate = convertFormat.format(convertedEndDate);
+
+        List<StatDay> findStatDayList = getUseCountBySiteId(
+                overPaymentTarget.getSiteId(),
+                startDate,
+                endDate
+        );
+
+        System.out.println(findStatDayList);
+
+        long incompleteCountSum = getIncompleteCount(billingBase, findStatDayList);
+        System.out.println(incompleteCountSum);
+
+        AgencyProducts products = getAgencyProductByRateSel(overPaymentTarget.getRateSel());
+        int offer = Integer.parseInt(overPaymentTarget.getOffer());
+        int excessCount = offer - (int) incompleteCountSum;
+
+        return excessCount < 0 ? (int) (Math.abs(excessCount) * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0;
     }
 
+    @Override
+    public void insertAutoPayPaymentHistory(String agencyId, String siteId, AgencyProducts products, String reqData) {
+        System.out.println(reqData);
+        ObjectMapper mapper = new ObjectMapper();
+        try {
+            Map<String, Object> map = mapper.readValue(reqData, new TypeReference<>() {
+            });
+            String params = mapper.writeValueAsString(map.get("params"));
+            String data = mapper.writeValueAsString(map.get("data"));
+
+            System.out.println("params ===============> : " + params);
+
+            Map<String, String> paramsMap = mapper.readValue(params, new TypeReference<>() {
+            });
+            Map<String, String> dataMap = mapper.readValue(data, new TypeReference<>() {
+            });
+
+            System.out.println("outStatCd : " + paramsMap.get("outStatCd"));
+            System.out.println("outRsltCd : " + paramsMap.get("outRsltCd"));
+            System.out.println("outRsltMsg : " + paramsMap.get("outRsltMsg"));
+            System.out.println("--------------------------DB InsertData-----------------------");
+            System.out.println("TradeNum : " + paramsMap.get("mchtTrdNo"));             // TradeNum
+            System.out.println("PGTradeNum : " + paramsMap.get("trdNo"));               // PGTradeNum
+            System.out.println("agencyId : " + agencyId);                               // agencyId
+            System.out.println("siteId : " + siteId);                                   // siteId
+            System.out.println("PaymentType : " + paramsMap.get("method"));             // PaymentType
+            System.out.println("rateSel : " + products.getRateSel());                   // rateSel
+            byte[] decodeBase64 = EncryptUtil.decodeBase64(dataMap.get("trdAmt"));
+            byte[] resultByte = EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, decodeBase64);
+            String decryptedAmount = new String(resultByte, "UTF-8");
+            System.out.println("amount : " + decryptedAmount);                          // amount
+            System.out.println("rateSel : " + products.getOffer());                     // rateSel
+            System.out.println("TrTrace : " +  "Y");                                    // TrTrace
+            System.out.println("PaymentStatus : " +  "Y");                              // PaymentStatus
+
+            System.out.println("--------------------------DB InsertData-----------------------");
+
+
+
+
+
+
+            System.out.println("data ===============> : " + data);
+
+
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+
+    }
+
+    private long getIncompleteCount(String billingBase, List<StatDay> statDays) {
+        if (billingBase.equals(EnumBillingBase.INCOMPLETE.getCode())) {
+            LongStream incompleteCounts = statDays.stream().mapToLong(StatDay::getIncompleteCnt);
+            return incompleteCounts.sum();
+        } else if (billingBase.equals(EnumBillingBase.FINAL_SUCCESS.getCode())) {
+            LongStream successFinalCnt = statDays.stream().mapToLong(StatDay::getIncompleteCnt);
+            return successFinalCnt.sum();
+        } else {
+            return 0L;
+        }
+    }
+
+    @Override
+    public List<StatDay> getUseCountBySiteId(String siteId, String startDate, String endDate) {
+        return loadStatDataPort.findBySiteIdAndFromDate(siteId, startDate, endDate);
+    }
+
+    //TODO
+    // Mapper 클래스로 뺄 필요가 있는지 확인 (ClientSideDataModel [DTO] <-> Domain)
+    private PaymentHistoryDataModel convertClient(PaymentHistory paymentHistory) {
+        return new PaymentHistoryDataModel(
+                paymentHistory.getTradeNum(),
+                paymentHistory.getPgTradeNum(),
+                paymentHistory.getAgencyId(),
+                paymentHistory.getSiteId(),
+                paymentHistory.getPaymentType(),
+                paymentHistory.getRateSel(),
+                paymentHistory.getAmount(),
+                paymentHistory.getOffer(),
+                paymentHistory.getUseCount(),
+                paymentHistory.getTrTrace(),
+                paymentHistory.getPaymentStatus(),
+                paymentHistory.getTrDate(),
+                paymentHistory.getStartDate(),
+                paymentHistory.getEndDate(),
+                paymentHistory.getRcptName(),
+                paymentHistory.getBillKey(),
+                paymentHistory.getBillKeyExpireDate(),
+                paymentHistory.getVbankName(),
+                paymentHistory.getVbankCode(),
+                paymentHistory.getVbankAccount(),
+                paymentHistory.getVbankExpireDate(),
+                paymentHistory.getRegDate(),
+                paymentHistory.getModDate(),
+                paymentHistory.getMemo()
+        );
+    }
 }

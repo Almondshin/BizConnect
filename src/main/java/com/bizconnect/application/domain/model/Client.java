@@ -26,9 +26,8 @@ public class Client {
     private Date endDate;
 
     private String serviceUseAgree;
-    private String privateColAgree;
 
-    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String siteStatus, Date startDate, Date endDate, String serviceUseAgree, String privateColAgree) {
+    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String siteStatus, String extensionStatus,Date startDate, Date endDate, String serviceUseAgree) {
         this.siteName = siteName;
         this.companyName = companyName;
         this.businessType = businessType;
@@ -40,10 +39,10 @@ public class Client {
         this.email = email;
         this.rateSel = rateSel;
         this.siteStatus = siteStatus;
+        this.extensionStatus = extensionStatus;
         this.startDate = startDate;
         this.endDate = endDate;
         this.serviceUseAgree = serviceUseAgree;
-        this.privateColAgree = privateColAgree;
     }
 
     public Client(String rateSel, Date startDate, Date endDate) {

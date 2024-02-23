@@ -3,6 +3,7 @@ package com.bizconnect.application.port.in;
 import com.bizconnect.adapter.in.model.ClientDataModel;
 import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
+import com.bizconnect.application.domain.model.AgencyInfoKey;
 
 import java.util.HashMap;
 import java.util.List;

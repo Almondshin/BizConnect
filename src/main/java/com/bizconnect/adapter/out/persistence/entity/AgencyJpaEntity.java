@@ -67,6 +67,4 @@ public class AgencyJpaEntity {
 
 	@Column(name = "SERVICE_USE_AGREE")
 	private String serviceUseAgree;
-	@Column(name = "PRIVATE_COL_AGREE")
-	private String privateColAgree;
 }

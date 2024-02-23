@@ -33,7 +33,7 @@ public class AgencyService implements AgencyUseCase {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
         ClientDataModel checkAgencyId = new ClientDataModel(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
-        saveAgencyDataPort.registerAgency(convertToAgency(checkAgencyId), convertToClient(clientDataModel), convertToSettleManager(clientDataModel));
+        saveAgencyDataPort.registerAgency(convertAgency(checkAgencyId), convertClient(clientDataModel), convertSettleManager(clientDataModel));
     }
 
     @Override
@@ -41,7 +41,7 @@ public class AgencyService implements AgencyUseCase {
         if (clientDataModel.getAgencyId() == null || clientDataModel.getAgencyId().isEmpty() || clientDataModel.getSiteId() == null || clientDataModel.getSiteId().isEmpty()) {
             throw new NullAgencyIdSiteIdException(EnumResultCode.NullPointArgument, null);
         }
-        return loadAgencyDataPort.getAgencyInfo(convertToAgency(clientDataModel), convertToClient(clientDataModel));
+        return loadAgencyDataPort.getAgencyInfo(convertAgency(clientDataModel), convertClient(clientDataModel));
     }
 
     @Override
@@ -55,28 +55,25 @@ public class AgencyService implements AgencyUseCase {
             System.out.println(Arrays.toString(productTypes));
             for (String productType : productTypes) {
                 Map<String, String> enumData = new HashMap<>();
-                if (loadAgencyProductDataPort.getAgencyProductList(productType).isPresent()) {
-                    AgencyProducts agencyProducts = loadAgencyProductDataPort.getAgencyProductList(productType).get();
-                    enumData.put("type", agencyProducts.getRateSel());
-                    enumData.put("name", agencyProducts.getName());
-                    enumData.put("price", agencyProducts.getPrice());
-                    enumData.put("basicOffer", agencyProducts.getOffer());
-                    enumData.put("month", agencyProducts.getMonth());
-                    enumData.put("feePerCase", agencyProducts.getFeePerCase());
-                    enumData.put("excessFeePerCase", agencyProducts.getExcessPerCase());
-                    productsList.add(enumData);
-                }
+                AgencyProducts agencyProducts = loadAgencyProductDataPort.getAgencyProductByRateSel(productType);
+                enumData.put("type", agencyProducts.getRateSel());
+                enumData.put("name", agencyProducts.getName());
+                enumData.put("price", agencyProducts.getPrice());
+                enumData.put("basicOffer", agencyProducts.getOffer());
+                enumData.put("month", agencyProducts.getMonth());
+                enumData.put("feePerCase", agencyProducts.getFeePerCase());
+                enumData.put("excessFeePerCase", agencyProducts.getExcessPerCase());
+                productsList.add(enumData);
             }
         }
         return productsList;
     }
 
-
-    private Agency convertToAgency(ClientDataModel clientDataModel) {
+    private Agency convertAgency(ClientDataModel clientDataModel) {
         return new Agency(clientDataModel.getAgencyId(), clientDataModel.getSiteId());
     }
 
-    private Client convertToClient(ClientDataModel clientDataModel) {
+    private Client convertClient(ClientDataModel clientDataModel) {
         return new Client(
                 clientDataModel.getSiteName(),
                 clientDataModel.getCompanyName(),
@@ -89,14 +86,14 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getEmail(),
                 clientDataModel.getRateSel(),
                 clientDataModel.getSiteStatus(),
+                clientDataModel.getExtensionStatus(),
                 clientDataModel.getStartDate(),
                 clientDataModel.getEndDate(),
-                clientDataModel.getServiceUseAgree(),
-                clientDataModel.getPrivateColAgree()
+                clientDataModel.getServiceUseAgree()
         );
     }
 
-    private SettleManager convertToSettleManager(ClientDataModel clientDataModel) {
+    private SettleManager convertSettleManager(ClientDataModel clientDataModel) {
         return new SettleManager(
                 clientDataModel.getSettleManagerName(),
                 clientDataModel.getSettleManagerPhoneNumber(),
@@ -104,5 +101,8 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getSettleManagerEmail()
         );
     }
+
+
+
 
 }

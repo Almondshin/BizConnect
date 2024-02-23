@@ -61,7 +61,8 @@ public class AgencyController {
     public ResponseEntity<?> getSiteStatus(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
-        ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+        String originalMessage = new String(plainBytes);
+        ClientDataModel decryptInfo = objectMapper.readValue(originalMessage, ClientDataModel.class);
         Optional<ClientDataModel> info = agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
         String resultCode = EnumResultCode.SUCCESS.getCode();
         String resultMsg = EnumResultCode.SUCCESS.getValue();
@@ -81,11 +82,7 @@ public class AgencyController {
             encryptMapData.put("siteStatus", clientInfo.getSiteStatus());
         }
 
-        Map<String, String> jsonData = new HashMap<>();
-        jsonData.put("siteId", decryptInfo.getSiteId());
-
         String encryptedHmacValue = clientDataModel.getVerifyInfo();
-        String originalMessage = objectMapper.writeValueAsString(jsonData);
         String keyString = clientDataModel.getAgencyId();
 
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, keyString);
@@ -125,44 +122,23 @@ public class AgencyController {
     public ResponseEntity<?> regSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, JsonProcessingException {
         ObjectMapper objectMapper = new ObjectMapper();
         byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
+        String originalMessage = new String(plainBytes);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-        ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+        ClientDataModel decryptInfo = objectMapper.readValue(originalMessage, ClientDataModel.class);
 
         String resultCode = EnumResultCode.SUCCESS.getCode();
         String resultMsg = EnumResultCode.SUCCESS.getValue();
         Map<String, String> responseMessage = new HashMap<>();
-        String startDate = decryptInfo.getStartDate() == null ? "" : sdf.format(decryptInfo.getStartDate());
 
-        //HMAC 검증
-        Map<String, String> jsonData = new HashMap<>();
-        jsonData.put("agencyId", decryptInfo.getAgencyId());
-        jsonData.put("siteId", decryptInfo.getSiteId());
-        jsonData.put("siteName", decryptInfo.getSiteName());
-        jsonData.put("companyName", decryptInfo.getCompanyName());
-        jsonData.put("businessType", decryptInfo.getBusinessType());
-        jsonData.put("bizNumber", decryptInfo.getBizNumber());
-        jsonData.put("ceoName", decryptInfo.getCeoName());
-        jsonData.put("phoneNumber", decryptInfo.getPhoneNumber());
-        jsonData.put("address", decryptInfo.getAddress());
-        jsonData.put("companySite", decryptInfo.getCompanySite());
-        jsonData.put("email", decryptInfo.getEmail());
-        jsonData.put("rateSel", decryptInfo.getRateSel());
-        jsonData.put("startDate", startDate);
-
-        jsonData.put("settleManagerName", decryptInfo.getSettleManagerName());
-        jsonData.put("settleManagerPhoneNumber", decryptInfo.getSettleManagerPhoneNumber());
-        jsonData.put("settleManagerTelNumber", decryptInfo.getSettleManagerTelNumber());
-        jsonData.put("settleManagerEmail", decryptInfo.getSettleManagerEmail());
-        jsonData.put("serviceUseAgree", decryptInfo.getServiceUseAgree());
-        jsonData.put("privateColAgree", decryptInfo.getPrivateColAgree());
-
-        ResponseEntity<?> validateResponse = validateRequiredValues(decryptInfo, responseMessage);
-        if (validateResponse != null) {
-            return validateResponse;
-        }
+        //TODO
+        // 이용 약관 동의관련 내용 주석처리
+        // 추후 표준창 개발 시 검증 필요
+//        ResponseEntity<?> validateResponse = validateRequiredValues(decryptInfo, responseMessage);
+//        if (validateResponse != null) {
+//            return validateResponse;
+//        }
 
         String encryptedHmacValue = clientDataModel.getVerifyInfo();
-        String originalMessage = objectMapper.writeValueAsString(jsonData);
         String keyString = clientDataModel.getAgencyId();
 
         //HMAC, MsgType 검증
@@ -178,7 +154,7 @@ public class AgencyController {
         logger.info("[client encryptData] : [" + clientDataModel.getEncryptData() + "]");
         logger.info("[client verifyInfo] : [" + clientDataModel.getVerifyInfo() + "]");
 
-        logger.info("[Received data] : [" + encryptUseCase.mapToJSONString(jsonData) + "]");
+        logger.info("[Received data] : [" + originalMessage + "]");
 
         responseMessage.put("resultCode", resultCode);
         responseMessage.put("resultMsg", resultMsg);
@@ -203,9 +179,9 @@ public class AgencyController {
     public ResponseEntity<?> cancelSiteInfo(@RequestBody ClientDataModel clientDataModel) throws GeneralSecurityException, IOException {
         ObjectMapper objectMapper = new ObjectMapper();
         Map<String, String> responseMessage = new HashMap<>();
-
         byte[] plainBytes = encryptUseCase.decryptData(clientDataModel.getAgencyId(), clientDataModel.getEncryptData());
-        ClientDataModel decryptInfo = objectMapper.readValue(new String(plainBytes), ClientDataModel.class);
+        String originalMessage = new String(plainBytes);
+        ClientDataModel decryptInfo = objectMapper.readValue(originalMessage, ClientDataModel.class);
 
         agencyUseCase.getAgencyInfo(new ClientDataModel(clientDataModel.getAgencyId(), decryptInfo.getSiteId()));
 
@@ -217,10 +193,7 @@ public class AgencyController {
         logger.info("[client verifyInfo] : [" + clientDataModel.getVerifyInfo() + "]");
 
         String encryptedHmacValue = clientDataModel.getVerifyInfo();
-        Map<String, String> jsonData = new HashMap<>();
-        jsonData.put("siteId", decryptInfo.getSiteId());
 
-        String originalMessage = objectMapper.writeValueAsString(jsonData);
         String hmacKeyString = clientDataModel.getAgencyId();
         //HMAC, MsgType 검증
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, hmacKeyString);
@@ -228,13 +201,14 @@ public class AgencyController {
 
         //TODO
         // 웹 관리도구로  해당 가맹점을 전달하여, 해지한 가맹점 정보를 Mail로 전달할 수 있도록 요청하는 기능 추가
-
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
 
-        jsonData.put("agencyId", clientDataModel.getAgencyId());
-        String cancelMessage = objectMapper.writeValueAsString(jsonData);
+        Map<String, String> cancelMap = new HashMap<>();
+        cancelMap.put("agencyId", clientDataModel.getAgencyId());
+        cancelMap.put("siteId", decryptInfo.getSiteId());
+        String cancelMessage = objectMapper.writeValueAsString(cancelMap);
         notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/cancel", cancelMessage);
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
@@ -313,15 +287,27 @@ public class AgencyController {
     public ResponseEntity<?> validateRequiredValues(ClientDataModel clientDataModel, Map<String, String> responseMessage) {
         String privateColAgree = clientDataModel.getPrivateColAgree();
         String serviceUseAgree = clientDataModel.getServiceUseAgree();
+        String thirdProvAgree = clientDataModel.getThirdProvAgree();
 
+        System.out.println(privateColAgree);
+        System.out.println(serviceUseAgree);
+        System.out.println(thirdProvAgree);
 
-        if ((privateColAgree.equals(EnumAgree.DISAGREE.getCode()) && !serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))
-                || (!privateColAgree.equals(EnumAgree.DISAGREE.getCode()) &&  serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))) {
-            responseMessage.put("resultMsg", "서비스 이용약관 미동의");
-            responseMessage.put("resultCode", "9999");
-            return ResponseEntity.ok(responseMessage);
+        // API 제휴사인경우 제3자 제공동의 체크 필요
+        if (clientDataModel.getAgencyId().equals(EnumAgency.SQUARES.getCode())) {
+            if(thirdProvAgree.equals(EnumAgree.DISAGREE.getCode())){
+                responseMessage.put("resultMsg", "서비스 이용약관 미동의");
+                responseMessage.put("resultCode", "9999");
+                return ResponseEntity.ok(responseMessage);
+            }
+        } else {
+            if ((privateColAgree.equals(EnumAgree.DISAGREE.getCode()) && !serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))
+                    || (!privateColAgree.equals(EnumAgree.DISAGREE.getCode()) && serviceUseAgree.equals(EnumAgree.DISAGREE.getCode()))) {
+                responseMessage.put("resultMsg", "서비스 이용약관 미동의");
+                responseMessage.put("resultCode", "9999");
+                return ResponseEntity.ok(responseMessage);
+            }
         }
-
 
         Map<String, String> requiredFields = new LinkedHashMap<>();
         requiredFields.put("siteName", clientDataModel.getSiteName());

@@ -30,15 +30,28 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
 
     @Override
     @Transactional
-    public List<PaymentHistoryDataModel> getPaymentHistoryByAgency(Agency agency) {
+    public List<PaymentHistory> getPaymentHistoryByAgency(Agency agency) {
         List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), agency.getSiteId(), EnumTradeTrace.USED.getCode());
         if (foundPaymentHistory == null || foundPaymentHistory.isEmpty()) {
-            throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : "  + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : " + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
         } else {
             return foundPaymentHistory.stream()
                     .map(this::convertToDomain)
-                    .sorted(Comparator.comparing(PaymentHistoryDataModel::getEndDate).reversed())
+                    .sorted(Comparator.comparing(PaymentHistory::getEndDate).reversed())
                     .collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public PaymentHistory getPaymentHistoryByAgencyLastPayment(Agency agency) {
+        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), agency.getSiteId(), EnumTradeTrace.USED.getCode());
+        if (foundPaymentHistory == null || foundPaymentHistory.isEmpty()) {
+            throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : " + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
+        } else {
+            return foundPaymentHistory.stream()
+                    .map(this::convertToDomain)
+                    .max(Comparator.comparing(PaymentHistory::getEndDate))
+                    .orElse(null);
         }
     }
 
@@ -54,18 +67,18 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     @Transactional
     public void updatePayment(PaymentHistory paymentHistory) {
         //persistence context
-        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getHfTradeNum());
+        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getPgTradeNum());
         if (optionalEntity.isPresent()) {
             updateEntityFields(paymentHistory, optionalEntity.get());
         } else {
-            throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getHfTradeNum() + "인 엔터티를 찾을 수 없습니다.");
+            throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getPgTradeNum() + "인 엔터티를 찾을 수 없습니다.");
         }
     }
 
 
     private void updateEntityFields(PaymentHistory paymentHistory, PaymentJpaEntity paymentJpaEntity) {
         paymentJpaEntity.setTradeNum(paymentHistory.getTradeNum());
-        paymentJpaEntity.setPgTradeNum(paymentHistory.getHfTradeNum());
+        paymentJpaEntity.setPgTradeNum(paymentHistory.getPgTradeNum());
         paymentJpaEntity.setAgencyId(paymentHistory.getAgencyId());
         paymentJpaEntity.setSiteId(paymentHistory.getSiteId());
         paymentJpaEntity.setPaymentType(paymentHistory.getPaymentType());
@@ -87,13 +100,14 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     private PaymentJpaEntity convertToEntity(PaymentHistory paymentHistory) {
         PaymentJpaEntity entity = new PaymentJpaEntity();
         entity.setTradeNum(paymentHistory.getTradeNum());
-        entity.setPgTradeNum(paymentHistory.getHfTradeNum());
+        entity.setPgTradeNum(paymentHistory.getPgTradeNum());
         entity.setAgencyId(paymentHistory.getAgencyId());
         entity.setSiteId(paymentHistory.getSiteId());
         entity.setPaymentType(paymentHistory.getPaymentType());
         entity.setRateSel(paymentHistory.getRateSel());
         entity.setAmount(paymentHistory.getAmount());
         entity.setOffer(paymentHistory.getOffer());
+        entity.setUseCount(paymentHistory.getUseCount());
         entity.setTrTrace(paymentHistory.getTrTrace());
         entity.setPaymentStatus(paymentHistory.getPaymentStatus());
         entity.setTrDate(paymentHistory.getTrDate());
@@ -107,33 +121,36 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setVbankExpireDate(paymentHistory.getVbankExpireDate());
         entity.setRegDate(paymentHistory.getRegDate());
         entity.setModDate(paymentHistory.getModDate());
+        entity.setMemo(paymentHistory.getMemo());
         return entity;
     }
 
-
-    private PaymentHistoryDataModel convertToDomain(PaymentJpaEntity entity) {
-        PaymentHistoryDataModel paymentHistoryDataModel = new PaymentHistoryDataModel();
-        paymentHistoryDataModel.setTradeNum(entity.getTradeNum());
-        paymentHistoryDataModel.setPgTradeNum(entity.getPgTradeNum());
-        paymentHistoryDataModel.setAgencyId(entity.getAgencyId());
-        paymentHistoryDataModel.setSiteId(entity.getSiteId());
-        paymentHistoryDataModel.setPaymentType(entity.getPaymentType());
-        paymentHistoryDataModel.setRateSel(entity.getRateSel());
-        paymentHistoryDataModel.setAmount(entity.getAmount());
-        paymentHistoryDataModel.setOffer(entity.getOffer());
-        paymentHistoryDataModel.setUseCount(entity.getUseCount());
-        paymentHistoryDataModel.setPaymentStatus(entity.getPaymentStatus());
-        paymentHistoryDataModel.setTrDate(entity.getTrDate());
-        paymentHistoryDataModel.setStartDate(entity.getStartDate());
-        paymentHistoryDataModel.setEndDate(entity.getEndDate());
-        paymentHistoryDataModel.setRcptName(entity.getRcptName());
-        paymentHistoryDataModel.setVbankName(entity.getVbankName());
-        paymentHistoryDataModel.setVbankAccount(entity.getVbankAccount());
-        paymentHistoryDataModel.setVbankExpireDate(entity.getVbankExpireDate());
-        paymentHistoryDataModel.setRegDate(entity.getRegDate());
-        paymentHistoryDataModel.setModDate(entity.getModDate());
-        paymentHistoryDataModel.setMemo(entity.getMemo());
-        return paymentHistoryDataModel;
+    private PaymentHistory convertToDomain(PaymentJpaEntity entity) {
+        return PaymentHistory.builder()
+                .tradeNum(entity.getTradeNum())
+                .pgTradeNum(entity.getPgTradeNum())
+                .agencyId(entity.getAgencyId())
+                .siteId(entity.getSiteId())
+                .paymentType(entity.getPaymentType())
+                .rateSel(entity.getRateSel())
+                .amount(entity.getAmount())
+                .offer(entity.getOffer())
+                .useCount(entity.getUseCount())
+                .trTrace(entity.getTrTrace())
+                .paymentStatus(entity.getPaymentStatus())
+                .trDate(entity.getTrDate())
+                .startDate(entity.getStartDate())
+                .endDate(entity.getEndDate())
+                .rcptName(entity.getRcptName())
+                .billKey(entity.getBillKey())
+                .billKeyExpireDate(entity.getBillKeyExpireDate())
+                .vbankName(entity.getVbankName())
+                .vbankAccount(entity.getVbankAccount())
+                .vbankExpireDate(entity.getVbankExpireDate())
+                .regDate(entity.getRegDate())
+                .modDate(entity.getModDate())
+                .memo(entity.getMemo())
+                .build();
     }
 
 }

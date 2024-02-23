@@ -27,8 +27,7 @@ public class HttpClientUtil {
 		String trdNo = (tmp == null) ? "" : tmp.getString("mchtTrdNo");
 		
 		logger.info("["+trdNo+"]=========================START SEND API=========================");
-//		System.out.println(("["+trdNo+"]=========================START SEND API========================="));
-		
+
 		HttpsURLConnection httpsURLConnection = null;
 		
 		String sendData = "";

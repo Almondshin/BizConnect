@@ -4,25 +4,25 @@ import com.dsmdb.japi.MagicDBAPI;
 
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.Calendar;
+import java.util.Date;
 
 public class TempTest {
-    public static void main(String[] args) {
-        System.out.println();
+    public static void main(String[] args) throws ParseException {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date today = new Date();
+        System.out.println("sdf.format(today) : " + sdf.format(today));
+
+        Calendar cal = Calendar.getInstance();
+        cal.setTime(sdf.parse("2024-02-23"));
+        Date sample = cal.getTime();
+
+        System.out.println(sdf.format(today).equals(sdf.format(sample)));
 
 
-        SecureRandom ran = null;
-        LocalDateTime ldt = LocalDateTime.now();
-        System.out.println("makeTradeNum 1");
-        try {
-            ran = SecureRandom.getInstanceStrong();
-            int randomNum = ran.nextInt(9999);
-            String formattedRandomNum = String.format("%04d", randomNum);
-            System.out.println("makeTradeNum 2");
-            System.out.println(formattedRandomNum);
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException(e);
-        }
     }
 }

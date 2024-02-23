@@ -18,20 +18,20 @@ public class AgencyProductAdapter implements LoadAgencyProductDataPort {
     }
 
     @Override
-    public Optional<AgencyProducts> getAgencyProductList(String rateSel) {
+    public AgencyProducts getAgencyProductByRateSel(String rateSel) {
         Optional<AgencyProductsJpaEntity> entity = agencyProductRepository.findByRateSel(rateSel);
-        return entity.map(this::convertDomain);
+        return entity.map(this::convertDomain).orElse(null);
     }
 
-    private AgencyProducts convertDomain(AgencyProductsJpaEntity entity){
-        AgencyProducts agencyProducts = new AgencyProducts();
-        agencyProducts.setRateSel(entity.getRateSel());
-        agencyProducts.setName(entity.getName());
-        agencyProducts.setPrice(entity.getPrice());
-        agencyProducts.setOffer(entity.getOffer());
-        agencyProducts.setMonth(entity.getMonth());
-        agencyProducts.setFeePerCase(entity.getFeePerCase());
-        agencyProducts.setExcessPerCase(entity.getExcessPerCase());
-        return agencyProducts;
+    private AgencyProducts convertDomain(AgencyProductsJpaEntity entity) {
+        return AgencyProducts.builder()
+                .rateSel(entity.getRateSel())
+                .name(entity.getName())
+                .price(entity.getPrice())
+                .offer(entity.getOffer())
+                .month(entity.getMonth())
+                .feePerCase(entity.getFeePerCase())
+                .excessPerCase(entity.getExcessPerCase())
+                .build();
     }
 }

@@ -6,15 +6,20 @@ import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
 import com.bizconnect.adapter.out.payment.utils.StringUtil;
+import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.domain.enums.EnumPaymentStatus;
 import com.bizconnect.application.domain.enums.EnumTradeTrace;
 import com.bizconnect.application.domain.model.Agency;
+import com.bizconnect.application.domain.model.AgencyInfoKey;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.PaymentHistory;
 import com.bizconnect.application.port.in.EncryptUseCase;
 import com.bizconnect.application.port.in.NotiUseCase;
+import com.bizconnect.application.port.out.load.LoadEncryptDataPort;
 import com.bizconnect.application.port.out.save.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.save.SavePaymentDataPort;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import net.sf.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,6 +28,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -35,6 +41,7 @@ public class HFResultService {
     private final Constant constant;
     private final SavePaymentDataPort savePaymentDataPort;
     private final SaveAgencyDataPort saveAgencyDataPort;
+    private final LoadEncryptDataPort loadEncryptDataPort;
 
     private final NotiUseCase notiUseCase;
     private final EncryptUseCase encryptUseCase;
@@ -47,10 +54,11 @@ public class HFResultService {
 
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
-    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, NotiUseCase notiUseCase, EncryptUseCase encryptUseCase) {
+    public HFResultService(Constant constant, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort, LoadEncryptDataPort loadEncryptDataPort, NotiUseCase notiUseCase, EncryptUseCase encryptUseCase) {
         this.constant = constant;
         this.savePaymentDataPort = savePaymentDataPort;
         this.saveAgencyDataPort = saveAgencyDataPort;
+        this.loadEncryptDataPort = loadEncryptDataPort;
         this.notiUseCase = notiUseCase;
         this.encryptUseCase = encryptUseCase;
     }
@@ -240,9 +248,6 @@ public class HFResultService {
 
             Map<String, String> parseParams = parseParams(pairs);
 
-            System.out.println(parseParams);
-            //TODO
-            // parseParams로 가져오는 데이터가 없음 확인필요
             try {
                 String agencyId = parseParams.get("agencyId");
                 String siteId = parseParams.get("siteId");
@@ -250,6 +255,9 @@ public class HFResultService {
                 Date endDate = sdf.parse(parseParams.get("endDate"));
                 String rateSel = parseParams.get("rateSel");
                 String offer = parseParams.get("offer");
+                Optional<AgencyInfoKey> agencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
+                String targetUrl = "";
+                String msgType = "";
 
                 if ("0021".equals(outStatCd)) {
                     System.out.println("outStatCd equals 0021");
@@ -273,10 +281,27 @@ public class HFResultService {
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
+                            if (agencyInfoKey.isPresent()) {
+                                AgencyInfoKey info = agencyInfoKey.get();
+                                ObjectMapper mapper = new ObjectMapper();
+                                Map<String, String> agencyUrlJson = mapper.readValue(info.getAgencyUrl(), new TypeReference<>() {
+                                });
+                                EnumAgency[] enumAgencies = EnumAgency.values();
+                                for (EnumAgency enumAgency : enumAgencies) {
+                                    if (enumAgency.getCode().equals(agencyId)) {
+                                        msgType = enumAgency.getPaymentMsg();
+                                        break;
+                                    }
+                                }
+                                targetUrl = agencyUrlJson.get(msgType);
+                            }
+
                             //AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+                            System.out.println("어드민 노티 완료");
                             //가맹점Noti
-//                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
+                            notiUseCase.sendNotification(targetUrl, makeAgencyNotifyData(agencyId, notifyPaymentData));
+                            System.out.println("가맹점 노티 완료 " + targetUrl + " " + makeAgencyNotifyData(agencyId, notifyPaymentData));
                             break;
                         }
                         case "VA": {
@@ -291,10 +316,27 @@ public class HFResultService {
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate));
 
+                            if (agencyInfoKey.isPresent()) {
+                                AgencyInfoKey info = agencyInfoKey.get();
+                                ObjectMapper mapper = new ObjectMapper();
+                                Map<String, String> agencyUrlJson = mapper.readValue(info.getAgencyUrl(), new TypeReference<>() {
+                                });
+                                EnumAgency[] enumAgencies = EnumAgency.values();
+                                for (EnumAgency enumAgency : enumAgencies) {
+                                    if (enumAgency.getCode().equals(agencyId)) {
+                                        msgType = enumAgency.getPaymentMsg();
+                                        break;
+                                    }
+                                }
+                                targetUrl = agencyUrlJson.get(msgType);
+                            }
+
                             //AdminNoti
                             notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptUseCase.mapToJSONString(jsonData));
+                            System.out.println("어드민 노티 완료");
                             //가맹점Noti
-//                            notiUseCase.sendNotification(profileSpecificUrl + "/agency/sample/notifyPaymentSiteInfo.jsp", encryptUseCase.mapToJSONString(notifyPaymentData));
+                            notiUseCase.sendNotification(targetUrl , makeAgencyNotifyData(agencyId, notifyPaymentData));
+                            System.out.println("가맹점 노티 완료 " + targetUrl + " " + makeAgencyNotifyData(agencyId, notifyPaymentData));
                             break;
                         }
                     }
@@ -399,8 +441,7 @@ public class HFResultService {
                     logger.info("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] " + ENCRYPT_PARAMS[i] + "[" + aesPlain + "] ---> [" + aesCipher + "]");
                 }
             }
-        }
-        catch (Exception e) {
+        } catch (Exception e) {
             e.printStackTrace();
             logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Encrypt] AES256 Encrypt Fail! : " + e.toString());
         }
@@ -425,8 +466,6 @@ public class HFResultService {
             logger.error("[" + REQ_HEADER.get("mchtTrdNo") + "][AES256 Decrypt] AES256 Decrypt Fail! : " + e.toString());
         }
     }
-
-
 
 
     public Map<String, String> requestBillKeyAPI(Map<String, String> REQ_HEADER, Map<String, String> REQ_BODY, Map<String, String> RES_HEADER, Map<String, String> RES_BODY) {
@@ -555,6 +594,7 @@ public class HFResultService {
         return jsonData;
     }
 
+    //encrypt필요
     private Map<String, String> prepareNotifyPaymentData(String agencyId, String siteId, Date startDate, Date endDate, String rateSel, String salesPrice) {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
         Map<String, String> notifyPaymentData = new HashMap<>();
@@ -577,6 +617,22 @@ public class HFResultService {
             }
         }
         return parsedParams;
+    }
+
+    private String makeAgencyNotifyData(String agencyId, Map<String, String> notifyPaymentData) throws GeneralSecurityException {
+        JSONObject json = new JSONObject();
+        json.put("agencyId", agencyId);
+        EnumAgency[] enumAgencies = EnumAgency.values();
+        for (EnumAgency enumAgency : enumAgencies) {
+            if (enumAgency.getCode().equals(agencyId)) {
+                json.put("msgType", enumAgency.getPaymentMsg());
+                break;
+            }
+        }
+        json.put("encryptData", encryptUseCase.encryptData(agencyId, encryptUseCase.mapToJSONString(notifyPaymentData)));
+        json.put("verifyInfo", encryptUseCase.hmacSHA256(encryptUseCase.mapToJSONString(notifyPaymentData), agencyId));
+
+        return json.toString();
     }
 
 }

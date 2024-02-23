@@ -16,5 +16,5 @@ public class AgencyInfoKey {
   private String agencyIv;
   private Date regDate;
   private Date modDate;
-
+  private String billingBase;
 }

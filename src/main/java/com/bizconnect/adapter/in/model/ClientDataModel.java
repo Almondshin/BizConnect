@@ -42,6 +42,7 @@ public class ClientDataModel {
 
     private String serviceUseAgree;
     private String privateColAgree;
+    private String thirdProvAgree;
 
     private String msgType;
     private String encryptData;
@@ -76,16 +77,6 @@ public class ClientDataModel {
         this.rateSel = rateSel;
         this.startDate = startDate;
     }
-
-    public ClientDataModel(String refundAcntNo, String vAcntNo, String cnclAmt, String trdAmt, String vatAmt, String taxFreeAmt) {
-        this.refundAcntNo = refundAcntNo;
-        this.vAcntNo = vAcntNo;
-        this.cnclAmt = cnclAmt;
-        this.trdAmt = trdAmt;
-        this.vatAmt = vatAmt;
-        this.taxFreeAmt = taxFreeAmt;
-    }
-
 
     private boolean isValidAgencyId(String agencyId) {
         return agencyId.matches(AGENCY_SITE_ID_PATTERN);

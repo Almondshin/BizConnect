@@ -1,5 +1,7 @@
 package com.bizconnect.application.domain.model;
 
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.ToString;
 
@@ -7,9 +9,10 @@ import java.util.Date;
 
 @Getter
 @ToString
+@Builder
 public class PaymentHistory {
     private String tradeNum;
-    private String hfTradeNum;
+    private String pgTradeNum;
     private String agencyId;
     private String siteId;
 
@@ -50,9 +53,9 @@ public class PaymentHistory {
         this.paymentType = method;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, String billKey, String billKeyExpireDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String pgTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, String billKey, String billKeyExpireDate, Date regDate) {
         this.tradeNum = tradeNum;
-        this.hfTradeNum = hfTradeNum;
+        this.pgTradeNum = pgTradeNum;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.paymentType = paymentType;
@@ -69,9 +72,9 @@ public class PaymentHistory {
         this.regDate = regDate;
     }
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, Date regDate) {
+    public PaymentHistory(String tradeNum, String pgTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, Date regDate) {
         this.tradeNum = tradeNum;
-        this.hfTradeNum = hfTradeNum;
+        this.pgTradeNum = pgTradeNum;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.paymentType = paymentType;
@@ -87,9 +90,9 @@ public class PaymentHistory {
     }
 
 
-    public PaymentHistory(String tradeNum, String hfTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, String rcptName, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date startDate, Date endDate, Date regDate, Date modDate) {
+    public PaymentHistory(String tradeNum, String pgTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String trTrace, String paymentStatus, Date trDate, String rcptName, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date startDate, Date endDate, Date regDate, Date modDate) {
         this.tradeNum = tradeNum;
-        this.hfTradeNum = hfTradeNum;
+        this.pgTradeNum = pgTradeNum;
         this.agencyId = agencyId;
         this.siteId = siteId;
         this.paymentType = paymentType;
@@ -108,5 +111,32 @@ public class PaymentHistory {
         this.endDate = endDate;
         this.regDate = regDate;
         this.modDate = modDate;
+    }
+
+    public PaymentHistory(String tradeNum, String pgTradeNum, String agencyId, String siteId, String paymentType, String rateSel, String amount, String offer, String useCount, String trTrace, String paymentStatus, Date trDate, Date startDate, Date endDate, String rcptName, String billKey, String billKeyExpireDate, String vbankName, String vbankCode, String vbankAccount, Date vbankExpireDate, Date regDate, Date modDate, String memo) {
+        this.tradeNum = tradeNum;
+        this.pgTradeNum = pgTradeNum;
+        this.agencyId = agencyId;
+        this.siteId = siteId;
+        this.paymentType = paymentType;
+        this.rateSel = rateSel;
+        this.amount = amount;
+        this.offer = offer;
+        this.useCount = useCount;
+        this.trTrace = trTrace;
+        this.paymentStatus = paymentStatus;
+        this.trDate = trDate;
+        this.startDate = startDate;
+        this.endDate = endDate;
+        this.rcptName = rcptName;
+        this.billKey = billKey;
+        this.billKeyExpireDate = billKeyExpireDate;
+        this.vbankName = vbankName;
+        this.vbankCode = vbankCode;
+        this.vbankAccount = vbankAccount;
+        this.vbankExpireDate = vbankExpireDate;
+        this.regDate = regDate;
+        this.modDate = modDate;
+        this.memo = memo;
     }
 }

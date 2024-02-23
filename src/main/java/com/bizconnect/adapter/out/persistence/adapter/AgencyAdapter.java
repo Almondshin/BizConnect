@@ -1,29 +1,27 @@
 package com.bizconnect.adapter.out.persistence.adapter;
 
 import com.bizconnect.adapter.in.model.ClientDataModel;
-import com.bizconnect.adapter.out.persistence.entity.AgencyInfoKeyJpaEntity;
 import com.bizconnect.adapter.out.persistence.entity.AgencyJpaEntity;
 import com.bizconnect.adapter.out.persistence.entity.SiteInfoJpaEntity;
 import com.bizconnect.adapter.out.persistence.repository.AgencyRepository;
 import com.bizconnect.adapter.out.persistence.repository.SiteInfoRepository;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
+import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import com.bizconnect.application.domain.model.Agency;
-import com.bizconnect.application.domain.model.AgencyInfoKey;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
+import com.bizconnect.application.domain.service.NotiService;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import com.bizconnect.application.exceptions.exceptions.DuplicateMemberException;
 import com.bizconnect.application.exceptions.exceptions.UnregisteredAgencyException;
 import com.bizconnect.application.port.out.load.LoadAgencyDataPort;
 import com.bizconnect.application.port.out.save.SaveAgencyDataPort;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
-import javax.xml.crypto.Data;
 import java.text.SimpleDateFormat;
-import java.time.LocalDate;
 import java.util.Date;
 import java.util.Optional;
 
@@ -32,10 +30,16 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     private final AgencyRepository agencyRepository;
     private final SiteInfoRepository siteInfoRepository;
 
-    public AgencyAdapter(AgencyRepository agencyRepository, SiteInfoRepository siteInfoRepository) {
+    private final NotiService notiService;
+    @Value("${external.admin.url}")
+    private String profileSpecificAdminUrl;
+
+    public AgencyAdapter(AgencyRepository agencyRepository, SiteInfoRepository siteInfoRepository, NotiService notiService) {
         this.agencyRepository = agencyRepository;
         this.siteInfoRepository = siteInfoRepository;
+        this.notiService = notiService;
     }
+
 
     @Override
     @Transactional
@@ -45,17 +49,21 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         if (foundAgencyInfo.isEmpty()){
             throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
         }
-        return foundAgencyInfo.map(this::convertToClientDomain);
+        return foundAgencyInfo.map(this::convertClientModel);
     }
+
+
 
 
     @Override
     @Transactional
     public void registerAgency(Agency agency, Client client, SettleManager settleManager) {
         AgencyJpaEntity entity = agencyAndClientConvertToEntity(agency, client);
-        Optional<SiteInfoJpaEntity> foundSiteId = siteInfoRepository.findBySiteId(entity.getSiteId());
+        Optional<SiteInfoJpaEntity> foundSiteIdBySiteInfo = siteInfoRepository.findBySiteId(entity.getSiteId());
+        Optional<AgencyJpaEntity> foundSiteIdByAgencyInfo = agencyRepository.findBySiteId(entity.getSiteId());
+
         // SiteId가 이미 존재하는 경우 DuplicateMemberException을 발생시킵니다.
-        if (foundSiteId.isPresent()) {
+        if (foundSiteIdBySiteInfo.isPresent() || foundSiteIdByAgencyInfo.isPresent()) {
             throw new DuplicateMemberException(EnumResultCode.DuplicateMember, entity.getSiteId());
         }
         client.setSiteStatus(EnumSiteStatus.PENDING.getCode());
@@ -68,6 +76,8 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
     @Transactional
     public void updateAgency(Agency agency, Client client) {
         Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(), agency.getSiteId());
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Date today = new Date();
         if (optionalEntity.isPresent()){
             AgencyJpaEntity entity = optionalEntity.get();
             if (entity.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode()) || client.getStartDate().equals(new Date())){
@@ -113,16 +123,19 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         agencyJpaEntity.setStartDate(client.getStartDate());
         agencyJpaEntity.setEndDate(client.getEndDate());
 
+        agencyJpaEntity.setServiceUseAgree(client.getServiceUseAgree());
+
         agencyJpaEntity.setSettleManagerName(settleManager.getSettleManagerName());
+        agencyJpaEntity.setSettleManagerTelNumber(settleManager.getSettleManagerTelNumber());
         agencyJpaEntity.setSettleManagerPhoneNumber(settleManager.getSettleManagerPhoneNumber());
         agencyJpaEntity.setSettleManagerEmail(settleManager.getSettleManagerEmail());
 
         return agencyJpaEntity;
     }
 
-    private ClientDataModel convertToClientDomain(AgencyJpaEntity entity) {
+
+    private ClientDataModel convertClientModel(AgencyJpaEntity entity) {
         ClientDataModel clientDataModel = new ClientDataModel();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
         clientDataModel.setAgencyId(entity.getAgencyId());
         clientDataModel.setSiteId(entity.getSiteId());
@@ -147,17 +160,6 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         clientDataModel.setSettleManagerEmail(entity.getSettleManagerEmail());
 
         return clientDataModel;
-    }
-
-
-    private AgencyInfoKey convertToAgencyInfoKeyDomain(AgencyInfoKeyJpaEntity entity){
-        AgencyInfoKey agencyInfoKey = new AgencyInfoKey();
-        agencyInfoKey.setAgencyId(entity.getAgencyId());
-        agencyInfoKey.setSiteName(entity.getSiteName());
-        agencyInfoKey.setAgencyUrl(entity.getAgencyUrl());
-        agencyInfoKey.setAgencyKey(entity.getAgencyKey());
-        agencyInfoKey.setAgencyIv(entity.getAgencyIv());
-        return agencyInfoKey;
     }
 
 

@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface LoadPaymentDataPort {
-    List<PaymentHistoryDataModel> getPaymentHistoryByAgency(Agency agency);
+    List<PaymentHistory> getPaymentHistoryByAgency(Agency agency);
+    PaymentHistory getPaymentHistoryByAgencyLastPayment(Agency agency);
 
 }

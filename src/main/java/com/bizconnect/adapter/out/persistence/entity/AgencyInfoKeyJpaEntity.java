@@ -31,5 +31,7 @@ public class AgencyInfoKeyJpaEntity {
   private Date regDate;
   @Column(name = "MOD_DATE")
   private Date modDate;
+  @Column(name = "BILLING_BASE")
+  private String billingBase;
 
 }

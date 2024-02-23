@@ -1,14 +1,14 @@
 package com.bizconnect.adapter.in.model;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.*;
 
 import java.util.Date;
 
 @Getter
 @Setter
 @ToString
+@Builder
+@AllArgsConstructor
 public class PaymentHistoryDataModel {
     private String tradeNum;
     private String pgTradeNum;
@@ -19,7 +19,8 @@ public class PaymentHistoryDataModel {
     private String rateSel;
     private String amount;
     private String offer;
-    private int useCount;
+    private String useCount;
+    private String trTrace;
     private String paymentStatus;
 
     private Date trDate;
@@ -28,7 +29,11 @@ public class PaymentHistoryDataModel {
 
     private String rcptName;
 
+    private String billKey;
+    private String billKeyExpireDate;
+
     private String vbankName;
+    private String vbankCode;
     private String vbankAccount;
     private Date vbankExpireDate;
 

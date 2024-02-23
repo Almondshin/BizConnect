@@ -38,7 +38,7 @@ public class PaymentJpaEntity {
     @Column(name = "OFFER")
     private String offer;
     @Column(name = "USE_COUNT")
-    private int useCount;
+    private String useCount;
     @Column(name = "TR_TRACE")
     private String trTrace;
     @Column(name = "PAYMENT_STATUS")

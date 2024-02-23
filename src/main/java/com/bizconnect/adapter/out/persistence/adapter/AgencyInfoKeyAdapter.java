@@ -38,6 +38,7 @@ public class AgencyInfoKeyAdapter implements LoadEncryptDataPort {
         agencyInfoKey.setAgencyUrl(entity.getAgencyUrl());
         agencyInfoKey.setAgencyKey(entity.getAgencyKey());
         agencyInfoKey.setAgencyIv(entity.getAgencyIv());
+        agencyInfoKey.setBillingBase(entity.getBillingBase());
         return agencyInfoKey;
     }
 

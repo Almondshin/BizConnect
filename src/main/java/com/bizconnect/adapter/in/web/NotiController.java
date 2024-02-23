@@ -42,12 +42,19 @@ public class NotiController {
         requestStatusSiteMap.put("verifyInfo", verifyInfo);
 
         String requestStatusSiteData = encryptUseCase.mapToJSONString(requestStatusSiteMap);
-        //targetUrl : 가맹점 NotiURL 입니다.
-        // notiUseCase.sendNotification("http://127.0.0.1:8080" + "/agency/sample/notifyStatusSite.jsp", requestStatusSiteData);
 
+        String targetUrl = notiUseCase.getAgencyUrlByAgencyInfoKey(responseData.get("agencyId"), msgType);
+
+        System.out.println("targetUrl : " + targetUrl);
+        System.out.println("requestStatusSiteData : " + requestStatusSiteData);
+
+        //targetUrl : 가맹점 NotiURL 입니다.
+         notiUseCase.sendNotification(targetUrl, requestStatusSiteData);
         // 클라이언트에게 응답을 기대하지 않는 경우에도 "Success" 응답을 제공
         return ResponseEntity.ok("Success");
     }
+
+
 
 
 }

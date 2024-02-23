@@ -5,13 +5,15 @@ import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
+import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
-import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.domain.enums.EnumSiteStatus;
-import com.bizconnect.application.exceptions.exceptions.IllegalAgencyIdSiteIdException;
+import com.bizconnect.application.domain.model.AgencyProducts;
+import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.port.in.AgencyUseCase;
 import com.bizconnect.application.port.in.PaymentUseCase;
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -29,6 +31,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
 
+/**
+ * The type Payment controller.
+ */
 @Slf4j
 @RestController
 @RequestMapping(value = {"/agency/payment", "/payment"})
@@ -45,8 +50,18 @@ public class PaymentController {
     @Value("${external.payment.url}")
     private String profileSpecificPaymentUrl;
 
+    /**
+     * The Logger.
+     */
     protected final Logger logger = LoggerFactory.getLogger(this.getClass());
 
+    /**
+     * Instantiates a new Payment controller.
+     *
+     * @param agencyUseCase  the agency use case
+     * @param constant       the constant
+     * @param paymentUseCase the payment use case
+     */
     public PaymentController(AgencyUseCase agencyUseCase, Constant constant, PaymentUseCase paymentUseCase) {
         this.agencyUseCase = agencyUseCase;
         this.constant = constant;
@@ -84,8 +99,11 @@ public class PaymentController {
                 return siteStatusResponse;
             }
 
+            //초과 건수 계산
             if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-                checkExtraCount(responseMessage, paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
+                int excessAmount = paymentUseCase.getExcessAmount(paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
+                responseMessage.put("excessAmount", excessAmount);
+                logger.info("[Retrieved excessAmount] : [" + excessAmount + "]");
             }
 
             logger.info("[Retrieved agencyId] : [" + clientInfo.getAgencyId() + "]");
@@ -113,6 +131,12 @@ public class PaymentController {
     }
 
 
+    /**
+     * Sets payment site info.
+     *
+     * @param clientDataModel the client data model
+     * @return the payment site info
+     */
     @PostMapping("/setPaymentSiteInfo")
     public ResponseEntity<?> setPaymentSiteInfo(@RequestBody ClientDataModel clientDataModel) {
         Map<String, Object> responseMessage = new HashMap<>();
@@ -154,6 +178,12 @@ public class PaymentController {
         return ResponseEntity.ok(responseMessage);
     }
 
+    /**
+     * Sets payment duck.
+     *
+     * @param duck the duck
+     * @return the payment duck
+     */
     @PostMapping("/setDuckPaymentSiteInfo")
     public ResponseEntity<?> setPaymentDuck(@RequestBody String duck) {
         System.out.println("====== " + duck + " ======");
@@ -163,9 +193,14 @@ public class PaymentController {
     }
 
 
+    /**
+     * Request bill key payment.
+     *
+     * @param requestSiteIdList the request map
+     */
     @PostMapping(value = "/bill")
-    public void requestBillKeyPayment(@RequestBody Map<String, String> requestMap) {
-        Map<String, Object> requestData = new HashMap<>();
+    public void requestBillKeyPayment(@RequestBody String requestSiteIdList) throws JsonProcessingException {
+        Map<String, Object> responseData = new HashMap<>();
         Map<String, String> params = new HashMap<>();
 
         String ver = "0A19";
@@ -187,44 +222,74 @@ public class PaymentController {
         params.put("trdDt", trdDt); // 주문 날짜
         params.put("trdTm", trdTm);   // 주문 시간
 
-        System.out.println(requestMap.get("siteId"));
-        System.out.println(requestMap.get("billKey"));
-        System.out.println(requestMap.get("trdAmt"));
-        System.out.println(requestMap.get("pmtprdNm"));
 
-        //TODO
-        // 정기결제 요청 데이터 생성
-        //
-        Map<String, String> data = new HashMap<>();
-        String billKey = "SBILL_PGCAnxca_jt_gu20249964770206160258";
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> mapData = mapper.readValue(requestSiteIdList, Map.class);
 
-        data.put("pmtprdNm", "테스트상품");
-        data.put("mchtCustNm", "드림시큐리티");
-        data.put("mchtCustId", "Dreamsecurity");
-        data.put("billKey", billKey);
-        data.put("instmtMon", "00"); // 할부개월
-        data.put("crcCd", "KRW");
-        data.put("trdAmt", "1000");
-        try {
-            data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
-            data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        mapData.forEach((siteId, agencyId) -> {
+            Optional<ClientDataModel> clientDataModel = agencyUseCase.getAgencyInfo(new ClientDataModel(agencyId, siteId));
+            if (clientDataModel.isPresent()) {
+                ClientDataModel info = clientDataModel.get();
+                PaymentHistoryDataModel paymentHistory = paymentUseCase.getPaymentHistoryByAgencyLastPayment(agencyId, siteId);
+
+                Map<String, String> data = new HashMap<>();
+                String billKey = paymentHistory.getBillKey();
+                String productName = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getName();
+                String amount = "10000";
+
+                data.put("pmtprdNm", productName);
+                data.put("mchtCustNm", "드림시큐리티");
+                data.put("mchtCustId", "Dreamsecurity");
+                data.put("billKey", billKey);
+                data.put("instmtMon", "00"); // 할부개월
+                data.put("crcCd", "KRW");
+                data.put("trdAmt", amount);
+
+                try {
+                    data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
+                    data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
 
 
-        requestData.put("params", params);
-        requestData.put("data", data);
-        String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+                String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
 
-        HttpClientUtil httpClientUtil = new HttpClientUtil();
-        String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
-        System.out.println(resData);
+                HttpClientUtil httpClientUtil = new HttpClientUtil();
+
+                //TODO
+                // responseData 요청 데이터 생성 필요
+                responseData.put("params", params);
+                responseData.put("data", data);
+                String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
+
+                paymentUseCase.insertAutoPayPaymentHistory(agencyId, siteId, paymentUseCase.getAgencyProductByRateSel(info.getRateSel()), reqData);
+            }
+        });
+
     }
 
 
+    /* 결제대기상태가 아닌 경우, 초기 결제로 판단 제휴사 승인대기, 통신사 승인대기 상태 전달. */
+
+
+    /**
+     * @param responseMessage
+     * @param clientInfo
+     * @return
+     */
     private ResponseEntity<?> decideSiteStatus(Map<String, Object> responseMessage, ClientDataModel clientInfo) {
-        if (!clientInfo.getSiteStatus().equals(EnumSiteStatus.TRADE_PENDING.getCode())){
+        // TRADE_PENDING : 결제 대기 상태 (통신사 심사 승인 완료 이후 결제 대기 알림 발송완료 상태)
+        // TELCO_PENDING : 통신사 승인 대기 ( 관리자가 가맹점 등록 후 통신사 정보 등록 전 상태 )
+        // PENDING : 제휴사 승인 대기 ( 관리자가 등록하기 전 상태 )
+
+        if (clientInfo.getSiteStatus().equals(EnumSiteStatus.SUSPENDED.getCode())) {
+            responseMessage.put("resultCode", EnumResultCode.SuspendedSiteId.getCode());
+            responseMessage.put("resultMsg", EnumResultCode.SuspendedSiteId.getValue());
+            return ResponseEntity.ok(responseMessage);
+        }
+
+        if (!clientInfo.getSiteStatus().equals(EnumSiteStatus.TRADE_PENDING.getCode())) {
             if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
                 responseMessage.put("resultCode", EnumResultCode.PendingTelcoApprovalStatus.getCode());
                 responseMessage.put("resultMsg", EnumResultCode.PendingTelcoApprovalStatus.getValue());
@@ -249,7 +314,6 @@ public class PaymentController {
 
         // 초기 결제인 경우
         if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.DEFAULT.getCode())) {
-            System.out.println(1);
             if (startDateClient != null) {
                 return sdf.format(startDateClient);
             } else if (startDateInfo != null) {
@@ -290,16 +354,5 @@ public class PaymentController {
             throw new NoExtensionException(EnumResultCode.NoExtension, clientInfo.getSiteId());
         }
     }
-
-
-    public void checkExtraCount(Map<String, Object> responseMessage, List<PaymentHistoryDataModel> list) {
-        if (list.size() > 2) {
-            int excessCount = Integer.parseInt(list.get(2).getOffer()) - list.get(2).getUseCount();
-            responseMessage.put("excessAmount", Math.abs(excessCount) * 50 * 1.1);
-        } else {
-            responseMessage.put("excessAmount", 0);
-        }
-    }
-
 
 }
