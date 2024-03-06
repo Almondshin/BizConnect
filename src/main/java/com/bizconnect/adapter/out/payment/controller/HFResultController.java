@@ -97,8 +97,8 @@ public class HFResultController {
 
 
     @PostMapping(value = "/cancel")
-    public void cancel(HttpServletRequest request, HttpServletResponse response) throws IOException {
-        response.sendRedirect("/agency/payment/cancel.html");
+    public void cancel(HttpServletResponse response) throws IOException {
+        response.sendRedirect(profileSpecificPaymentUrl+ "/agency/procpayment/cancel.html");
     }
 
     @PostMapping(value = "/decrypt")

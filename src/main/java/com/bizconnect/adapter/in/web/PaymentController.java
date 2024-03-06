@@ -5,7 +5,6 @@ import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
-import com.bizconnect.application.domain.enums.EnumAgency;
 import com.bizconnect.application.domain.enums.EnumExtensionStatus;
 import com.bizconnect.application.domain.enums.EnumSiteStatus;
 import com.bizconnect.application.domain.model.AgencyProducts;
@@ -88,6 +87,9 @@ public class PaymentController {
         logger.info("[rateSel] : [" + clientDataModel.getRateSel() + "]");
         logger.info("[startDate] : [" + clientDataModel.getStartDate() + "]");
 
+
+        //TODO
+        // 초과금액 계산 마지막거래건이 아닌 전전거래건을 찾아갈 수 있도록 변경 필요
         if (optClientInfo.isPresent()) {
             ClientDataModel clientInfo = optClientInfo.get();
 
@@ -121,7 +123,7 @@ public class PaymentController {
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         responseMessage.put("profileUrl", profileSpecificUrl);
         responseMessage.put("profilePaymentUrl", profileSpecificPaymentUrl);
-        responseMessage.put("siteId", clientDataModel.getSiteId());
+        responseMessage.put("siteId", clientDataModel.getAgencyId() + "-" + clientDataModel.getSiteId());
         responseMessage.put("listSel", productTypes);
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
@@ -144,6 +146,10 @@ public class PaymentController {
         DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyyMMdd");
         DateTimeFormatter timeFormatter = DateTimeFormatter.ofPattern("HHmmss");
         String tradeNum = paymentUseCase.makeTradeNum();
+
+        //TODO
+        // 연장결제 시 기간 선택 불가능
+        // 초과금액 계산 마지막거래건이 아닌 전전거래건을 찾아갈 수 있도록 변경 필요
         try {
             paymentUseCase.checkMchtParams(clientDataModel);
         } catch (ParseException e) {
@@ -230,12 +236,25 @@ public class PaymentController {
             Optional<ClientDataModel> clientDataModel = agencyUseCase.getAgencyInfo(new ClientDataModel(agencyId, siteId));
             if (clientDataModel.isPresent()) {
                 ClientDataModel info = clientDataModel.get();
+
+                //TODO
+                // 리스트에서 가져오는데이터가 가장 첫번째 데이터가 아닐 수 있음,
+                // 직전월의 데이터만 추출하도록 해야 할 가능성이 있음
                 PaymentHistoryDataModel paymentHistory = paymentUseCase.getPaymentHistoryByAgencyLastPayment(agencyId, siteId);
 
                 Map<String, String> data = new HashMap<>();
                 String billKey = paymentHistory.getBillKey();
-                String productName = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getName();
-                String amount = "10000";
+
+                AgencyProducts products = paymentUseCase.getAgencyProductByRateSel(info.getRateSel());
+                String productName = products.getName();
+
+
+                int offer = Integer.parseInt(paymentHistory.getOffer());
+                int excessCount = offer - Integer.parseInt(paymentHistory.getUseCount());
+
+                int excessAmount = excessCount < 0 ? (int) (Math.abs(excessCount) * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0;
+
+                String amount = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getPrice() + excessAmount;
 
                 data.put("pmtprdNm", productName);
                 data.put("mchtCustNm", "드림시큐리티");
@@ -290,9 +309,9 @@ public class PaymentController {
         }
 
         if (!clientInfo.getSiteStatus().equals(EnumSiteStatus.TRADE_PENDING.getCode())) {
-            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.TELCO_PENDING.getCode())) {
-                responseMessage.put("resultCode", EnumResultCode.PendingTelcoApprovalStatus.getCode());
-                responseMessage.put("resultMsg", EnumResultCode.PendingTelcoApprovalStatus.getValue());
+            if (clientInfo.getSiteStatus().equals(EnumSiteStatus.REJECT.getCode())) {
+                responseMessage.put("resultCode", EnumResultCode.RejectAgency.getCode());
+                responseMessage.put("resultMsg", EnumResultCode.RejectAgency.getValue());
                 return ResponseEntity.ok(responseMessage);
             } else if (clientInfo.getSiteStatus().equals(EnumSiteStatus.PENDING.getCode())) {
                 responseMessage.put("resultCode", EnumResultCode.PendingApprovalStatus.getCode());

@@ -29,6 +29,8 @@ public class QAgencyInfoKeyJpaEntity extends EntityPathBase<AgencyInfoKeyJpaEnti
 
     public final StringPath agencyUrl = createString("agencyUrl");
 
+    public final StringPath billingBase = createString("billingBase");
+
     public final DateTimePath<java.util.Date> modDate = createDateTime("modDate", java.util.Date.class);
 
     public final DateTimePath<java.util.Date> regDate = createDateTime("regDate", java.util.Date.class);

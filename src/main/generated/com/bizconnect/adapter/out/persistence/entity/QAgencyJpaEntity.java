@@ -41,8 +41,6 @@ public class QAgencyJpaEntity extends EntityPathBase<AgencyJpaEntity> {
 
     public final StringPath phoneNumber = createString("phoneNumber");
 
-    public final StringPath privateColAgree = createString("privateColAgree");
-
     public final StringPath rateSel = createString("rateSel");
 
     public final StringPath serviceUseAgree = createString("serviceUseAgree");

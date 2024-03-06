@@ -130,9 +130,8 @@ public class AgencyController {
         String resultMsg = EnumResultCode.SUCCESS.getValue();
         Map<String, String> responseMessage = new HashMap<>();
 
-        //TODO
-        // 이용 약관 동의관련 내용 주석처리
-        // 추후 표준창 개발 시 검증 필요
+         /*이용 약관 동의관련 내용 주석처리
+         추후 표준창 개발 시 검증 필요*/
 //        ResponseEntity<?> validateResponse = validateRequiredValues(decryptInfo, responseMessage);
 //        if (validateResponse != null) {
 //            return validateResponse;
@@ -199,8 +198,6 @@ public class AgencyController {
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, hmacKeyString);
         boolean isVerifiedMsgType = verifyReceivedMessageType("cancel", clientDataModel.getMsgType(), clientDataModel.getAgencyId());
 
-        //TODO
-        // 웹 관리도구로  해당 가맹점을 전달하여, 해지한 가맹점 정보를 Mail로 전달할 수 있도록 요청하는 기능 추가
         responseMessage.put("resultCode", EnumResultCode.SUCCESS.getCode());
         responseMessage.put("resultMsg", EnumResultCode.SUCCESS.getValue());
         verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
@@ -265,19 +262,20 @@ public class AgencyController {
             boolean isCancelType = messageType.equals("cancel");
             boolean isRegType = messageType.equals("reg");
             boolean isGetType = messageType.equals("status");
-            boolean isSquaresAgency = keyString.equals(EnumAgency.SQUARES.getCode());
 
-            if (isCancelType && isSquaresAgency) {
-                return EnumAgency.SQUARES.getCancelMsg().equals(receivedMsgType);
-            } else if (isRegType && isSquaresAgency) {
-                return EnumAgency.SQUARES.getRegMsg().equals(receivedMsgType);
-            } else if (isGetType && isSquaresAgency) {
-                return EnumAgency.SQUARES.getStatusMsg().equals(receivedMsgType);
+            EnumAgency[] enumAgencies = EnumAgency.values();
+            for (EnumAgency enumAgency : enumAgencies) {
+                if (enumAgency.getCode().equals(keyString)) {
+                    if (isCancelType) {
+                        return enumAgency.getCancelMsg().equals(receivedMsgType);
+                    } else if (isRegType) {
+                        return enumAgency.getRegMsg().equals(receivedMsgType);
+                    } else if (isGetType) {
+                        return enumAgency.getStatusMsg().equals(receivedMsgType);
+                    }
+                }
             }
-
         } catch (Exception e) {
-            // 이 오류를 로거를 사용하여 로깅하는 것이 더 좋습니다.
-            // logger.error("Error while verifying received message type", e);
             return false;
         }
         return false;
@@ -295,7 +293,7 @@ public class AgencyController {
 
         // API 제휴사인경우 제3자 제공동의 체크 필요
         if (clientDataModel.getAgencyId().equals(EnumAgency.SQUARES.getCode())) {
-            if(thirdProvAgree.equals(EnumAgree.DISAGREE.getCode())){
+            if (thirdProvAgree.equals(EnumAgree.DISAGREE.getCode())) {
                 responseMessage.put("resultMsg", "서비스 이용약관 미동의");
                 responseMessage.put("resultCode", "9999");
                 return ResponseEntity.ok(responseMessage);
@@ -330,7 +328,6 @@ public class AgencyController {
                 return ResponseEntity.ok(responseMessage);
             }
         }
-
         return null;
     }
 }

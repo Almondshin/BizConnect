@@ -38,20 +38,20 @@ public class NotiService implements NotiUseCase {
             connection.setRequestProperty("Content-Type", "application/json;charset=UTF-8");
             connection.setDoOutput(true);
 
-            DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream());
-            dataOutputStream.write(responseData.getBytes(StandardCharsets.UTF_8));
-
-
-            BufferedReader bufferedReader = new BufferedReader(new InputStreamReader(connection.getInputStream()));
-            StringBuilder response = new StringBuilder();
-            String line;
-            while ((line = bufferedReader.readLine()) != null) {
-                response.append(line);
+            try (DataOutputStream dataOutputStream = new DataOutputStream(connection.getOutputStream())) {
+                dataOutputStream.write(responseData.getBytes(StandardCharsets.UTF_8));
             }
-            System.out.println("전달 URL 체크 : " + url);
-            System.out.println("전달 data 체크 : " + responseData);
 
-            return response.toString();
+            int responseCode = connection.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                System.out.println("전달 URL 체크 : " + url);
+                System.out.println("전달 data 체크 : " + responseData);
+                return "Success";
+            } else {
+                // Handle error response, if needed
+                System.out.println("Error response code: " + responseCode);
+                return null;
+            }
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -75,5 +75,6 @@ public class NotiService implements NotiUseCase {
         }
         return null;
     }
+
 
 }

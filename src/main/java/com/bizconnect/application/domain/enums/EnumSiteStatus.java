@@ -6,7 +6,7 @@ public enum EnumSiteStatus {
     UNREGISTERED("E", "제휴사 미등록"),
     PENDING("H" , "제휴사 승인대기"),
     DUPLICATE("D", "이미 등록된 사이트"),
-    TELCO_PENDING("T" , "통신사 승인대기"),
+    REJECT("R" , "통신사 심사 반려된 사이트"),
     TRADE_PENDING("P" , "결제 대기");
 
     private final String code;

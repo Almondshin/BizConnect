@@ -9,7 +9,7 @@ import java.util.Date;
 @Setter
 public class AgencyInfoKey {
   private String agencyId;
-  private String siteName;
+  private String agencyName;
   private String agencyProductType;
   private String agencyUrl;
   private String agencyKey;

@@ -1,7 +1,6 @@
 package com.bizconnect.adapter.out.persistence.entity;
 
 import lombok.Getter;
-import lombok.Setter;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -17,8 +16,8 @@ public class AgencyInfoKeyJpaEntity {
   @Id
   @Column(name = "AGENCY_ID")
   private String agencyId;
-  @Column(name = "SITE_NAME")
-  private String siteName;
+  @Column(name = "AGENCY_NAME")
+  private String agencyName;
   @Column(name = "AGENCY_PRODUCT_TYPE")
   private String agencyProductType;
   @Column(name = "AGENCY_URL")

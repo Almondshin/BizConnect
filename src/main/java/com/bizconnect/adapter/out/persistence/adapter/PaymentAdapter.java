@@ -31,7 +31,8 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
     @Override
     @Transactional
     public List<PaymentHistory> getPaymentHistoryByAgency(Agency agency) {
-        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), agency.getSiteId(), EnumTradeTrace.USED.getCode());
+        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
+        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), siteId, EnumTradeTrace.USED.getCode());
         if (foundPaymentHistory == null || foundPaymentHistory.isEmpty()) {
             throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : " + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
         } else {
@@ -44,7 +45,8 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
 
     @Override
     public PaymentHistory getPaymentHistoryByAgencyLastPayment(Agency agency) {
-        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), agency.getSiteId(), EnumTradeTrace.USED.getCode());
+        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
+        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), siteId, EnumTradeTrace.USED.getCode());
         if (foundPaymentHistory == null || foundPaymentHistory.isEmpty()) {
             throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : " + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
         } else {
@@ -53,6 +55,12 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
                     .max(Comparator.comparing(PaymentHistory::getEndDate))
                     .orElse(null);
         }
+    }
+
+    @Override
+    public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String tradeNum) {
+        Optional<PaymentJpaEntity> entity = paymentHistoryRepository.findByTradeNum(tradeNum);
+        return entity.map(this::convertToDomain);
     }
 
     @Override
@@ -80,11 +88,12 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         paymentJpaEntity.setTradeNum(paymentHistory.getTradeNum());
         paymentJpaEntity.setPgTradeNum(paymentHistory.getPgTradeNum());
         paymentJpaEntity.setAgencyId(paymentHistory.getAgencyId());
-        paymentJpaEntity.setSiteId(paymentHistory.getSiteId());
+        paymentJpaEntity.setSiteId(paymentHistory.getAgencyId() + "-" + paymentHistory.getSiteId());
         paymentJpaEntity.setPaymentType(paymentHistory.getPaymentType());
         paymentJpaEntity.setRateSel(paymentHistory.getRateSel());
         paymentJpaEntity.setAmount(paymentHistory.getAmount());
         paymentJpaEntity.setOffer(paymentHistory.getOffer());
+        paymentJpaEntity.setTrTrace(paymentHistory.getTrTrace());
         paymentJpaEntity.setPaymentStatus(paymentHistory.getPaymentStatus());
         paymentJpaEntity.setTrDate(paymentHistory.getTrDate());
         paymentJpaEntity.setStartDate(paymentHistory.getStartDate());
@@ -102,7 +111,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setTradeNum(paymentHistory.getTradeNum());
         entity.setPgTradeNum(paymentHistory.getPgTradeNum());
         entity.setAgencyId(paymentHistory.getAgencyId());
-        entity.setSiteId(paymentHistory.getSiteId());
+        entity.setSiteId(paymentHistory.getAgencyId() + "-" + paymentHistory.getSiteId());
         entity.setPaymentType(paymentHistory.getPaymentType());
         entity.setRateSel(paymentHistory.getRateSel());
         entity.setAmount(paymentHistory.getAmount());
@@ -130,7 +139,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
                 .tradeNum(entity.getTradeNum())
                 .pgTradeNum(entity.getPgTradeNum())
                 .agencyId(entity.getAgencyId())
-                .siteId(entity.getSiteId())
+                .siteId(entity.getSiteId().split("-")[1])
                 .paymentType(entity.getPaymentType())
                 .rateSel(entity.getRateSel())
                 .amount(entity.getAmount())

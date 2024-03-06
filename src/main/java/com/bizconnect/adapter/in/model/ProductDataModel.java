@@ -1,13 +1,11 @@
-package com.bizconnect.application.domain.model;
+package com.bizconnect.adapter.in.model;
 
 import lombok.Getter;
 import lombok.Setter;
 
-import java.time.LocalDateTime;
-
 @Getter
 @Setter
-public class Product {
+public class ProductDataModel {
     /* 결제 상품 */
     /*
     상품코드 (Product Code) : productCode
