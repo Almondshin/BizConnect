@@ -214,7 +214,7 @@ public class PaymentController {
         String bizType = "B0";
         String encCd = "23";
         String mchtId = constant.PG_MID_AUTO;
-        String mchtTrdNo = "DREAMSEC" + UUID.randomUUID().toString().replace("-", "");
+        String mchtTrdNo = "RANDPREFIX" + UUID.randomUUID().toString().replace("-", "");
         LocalDateTime now = LocalDateTime.now();
         String trdDt = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String trdTm = now.toLocalTime().format(DateTimeFormatter.ofPattern("HHmmss"));
@@ -257,8 +257,8 @@ public class PaymentController {
                 String amount = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getPrice() + excessAmount;
 
                 data.put("pmtprdNm", productName);
-                data.put("mchtCustNm", "드림시큐리티");
-                data.put("mchtCustId", "Dreamsecurity");
+                data.put("mchtCustNm", "상점이름");
+                data.put("mchtCustId", "상점아이디");
                 data.put("billKey", billKey);
                 data.put("instmtMon", "00"); // 할부개월
                 data.put("crcCd", "KRW");
