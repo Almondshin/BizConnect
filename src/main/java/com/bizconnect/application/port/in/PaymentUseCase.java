@@ -17,10 +17,11 @@ public interface PaymentUseCase {
     String aes256EncryptEcb(ClientDataModel clientDataModel, String tradeNum, String trdDt, String trdTm);
     HashMap<String, String> encodeBase64(ClientDataModel clientDataModel , String tradeNum);
     List<PaymentHistoryDataModel> getPaymentHistoryByAgency(String agencyId,String siteId);
-    PaymentHistoryDataModel getPaymentHistoryByAgencyLastPayment(String agencyId,String siteId);
+    PaymentHistoryDataModel getPaymentHistoryByTradeNum(String tradeNum);
     String makeTradeNum();
     AgencyProducts getAgencyProductByRateSel(String rateSel);
-    int getExcessAmount(List<PaymentHistoryDataModel> list);
+    Map<String, Integer> getExcessAmount(List<PaymentHistoryDataModel> list);
     void insertAutoPayPaymentHistory(String agencyId, String siteId, AgencyProducts product,String reqData);
+    String makeTargetUrl(String agencyId,  String msgType);
 }
 

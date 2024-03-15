@@ -23,7 +23,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import javax.persistence.EntityNotFoundException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -51,6 +53,16 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
             throw new UnregisteredAgencyException(EnumResultCode.UnregisteredAgency, agency.getSiteId());
         }
         return foundAgencyInfo.map(this::convertClientModel);
+    }
+
+    @Override
+    public List<ClientDataModel> selectAgencyInfo() {
+        List<AgencyJpaEntity> entityList = agencyRepository.findAll();
+        List<ClientDataModel> clientDataModels = new ArrayList<>();
+        for (AgencyJpaEntity entity : entityList) {
+            clientDataModels.add(convertClientModel(entity));
+        }
+        return clientDataModels;
     }
 
 
@@ -82,7 +94,23 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
                 entity.setStartDate(client.getStartDate());
                 entity.setEndDate(client.getEndDate());
             }
+            if (client.getRateSel().contains("autopay")){
+                entity.setScheduledRateSel(client.getRateSel());
+            }
             entity.setExtensionStatus(EnumExtensionStatus.NOT_EXTENDABLE.getCode());
+        } else {
+            throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() + ", " + agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updateAgencyExcessCount(Agency agency, int excessCount) {
+        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
+        Optional<AgencyJpaEntity> optionalEntity = agencyRepository.findByAgencyIdAndSiteId(agency.getAgencyId(),siteId);
+        if (optionalEntity.isPresent()){
+            AgencyJpaEntity entity = optionalEntity.get();
+            entity.setExcessCount(Integer.toString(excessCount));
         } else {
             throw new EntityNotFoundException("optionalEntity : " + agency.getAgencyId() + ", " + agency.getSiteId() + "인 엔터티를 찾을 수 없습니다.");
         }
@@ -148,6 +176,7 @@ public class AgencyAdapter implements LoadAgencyDataPort, SaveAgencyDataPort {
         clientDataModel.setCompanySite(entity.getCompanySite());
         clientDataModel.setEmail(entity.getEmail());
         clientDataModel.setRateSel(entity.getRateSel());
+        clientDataModel.setScheduledRateSel(entity.getScheduledRateSel());
         clientDataModel.setSiteStatus(entity.getSiteStatus());
         clientDataModel.setExtensionStatus(entity.getExtensionStatus());
         clientDataModel.setStartDate(entity.getStartDate());

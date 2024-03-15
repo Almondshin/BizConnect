@@ -5,6 +5,7 @@ import com.bizconnect.adapter.out.persistence.repository.AgencyProductRepository
 import com.bizconnect.application.domain.model.AgencyProducts;
 import com.bizconnect.application.port.out.load.LoadAgencyProductDataPort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -18,6 +19,7 @@ public class AgencyProductAdapter implements LoadAgencyProductDataPort {
     }
 
     @Override
+    @Transactional
     public AgencyProducts getAgencyProductByRateSel(String rateSel) {
         Optional<AgencyProductsJpaEntity> entity = agencyProductRepository.findByRateSel(rateSel);
         return entity.map(this::convertDomain).orElse(null);

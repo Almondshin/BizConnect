@@ -45,6 +45,11 @@ public class AgencyService implements AgencyUseCase {
     }
 
     @Override
+    public List<ClientDataModel> selectAgencyInfo() {
+        return loadAgencyDataPort.selectAgencyInfo();
+    }
+
+    @Override
     public List<Map<String, String>> getProductTypes(String agencyId) {
         Optional<AgencyInfoKey> optAgencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
         List<Map<String, String>> productsList = new ArrayList<>();
@@ -66,6 +71,8 @@ public class AgencyService implements AgencyUseCase {
                 productsList.add(enumData);
             }
         }
+
+        System.out.println("productsList : " + productsList);
         return productsList;
     }
 
@@ -85,6 +92,7 @@ public class AgencyService implements AgencyUseCase {
                 clientDataModel.getCompanySite(),
                 clientDataModel.getEmail(),
                 clientDataModel.getRateSel(),
+                clientDataModel.getScheduledRateSel(),
                 clientDataModel.getSiteStatus(),
                 clientDataModel.getExtensionStatus(),
                 clientDataModel.getStartDate(),

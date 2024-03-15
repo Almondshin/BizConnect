@@ -71,6 +71,9 @@ public class PaymentJpaEntity {
     private Date regDate;
     @Column(name = "MOD_DATE")
     private Date modDate;
+
+    @Column(name = "EXTRA_AMOUNT_STATUS")
+    private String extraAmountStatus;
     @Column(name = "MEMO")
     private String memo;
 

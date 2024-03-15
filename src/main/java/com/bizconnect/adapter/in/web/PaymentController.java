@@ -5,14 +5,16 @@ import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
-import com.bizconnect.application.domain.enums.EnumExtensionStatus;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
+import com.bizconnect.application.domain.enums.*;
+import com.bizconnect.application.domain.model.AgencyInfoKey;
 import com.bizconnect.application.domain.model.AgencyProducts;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
 import com.bizconnect.application.port.in.AgencyUseCase;
+import com.bizconnect.application.port.in.NotiUseCase;
 import com.bizconnect.application.port.in.PaymentUseCase;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.Logger;
@@ -29,6 +31,7 @@ import java.text.SimpleDateFormat;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The type Payment controller.
@@ -42,6 +45,7 @@ public class PaymentController {
     private final AgencyUseCase agencyUseCase;
     private final Constant constant;
     private final PaymentUseCase paymentUseCase;
+    private final NotiUseCase notiUseCase;
 
     @Value("${external.url}")
     private String profileSpecificUrl;
@@ -61,10 +65,11 @@ public class PaymentController {
      * @param constant       the constant
      * @param paymentUseCase the payment use case
      */
-    public PaymentController(AgencyUseCase agencyUseCase, Constant constant, PaymentUseCase paymentUseCase) {
+    public PaymentController(AgencyUseCase agencyUseCase, Constant constant, PaymentUseCase paymentUseCase, NotiUseCase notiUseCase) {
         this.agencyUseCase = agencyUseCase;
         this.constant = constant;
         this.paymentUseCase = paymentUseCase;
+        this.notiUseCase = notiUseCase;
     }
 
 
@@ -88,8 +93,6 @@ public class PaymentController {
         logger.info("[startDate] : [" + clientDataModel.getStartDate() + "]");
 
 
-        //TODO
-        // 초과금액 계산 마지막거래건이 아닌 전전거래건을 찾아갈 수 있도록 변경 필요
         if (optClientInfo.isPresent()) {
             ClientDataModel clientInfo = optClientInfo.get();
 
@@ -101,11 +104,23 @@ public class PaymentController {
                 return siteStatusResponse;
             }
 
+            if (clientInfo.getScheduledRateSel() != null && clientInfo.getScheduledRateSel().contains("autopay")) {
+                responseMessage.put("resultCode", EnumResultCode.Subscription.getCode());
+                responseMessage.put("resultMsg", EnumResultCode.Subscription.getValue());
+                return ResponseEntity.ok(responseMessage);
+            }
+
             //초과 건수 계산
             if (clientInfo.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-                int excessAmount = paymentUseCase.getExcessAmount(paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId()));
-                responseMessage.put("excessAmount", excessAmount);
-                logger.info("[Retrieved excessAmount] : [" + excessAmount + "]");
+                Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
+                        paymentUseCase.getPaymentHistoryByAgency(clientInfo.getAgencyId(), clientInfo.getSiteId())
+                );
+
+                responseMessage.put("extensionStatus", EnumExtensionStatus.EXTENDABLE.getCode());
+                responseMessage.put("excessCount", excessMap.get("excessCount"));
+                responseMessage.put("excessAmount", excessMap.get("excessAmount"));
+                logger.info("[Retrieved excessCount] : [" + excessMap.get("excessCount") + "]");
+                logger.info("[Retrieved excessAmount] : [" + excessMap.get("excessAmount") + "]");
             }
 
             logger.info("[Retrieved agencyId] : [" + clientInfo.getAgencyId() + "]");
@@ -199,13 +214,101 @@ public class PaymentController {
     }
 
 
+    @PostMapping(value = "/cardCancel")
+    public void requestCardCancelPayment(@RequestBody String requestSiteId) throws JsonProcessingException {
+        Map<String, Object> requestData = new HashMap<>();
+        Map<String, String> params = new HashMap<>();
+
+        String ver = "0A19"; // 전문의 버전 "0A19"고정값
+        String method = "CA"; // 결제 수단 "CA" 고정값
+        String bizType = "C0"; // 업무 구분코드 "C0" 고정값
+        String encCd = "23"; //  암호화 구분 코드 "23" 고정값
+        String mchtId = constant.getPG_CANCEL_MID_CARD(); // 상점아이디
+        String mchtTrdNo = "DREAMSECCNCL" + UUID.randomUUID().toString().replace("-", "");
+        LocalDateTime now = LocalDateTime.now();
+        String trdDt = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
+        String trdTm = now.toLocalTime().format(DateTimeFormatter.ofPattern("HHmmss"));
+
+        params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
+        params.put("ver", ver); // 버전 (고정값)
+        params.put("method", method); // 결제수단 (고정값)
+        params.put("bizType", bizType); // 업무 구분 코드 (고정값)
+        params.put("encCd", encCd);   // 암호화 구분 코드 (고정값)
+        params.put("mchtTrdNo", mchtTrdNo); // 상점 주문번호
+        params.put("trdDt", trdDt); // 취소 요청 일자
+        params.put("trdTm", trdTm);   // 취소 요청 시간
+
+
+        ObjectMapper mapper = new ObjectMapper();
+        Map<String, String> mapData = mapper.readValue(requestSiteId, Map.class);
+
+        String agencyId = mapData.get("agencyId");
+        String siteId = mapData.get("siteId").split("-")[1];
+
+        Optional<PaymentHistoryDataModel> optPaymentHistory = paymentUseCase.getPaymentHistoryByAgency(agencyId, siteId)
+                .stream()
+                .filter(e -> e.getTradeNum().equals(mapData.get("tradeNum")))
+                .findFirst();
+
+        if (optPaymentHistory.isPresent()) {
+            PaymentHistoryDataModel paymentHistoryDataModel = optPaymentHistory.get();
+            Map<String, String> data = new HashMap<>();
+
+            if (paymentHistoryDataModel.getRateSel().contains("autopay")) {
+                mchtId = constant.getPG_CANCEL_MID_AUTO();
+                params.put("mchtId", mchtId); // 헥토파이낸셜 부여 상점 아이디
+            }
+
+            data.put("orgTrdNo", paymentHistoryDataModel.getPgTradeNum()); // 원거래번호 : 결제시 헥토에서 발급한 거래번호
+            data.put("crcCd", "KRW"); // 통화구분 "KRW" 고정값
+            data.put("cnclOrd", "001"); // 취소 회차
+            data.put("cnclAmt", paymentHistoryDataModel.getAmount()); // 취소 금액 AES 암호화
+
+            try {
+                // 취소요청일자 + 취소요청시간 + 상점아이디 + 상점주문번호 + 취소금액(평문) + 해쉬키
+                data.put("pktHash", EncryptUtil.digestSHA256(
+                        trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataModel.getAmount() + constant.LICENSE_KEY)
+                );
+                data.put("cnclAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("cnclAmt"))));
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+
+            requestData.put("params", params);
+            requestData.put("data", data);
+            String url = constant.BILL_SERVER_URL + "/spay/APICancel.do";
+
+            HttpClientUtil httpClientUtil = new HttpClientUtil();
+            String resData = httpClientUtil.sendApi(url, requestData, 5000, 25000);
+            System.out.println(resData);
+
+            String hashCipher = "";
+            String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + paymentHistoryDataModel.getAmount() + constant.LICENSE_KEY;
+
+            /** SHA256 해쉬 처리 */
+            try {
+                hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+            } catch (Exception e) {
+                logger.error("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+            } finally {
+                logger.info("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+            }
+
+
+            //TODO
+            // 결제 취소 시 제휴사 알림 필요 사이트 상태는 : P로 전달
+            String targetUrl = paymentUseCase.makeTargetUrl(agencyId, "SiteStatusMsg");
+        }
+    }
+
+
     /**
      * Request bill key payment.
      *
-     * @param requestSiteIdList the request map
+     * @param requestMsg the request map
      */
     @PostMapping(value = "/bill")
-    public void requestBillKeyPayment(@RequestBody String requestSiteIdList) throws JsonProcessingException {
+    public void requestBillKeyPayment(@RequestBody String requestMsg) {
         Map<String, Object> responseData = new HashMap<>();
         Map<String, String> params = new HashMap<>();
 
@@ -214,7 +317,7 @@ public class PaymentController {
         String bizType = "B0";
         String encCd = "23";
         String mchtId = constant.PG_MID_AUTO;
-        String mchtTrdNo = "RANDPREFIX" + UUID.randomUUID().toString().replace("-", "");
+        String mchtTrdNo = "DREAMSECAUTO" + UUID.randomUUID().toString().replace("-", "");
         LocalDateTime now = LocalDateTime.now();
         String trdDt = now.toLocalDate().format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String trdTm = now.toLocalTime().format(DateTimeFormatter.ofPattern("HHmmss"));
@@ -229,68 +332,93 @@ public class PaymentController {
         params.put("trdTm", trdTm);   // 주문 시간
 
 
-        ObjectMapper mapper = new ObjectMapper();
-        Map<String, String> mapData = mapper.readValue(requestSiteIdList, Map.class);
+        if (requestMsg.equals("BillPaymentService")) {
+            List<ClientDataModel> agencyInfoList = agencyUseCase.selectAgencyInfo().stream()
+                    .filter(e -> e.getSiteStatus().equals(EnumSiteStatus.ACTIVE.getCode()))
+                    .filter(e -> e.getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode()))
+                    .filter(e -> e.getScheduledRateSel() != null && e.getScheduledRateSel().contains("auto"))
+                    .collect(Collectors.toList());
 
-        mapData.forEach((siteId, agencyId) -> {
-            Optional<ClientDataModel> clientDataModel = agencyUseCase.getAgencyInfo(new ClientDataModel(agencyId, siteId));
-            if (clientDataModel.isPresent()) {
-                ClientDataModel info = clientDataModel.get();
+            agencyInfoList.forEach(agencyInfo -> {
+                String convertSiteId = agencyInfo.getSiteId();
 
-                //TODO
-                // 리스트에서 가져오는데이터가 가장 첫번째 데이터가 아닐 수 있음,
-                // 직전월의 데이터만 추출하도록 해야 할 가능성이 있음
-                PaymentHistoryDataModel paymentHistory = paymentUseCase.getPaymentHistoryByAgencyLastPayment(agencyId, siteId);
+                Optional<ClientDataModel> clientDataModel = agencyUseCase.getAgencyInfo(new ClientDataModel(agencyInfo.getAgencyId(), convertSiteId));
+                if (clientDataModel.isPresent()) {
+                    ClientDataModel info = clientDataModel.get();
 
-                Map<String, String> data = new HashMap<>();
-                String billKey = paymentHistory.getBillKey();
+                    AgencyProducts products;
+                    if (info.getScheduledRateSel() == null || info.getScheduledRateSel().isEmpty()) {
+                        products = paymentUseCase.getAgencyProductByRateSel(info.getRateSel());
+                    } else {
+                        products = paymentUseCase.getAgencyProductByRateSel(info.getScheduledRateSel());
+                    }
+                    List<PaymentHistoryDataModel> paymentHistoryList = paymentUseCase.getPaymentHistoryByAgency(agencyInfo.getAgencyId(), convertSiteId)
+                            .stream()
+                            .filter((PaymentHistoryDataModel e) -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
+                            .filter((PaymentHistoryDataModel e) -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                            .collect(Collectors.toList());
 
-                AgencyProducts products = paymentUseCase.getAgencyProductByRateSel(info.getRateSel());
-                String productName = products.getName();
 
+                    Map<String, String> data = new HashMap<>();
+                    String billKey = paymentHistoryList.get(0).getBillKey();
 
-                int offer = Integer.parseInt(paymentHistory.getOffer());
-                int excessCount = offer - Integer.parseInt(paymentHistory.getUseCount());
+                    String productName = products.getName();
 
-                int excessAmount = excessCount < 0 ? (int) (Math.abs(excessCount) * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0;
+                    int excessCount = 0;
+                    int excessAmount = 0;
+                    if (paymentHistoryList.size() > 2) {
+                        Map<String, Integer> excessMap = paymentUseCase.getExcessAmount(
+                                paymentUseCase.getPaymentHistoryByAgency(info.getAgencyId(), info.getSiteId())
+                        );
+                        excessCount = excessMap.get("excessCount");
+                        excessAmount = excessMap.get("excessAmount");
+                    }
 
-                String amount = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getPrice() + excessAmount;
+                    String amount = paymentUseCase.getAgencyProductByRateSel(info.getRateSel()).getPrice() + excessAmount;
 
-                data.put("pmtprdNm", productName);
-                data.put("mchtCustNm", "상점이름");
-                data.put("mchtCustId", "상점아이디");
-                data.put("billKey", billKey);
-                data.put("instmtMon", "00"); // 할부개월
-                data.put("crcCd", "KRW");
-                data.put("trdAmt", amount);
+                    data.put("pmtprdNm", productName);
+                    data.put("mchtCustNm", "드림시큐리티");
+                    data.put("mchtCustId", mchtId);
+                    data.put("billKey", billKey);
+                    data.put("instmtMon", "00"); // 할부개월
+                    data.put("crcCd", "KRW");
+                    data.put("trdAmt", amount);
 
-                try {
-                    data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
-                    data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
-                } catch (Exception e) {
-                    throw new RuntimeException(e);
+                    try {
+                        data.put("pktHash", EncryptUtil.digestSHA256(trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY));
+                        data.put("trdAmt", Base64.getEncoder().encodeToString(EncryptUtil.aes256EncryptEcb(constant.AES256_KEY, data.get("trdAmt"))));
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+
+                    String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
+
+                    HttpClientUtil httpClientUtil = new HttpClientUtil();
+
+                    responseData.put("params", params);
+                    responseData.put("data", data);
+                    String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
+
+                    String hashCipher = "";
+                    String hashPlain = trdDt + trdTm + mchtId + mchtTrdNo + data.get("trdAmt") + constant.LICENSE_KEY;
+
+                    /** SHA256 해쉬 처리 */
+                    try {
+                        hashCipher = EncryptUtil.digestSHA256(hashPlain);//해쉬 값
+                    } catch (Exception e) {
+                        logger.error("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Hashing Fail! : " + e.toString());
+                    } finally {
+                        logger.info("[" + params.get("mchtTrdNo") + "][SHA256 HASHING] Plain Text[" + hashPlain + "] ---> Cipher Text[" + hashCipher + "]");
+                    }
+                    paymentUseCase.insertAutoPayPaymentHistory(agencyInfo.getAgencyId(), convertSiteId, paymentUseCase.getAgencyProductByRateSel(info.getRateSel()), reqData);
                 }
-
-
-                String url = constant.BILL_SERVER_URL + "/spay/APICardActionPay.do";
-
-                HttpClientUtil httpClientUtil = new HttpClientUtil();
-
-                //TODO
-                // responseData 요청 데이터 생성 필요
-                responseData.put("params", params);
-                responseData.put("data", data);
-                String reqData = httpClientUtil.sendApi(url, responseData, 5000, 25000);
-
-                paymentUseCase.insertAutoPayPaymentHistory(agencyId, siteId, paymentUseCase.getAgencyProductByRateSel(info.getRateSel()), reqData);
-            }
-        });
+            });
+        }
 
     }
 
 
     /* 결제대기상태가 아닌 경우, 초기 결제로 판단 제휴사 승인대기, 통신사 승인대기 상태 전달. */
-
 
     /**
      * @param responseMessage
@@ -373,5 +501,25 @@ public class PaymentController {
             throw new NoExtensionException(EnumResultCode.NoExtension, clientInfo.getSiteId());
         }
     }
+
+    private String makeTargetUrl(Optional<AgencyInfoKey> agencyInfoKey, String agencyId) throws JsonProcessingException {
+        String msgType = "";
+        if (agencyInfoKey.isPresent()) {
+            AgencyInfoKey info = agencyInfoKey.get();
+            ObjectMapper mapper = new ObjectMapper();
+            Map<String, String> agencyUrlJson = mapper.readValue(info.getAgencyUrl(), new TypeReference<>() {
+            });
+            EnumAgency[] enumAgencies = EnumAgency.values();
+            for (EnumAgency enumAgency : enumAgencies) {
+                if (enumAgency.getCode().equals(agencyId)) {
+                    msgType = enumAgency.getPaymentMsg();
+                    break;
+                }
+            }
+            return agencyUrlJson.get(msgType);
+        }
+        return "";
+    }
+
 
 }

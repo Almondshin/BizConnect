@@ -1,8 +1,8 @@
 package com.bizconnect.adapter.out.persistence.adapter;
 
-import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.persistence.entity.PaymentJpaEntity;
 import com.bizconnect.adapter.out.persistence.repository.PaymentHistoryRepository;
+import com.bizconnect.application.domain.enums.EnumExtraAmountStatus;
 import com.bizconnect.application.domain.enums.EnumTradeTrace;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.PaymentHistory;
@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 import javax.persistence.EntityNotFoundException;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
@@ -43,23 +44,11 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         }
     }
 
-    @Override
-    public PaymentHistory getPaymentHistoryByAgencyLastPayment(Agency agency) {
-        String siteId = agency.getAgencyId() + "-" + agency.getSiteId();
-        List<PaymentJpaEntity> foundPaymentHistory = paymentHistoryRepository.findByAgencyIdAndSiteIdAndTrTrace(agency.getAgencyId(), siteId, EnumTradeTrace.USED.getCode());
-        if (foundPaymentHistory == null || foundPaymentHistory.isEmpty()) {
-            throw new EntityNotFoundException("Agency siteId : " + agency.getSiteId() + " EnumTradeTrace : " + EnumTradeTrace.USED.getCode() + " 인 엔터티를 찾을 수 없습니다.");
-        } else {
-            return foundPaymentHistory.stream()
-                    .map(this::convertToDomain)
-                    .max(Comparator.comparing(PaymentHistory::getEndDate))
-                    .orElse(null);
-        }
-    }
 
     @Override
-    public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String tradeNum) {
-        Optional<PaymentJpaEntity> entity = paymentHistoryRepository.findByTradeNum(tradeNum);
+    @Transactional
+    public Optional<PaymentHistory> getPaymentHistoryByTradeNum(String pgTradeNum) {
+        Optional<PaymentJpaEntity> entity = paymentHistoryRepository.findById(pgTradeNum);
         return entity.map(this::convertToDomain);
     }
 
@@ -80,6 +69,30 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
             updateEntityFields(paymentHistory, optionalEntity.get());
         } else {
             throw new EntityNotFoundException("hfTradeNum : " + paymentHistory.getPgTradeNum() + "인 엔터티를 찾을 수 없습니다.");
+        }
+    }
+
+    @Override
+    @Transactional
+    public void updatePaymentUseCount(String tradeNum, String pgTradeNum, long useCountSum) {
+        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(pgTradeNum);
+        if (optionalEntity.isPresent()) {
+            PaymentJpaEntity entity = optionalEntity.get();
+            entity.setUseCount(Long.toString(useCountSum));
+            if (!Objects.equals(entity.getTradeNum(), tradeNum)) {
+                throw new EntityNotFoundException("tradeNum : " + entity.getTradeNum() + "인 엔터티를 찾을 수 없습니다.");
+            }
+        }
+
+    }
+
+    @Override
+    @Transactional
+    public void updatePaymentExtraAmountStatus(PaymentHistory paymentHistory) {
+        Optional<PaymentJpaEntity> optionalEntity = paymentHistoryRepository.findById(paymentHistory.getPgTradeNum());
+        if (optionalEntity.isPresent()){
+            PaymentJpaEntity entity = optionalEntity.get();
+            entity.setExtraAmountStatus(EnumExtraAmountStatus.SYSTEM_COMPLETE.getCode());
         }
     }
 
@@ -130,6 +143,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
         entity.setVbankExpireDate(paymentHistory.getVbankExpireDate());
         entity.setRegDate(paymentHistory.getRegDate());
         entity.setModDate(paymentHistory.getModDate());
+        entity.setExtraAmountStatus(paymentHistory.getExtraAmountStatus());
         entity.setMemo(paymentHistory.getMemo());
         return entity;
     }
@@ -158,6 +172,7 @@ public class PaymentAdapter implements LoadPaymentDataPort, SavePaymentDataPort 
                 .vbankExpireDate(entity.getVbankExpireDate())
                 .regDate(entity.getRegDate())
                 .modDate(entity.getModDate())
+                .extraAmountStatus(entity.getExtraAmountStatus())
                 .memo(entity.getMemo())
                 .build();
     }

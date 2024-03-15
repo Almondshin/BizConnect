@@ -11,7 +11,8 @@ public class Constant {
     public String PG_MID;
     public String PG_MID_CARD;
     public String PG_MID_AUTO;
-    public String PG_CANCEL_MID;
+    public String PG_CANCEL_MID_CARD;
+    public String PG_CANCEL_MID_AUTO;
     public String LICENSE_KEY;
     public String AES256_KEY;
     public String BILL_SERVER_URL;

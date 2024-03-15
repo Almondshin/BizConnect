@@ -9,4 +9,6 @@ import java.util.Date;
 public interface SaveAgencyDataPort {
     void registerAgency(Agency agency, Client client, SettleManager settleManager);
     void updateAgency(Agency agency, Client client, String paymentStatus);
+
+    void updateAgencyExcessCount(Agency agency, int excessCount);
 }

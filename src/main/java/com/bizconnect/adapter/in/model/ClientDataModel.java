@@ -25,6 +25,7 @@ public class ClientDataModel {
     private String companySite;
     private String email;
     private String rateSel;
+    private String scheduledRateSel;
     private String siteStatus;
     private String extensionStatus;
     private Date startDate;
@@ -55,7 +56,7 @@ public class ClientDataModel {
     private String vatAmt;
     private String taxFreeAmt;
 
-    private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9]+$";
+    private static final String AGENCY_SITE_ID_PATTERN = "^[a-zA-Z0-9\\-]+$";
 
     public ClientDataModel() {
     }

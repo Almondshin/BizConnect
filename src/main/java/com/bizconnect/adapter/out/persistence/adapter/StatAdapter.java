@@ -5,6 +5,7 @@ import com.bizconnect.adapter.out.persistence.repository.StatDayRepository;
 import com.bizconnect.application.domain.model.StatDay;
 import com.bizconnect.application.port.out.load.LoadStatDataPort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -25,6 +26,7 @@ public class StatAdapter implements LoadStatDataPort {
     private final SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
 
     @Override
+    @Transactional
     public List<StatDay> findBySiteIdAndFromDate(String siteId, String toDate, String fromDate) {
         List<StatDayJpaEntity> entities = statDayRepository.findBySiteIdAndFromDate(siteId, toDate, fromDate);
         return entities.stream()

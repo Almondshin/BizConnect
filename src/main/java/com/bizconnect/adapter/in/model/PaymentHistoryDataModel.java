@@ -39,5 +39,7 @@ public class PaymentHistoryDataModel {
 
     private Date regDate;
     private Date modDate;
+
+    private String extraAmountStatus;
     private String memo;
 }

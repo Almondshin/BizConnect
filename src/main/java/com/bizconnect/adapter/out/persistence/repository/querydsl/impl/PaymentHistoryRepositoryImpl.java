@@ -14,7 +14,6 @@ import java.util.List;
 public class PaymentHistoryRepositoryImpl implements PaymentHistoryRepositoryQueryDSL {
 
     private final JPAQueryFactory jpaQueryFactory;
-
     QPaymentJpaEntity qPaymentJpaEntity = QPaymentJpaEntity.paymentJpaEntity;
 
     @Override
@@ -23,7 +22,7 @@ public class PaymentHistoryRepositoryImpl implements PaymentHistoryRepositoryQue
                 .where(qPaymentJpaEntity.agencyId.eq(agencyId)
                         .and(qPaymentJpaEntity.siteId.eq(siteId))
                         .and(qPaymentJpaEntity.trTrace.eq(trTrace)))
-                .limit(2)
+                .orderBy(qPaymentJpaEntity.trDate.desc())
                 .fetch();
     }
 }

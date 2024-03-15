@@ -5,6 +5,7 @@ public enum EnumResultCode {
     IllegalArgument("2900", "데이터형식이 올바르지 않습니다."),
     NullPointArgument("2980", "제휴사ID 또는 상점ID가 비어있습니다."),
     DuplicateMember("2999", "이미 사용중인 아이디입니다."),
+    Subscription("3700", "정기결제를 이용중인 가맹점입니다."),
     PendingApprovalStatus("3800", "제휴사 승인대기 상태입니다."),
     PendingTelcoApprovalStatus("3810", "통신사 승인대기 상태입니다."),
     NoExtension("3988", "결제 가능 기간이 아닙니다."),

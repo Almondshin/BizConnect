@@ -5,9 +5,12 @@ import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.Client;
 import com.bizconnect.application.domain.model.SettleManager;
 
+import java.util.List;
 import java.util.Optional;
 
 public interface LoadAgencyDataPort {
     Optional<ClientDataModel> getAgencyInfo(Agency agency, Client client);
+
+    List<ClientDataModel> selectAgencyInfo();
 }
 

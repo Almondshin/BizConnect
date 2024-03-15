@@ -12,6 +12,7 @@ import java.util.List;
 @Repository
 @RequiredArgsConstructor
 public class StatDayRepositoryImpl implements StatDayRepositoryQueryDSL {
+
     private final JPAQueryFactory jpaQueryFactory;
     QStatDayJpaEntity qStatDayJpaEntity = QStatDayJpaEntity.statDayJpaEntity;
 

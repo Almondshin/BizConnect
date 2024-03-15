@@ -20,6 +20,7 @@ public class Client {
     private String companySite;
     private String email;
     private String rateSel;
+    private String scheduledRateSel;
     private String siteStatus;
     private String extensionStatus;
     private Date startDate;
@@ -27,7 +28,7 @@ public class Client {
 
     private String serviceUseAgree;
 
-    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String siteStatus, String extensionStatus,Date startDate, Date endDate, String serviceUseAgree) {
+    public Client(String siteName, String companyName, String businessType, String bizNumber, String ceoName, String phoneNumber, String address, String companySite, String email, String rateSel, String scheduledRateSel, String siteStatus, String extensionStatus,Date startDate, Date endDate, String serviceUseAgree) {
         this.siteName = siteName;
         this.companyName = companyName;
         this.businessType = businessType;
@@ -38,6 +39,7 @@ public class Client {
         this.companySite = companySite;
         this.email = email;
         this.rateSel = rateSel;
+        this.scheduledRateSel = scheduledRateSel;
         this.siteStatus = siteStatus;
         this.extensionStatus = extensionStatus;
         this.startDate = startDate;

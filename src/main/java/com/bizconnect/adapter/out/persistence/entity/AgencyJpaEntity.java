@@ -44,12 +44,15 @@ public class AgencyJpaEntity {
 	private String email;
 	@Column(name = "RATE_SEL")
 	private String rateSel;
+	@Column(name = "SCHEDULED_RATE_SEL")
+	private String scheduledRateSel;
 	@Column(name = "SITE_STATUS")
 	private String siteStatus;
 
 	@Column(name = "EXTENSION_STATUS")
 	private String extensionStatus;
-
+	@Column(name = "EXCESS_COUNT")
+	private String excessCount;
 
 	@Column(name = "START_DATE")
 	private Date startDate;

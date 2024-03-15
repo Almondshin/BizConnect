@@ -32,13 +32,6 @@ public class AgencyController {
     private final EncryptUseCase encryptUseCase;
     private final NotiUseCase notiUseCase;
 
-
-    @Value("${external.url}")
-    private String profileSpecificUrl;
-
-    @Value("${external.payment.url}")
-    private String profileSpecificPaymentUrl;
-
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
 
@@ -144,7 +137,7 @@ public class AgencyController {
         boolean isVerifiedHmac = verifyHmacSHA256(encryptedHmacValue, originalMessage, keyString);
         boolean isVerifiedMsgType = verifyReceivedMessageType("reg", clientDataModel.getMsgType(), keyString);
 
-        agencyUseCase.registerAgency(decryptInfo);
+        verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
 
         logger.info("S ------------------------------[AGENCY] - [regSiteInfo] ------------------------------ S");
         logger.info("[agencyId] : [" + clientDataModel.getAgencyId() + "]");
@@ -158,7 +151,13 @@ public class AgencyController {
         responseMessage.put("resultCode", resultCode);
         responseMessage.put("resultMsg", resultMsg);
 
-        verifiedHmacAndType(responseMessage, isVerifiedHmac, isVerifiedMsgType);
+        agencyUseCase.registerAgency(decryptInfo);
+
+        Map<String, String> registerMap = new HashMap<>();
+        registerMap.put("agencyId", clientDataModel.getAgencyId());
+        registerMap.put("siteId", decryptInfo.getSiteId());
+        String registerMessage = objectMapper.writeValueAsString(registerMap);
+        notiUseCase.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/register", registerMessage);
 
         logger.info("[resultCode] : [" + responseMessage.get("resultCode") + "]");
         logger.info("[resultMsg] : [" + responseMessage.get("resultMsg") + "]");

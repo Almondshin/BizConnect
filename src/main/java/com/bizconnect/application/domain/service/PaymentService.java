@@ -5,11 +5,7 @@ import com.bizconnect.adapter.in.model.PaymentDataModel;
 import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
-import com.bizconnect.adapter.out.persistence.entity.StatDayJpaEntity;
-import com.bizconnect.application.domain.enums.EnumBillingBase;
-import com.bizconnect.application.domain.enums.EnumExtensionStatus;
-import com.bizconnect.application.domain.enums.EnumPaymentStatus;
-import com.bizconnect.application.domain.enums.EnumTradeTrace;
+import com.bizconnect.application.domain.enums.*;
 import com.bizconnect.application.domain.model.*;
 import com.bizconnect.application.exceptions.enums.EnumResultCode;
 import com.bizconnect.application.exceptions.exceptions.NoExtensionException;
@@ -20,14 +16,17 @@ import com.bizconnect.application.port.out.load.LoadAgencyProductDataPort;
 import com.bizconnect.application.port.out.load.LoadEncryptDataPort;
 import com.bizconnect.application.port.out.load.LoadPaymentDataPort;
 import com.bizconnect.application.port.out.load.LoadStatDataPort;
+import com.bizconnect.application.port.out.save.SaveAgencyDataPort;
 import com.bizconnect.application.port.out.save.SavePaymentDataPort;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import net.sf.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
@@ -41,23 +40,33 @@ import java.util.stream.LongStream;
 @Service
 public class PaymentService implements PaymentUseCase, StatUseCase {
     private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+    Logger logger = LoggerFactory.getLogger("PaymentService");
+
+    @Value("${external.admin.url}")
+    private String profileSpecificAdminUrl;
     private final Constant constant;
     private final AgencyService agencyService;
-    Logger logger = LoggerFactory.getLogger("HFInitController");
+    private final EncryptDataService encryptDataService;
+    private final NotiService notiService;
     private final LoadPaymentDataPort loadPaymentDataPort;
+    private final SavePaymentDataPort savePaymentDataPort;
+    private final SaveAgencyDataPort saveAgencyDataPort;
     private final LoadEncryptDataPort loadEncryptDataPort;
     private final LoadAgencyProductDataPort loadAgencyProductDataPort;
     private final LoadStatDataPort loadStatDataPort;
-    private final SavePaymentDataPort savePaymentDataPort;
 
-    public PaymentService(Constant constant, AgencyService agencyService, LoadPaymentDataPort loadPaymentDataPort, LoadEncryptDataPort loadEncryptDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort, LoadStatDataPort loadStatDataPort, SavePaymentDataPort savePaymentDataPort) {
+
+    public PaymentService(Constant constant, AgencyService agencyService, EncryptDataService encryptDataService, NotiService notiService, LoadPaymentDataPort loadPaymentDataPort, LoadEncryptDataPort loadEncryptDataPort, LoadAgencyProductDataPort loadAgencyProductDataPort, LoadStatDataPort loadStatDataPort, SavePaymentDataPort savePaymentDataPort, SaveAgencyDataPort saveAgencyDataPort) {
         this.constant = constant;
         this.agencyService = agencyService;
+        this.encryptDataService = encryptDataService;
+        this.notiService = notiService;
         this.loadPaymentDataPort = loadPaymentDataPort;
         this.loadEncryptDataPort = loadEncryptDataPort;
         this.loadAgencyProductDataPort = loadAgencyProductDataPort;
         this.loadStatDataPort = loadStatDataPort;
         this.savePaymentDataPort = savePaymentDataPort;
+        this.saveAgencyDataPort = saveAgencyDataPort;
     }
 
 
@@ -119,7 +128,10 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
         Optional<ClientDataModel> info = agencyService.getAgencyInfo(new ClientDataModel(agencyId, siteId));
 
         if (info.get().getExtensionStatus().equals(EnumExtensionStatus.EXTENDABLE.getCode())) {
-            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId, siteId);
+            List<PaymentHistoryDataModel> list = getPaymentHistoryByAgency(agencyId, siteId).stream()
+                    .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
+                    .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                    .collect(Collectors.toList());
 
             if (sdf.parse(sdf.format(clientDataModel.getStartDate())).before(info.get().getEndDate())) {
                 throw new NoExtensionException(EnumResultCode.NoExtension, siteId);
@@ -231,10 +243,14 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public PaymentHistoryDataModel getPaymentHistoryByAgencyLastPayment(String agencyId, String siteId) {
-        return convertClient(loadPaymentDataPort.getPaymentHistoryByAgencyLastPayment(new Agency(agencyId, siteId)));
+    public PaymentHistoryDataModel getPaymentHistoryByTradeNum(String pgTradeNum) {
+        Optional<PaymentHistory> optPaymentHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(pgTradeNum);
+        if (optPaymentHistory.isPresent()) {
+            PaymentHistory paymentHistory = optPaymentHistory.get();
+            return convertClient(paymentHistory);
+        }
+        return null;
     }
-
 
     @Override
     public String makeTradeNum() {
@@ -250,60 +266,71 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     }
 
     @Override
-    public int getExcessAmount(List<PaymentHistoryDataModel> list) {
+    public Map<String, Integer> getExcessAmount(List<PaymentHistoryDataModel> list) {
         SimpleDateFormat convertFormat = new SimpleDateFormat("yyyyMMdd");
 
         List<PaymentHistoryDataModel> checkedList = list.stream()
                 .filter(e -> e.getTrTrace().equals(EnumTradeTrace.USED.getCode()))
+                .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
                 .collect(Collectors.toList());
 
         if (checkedList.size() < 2) {
-            return 0;
+            return new HashMap<>();
         }
 
-        PaymentHistoryDataModel overPaymentTarget = checkedList.get(2);
-        Date convertedStartDate = overPaymentTarget.getStartDate();
-        Date convertedEndDate = overPaymentTarget.getEndDate();
+        PaymentHistoryDataModel overPaymentTarget = checkedList.get(1);
+
+        Date startDate = overPaymentTarget.getStartDate();
+        Date endDate = overPaymentTarget.getEndDate();
 
         String agencyId = overPaymentTarget.getAgencyId();
+
         if (agencyId == null) {
-            return 0;
+            return new HashMap<>();
         }
         String billingBase = loadEncryptDataPort.getAgencyInfoKey(agencyId)
                 .map(AgencyInfoKey::getBillingBase)
                 .orElse(null);
 
+
         if (billingBase == null) {
-            return 0;
+            return new HashMap<>();
         }
 
-        String startDate = convertFormat.format(convertedStartDate);
-        String endDate = convertFormat.format(convertedEndDate);
+        String convertedStartDate = convertFormat.format(startDate);
+        String convertedEndDate = convertFormat.format(endDate);
 
         List<StatDay> findStatDayList = getUseCountBySiteId(
-                overPaymentTarget.getSiteId(),
-                startDate,
-                endDate
+                agencyId + "-" + overPaymentTarget.getSiteId(),
+                convertedStartDate,
+                convertedEndDate
         );
 
-        System.out.println(findStatDayList);
+        long useCountSum = getUseCount(billingBase, findStatDayList);
+        System.out.println("useCountSum : " + useCountSum + ", startDate : " + convertedStartDate + ", endDate : " + convertedEndDate + ", billingBase : " + billingBase);
 
-        long incompleteCountSum = getIncompleteCount(billingBase, findStatDayList);
-        System.out.println(incompleteCountSum);
 
         AgencyProducts products = getAgencyProductByRateSel(overPaymentTarget.getRateSel());
         int offer = Integer.parseInt(overPaymentTarget.getOffer());
-        int excessCount = offer - (int) incompleteCountSum;
+        int excessCount = offer - (int) useCountSum;
+        int calcExcessCount = excessCount < 0 ? Math.abs(excessCount) : 0;
 
-        return excessCount < 0 ? (int) (Math.abs(excessCount) * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0;
+        saveAgencyDataPort.updateAgencyExcessCount(new Agency(agencyId, overPaymentTarget.getSiteId()), calcExcessCount);
+        savePaymentDataPort.updatePaymentUseCount(overPaymentTarget.getTradeNum(), overPaymentTarget.getPgTradeNum(), useCountSum);
+
+        Map<String, Integer> result = new HashMap<>();
+        result.put("excessCount", calcExcessCount);
+        result.put("excessAmount", excessCount < 0 ? (int) (Math.abs(excessCount) * Integer.parseInt(products.getExcessPerCase()) * 1.1) : 0);
+
+        return result;
     }
 
     @Override
     public void insertAutoPayPaymentHistory(String agencyId, String siteId, AgencyProducts products, String reqData) {
         System.out.println(reqData);
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
-
         ObjectMapper mapper = new ObjectMapper();
+
         try {
             Map<String, Object> map = mapper.readValue(reqData, new TypeReference<>() {
             });
@@ -318,73 +345,127 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
             System.out.println("outRsltCd : " + paramsMap.get("outRsltCd"));
             System.out.println("outRsltMsg : " + paramsMap.get("outRsltMsg"));
 
-            if ("0021".equals(paramsMap.get("outStatCd"))) {
+            if (getPaymentHistoryByTradeNum(paramsMap.get("trdNo")) == null) {
+                if ("0021".equals(paramsMap.get("outStatCd"))) {
+                    byte[] decodeBase64 = EncryptUtil.decodeBase64(dataMap.get("trdAmt"));
+                    byte[] resultByte = EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, decodeBase64);
+                    String decryptedAmount = new String(resultByte, "UTF-8");
 
-                byte[] decodeBase64 = EncryptUtil.decodeBase64(dataMap.get("trdAmt"));
-                byte[] resultByte = EncryptUtil.aes256DecryptEcb(constant.AES256_KEY, decodeBase64);
-                String decryptedAmount = new String(resultByte, "UTF-8");
+                    DateTimeFormatter trdDtFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
+                    LocalDateTime trDate = LocalDateTime.parse(paramsMap.get("trdDt") + paramsMap.get("trdTm"), trdDtFormat);
+                    Instant instant = trDate.atZone(ZoneId.systemDefault()).toInstant();
+                    Date trDateAsDate = Date.from(instant);
 
-                DateTimeFormatter trdDtFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-                LocalDateTime trDate = LocalDateTime.parse(paramsMap.get("trdDt") + paramsMap.get("trdTm"), trdDtFormat);
-                Instant instant = trDate.atZone(ZoneId.systemDefault()).toInstant();
-                Date trDateAsDate = Date.from(instant);
+                    Calendar startDateCal = Calendar.getInstance();
+                    startDateCal.add(Calendar.MONTH, 1);
+                    startDateCal.set(Calendar.DAY_OF_MONTH, startDateCal.getActualMinimum(Calendar.DAY_OF_MONTH));
 
-                Calendar startDateCal = Calendar.getInstance();
-                startDateCal.add(Calendar.MONTH, 1);
-                startDateCal.set(Calendar.DAY_OF_MONTH, startDateCal.getActualMinimum(Calendar.DAY_OF_MONTH));
+                    Calendar endDateCal = Calendar.getInstance();
+                    endDateCal.add(Calendar.MONTH, 1);
+                    endDateCal.set(Calendar.DAY_OF_MONTH, endDateCal.getActualMaximum(Calendar.DAY_OF_MONTH));
 
-                Calendar endDateCal = Calendar.getInstance();
-                endDateCal.add(Calendar.MONTH, 1);
-                endDateCal.set(Calendar.DAY_OF_MONTH, endDateCal.getActualMaximum(Calendar.DAY_OF_MONTH));
+                    Calendar cal = Calendar.getInstance();
+                    Date regDate = cal.getTime();
 
-                Calendar cal = Calendar.getInstance();
-                Date regDate = cal.getTime();
+                    Date startDate = sdf.parse(sdf.format(startDateCal.getTime()));
+                    Date endDate = sdf.parse(sdf.format(endDateCal.getTime()));
 
-                PaymentHistory paymentHistory = PaymentHistory.builder()
-                        .tradeNum(paramsMap.get("mchtTrdNo"))
-                        .pgTradeNum(paramsMap.get("trdNo"))
-                        .agencyId(agencyId)
-                        .siteId(siteId)
-                        .paymentType(paramsMap.get("method"))
-                        .rateSel(products.getRateSel())
-                        .amount(decryptedAmount)
-                        .offer(products.getOffer())
-                        .trTrace(EnumTradeTrace.USED.getCode())
-                        .paymentStatus(EnumPaymentStatus.ACTIVE.getCode())
-                        .trDate(trDateAsDate)
-                        .startDate(sdf.parse(sdf.format(startDateCal.getTime())))
-                        .endDate(sdf.parse(sdf.format(endDateCal.getTime())))
-                        .billKey(dataMap.get("billKey"))
-                        .billKeyExpireDate(dataMap.get("vldDtYear") + dataMap.get("vldDtMon"))
-                        .regDate(regDate)
-                        .build();
+                    PaymentHistory paymentHistory = PaymentHistory.builder()
+                            .tradeNum(paramsMap.get("mchtTrdNo"))
+                            .pgTradeNum(paramsMap.get("trdNo"))
+                            .agencyId(agencyId)
+                            .siteId(siteId)
+                            .paymentType(paramsMap.get("method"))
+                            .rateSel(products.getRateSel())
+                            .amount(decryptedAmount)
+                            .offer(products.getOffer())
+                            .trTrace(EnumTradeTrace.USED.getCode())
+                            .paymentStatus(EnumPaymentStatus.ACTIVE.getCode())
+                            .trDate(trDateAsDate)
+                            .startDate(startDate)
+                            .endDate(endDate)
+                            .billKey(dataMap.get("billKey"))
+                            .billKeyExpireDate(dataMap.get("vldDtYear") + dataMap.get("vldDtMon"))
+                            .regDate(regDate)
+                            .extraAmountStatus(EnumExtraAmountStatus.PASS.getCode())
+                            .build();
 
-                savePaymentDataPort.insertPayment(paymentHistory);
+                    savePaymentDataPort.insertPayment(paymentHistory);
+                    saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(products.getRateSel(), startDate, endDate), EnumPaymentStatus.ACTIVE.getCode());
+
+                    updateExtraAmountStatus(agencyId, siteId, paramsMap.get("method"));
+
+                    Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, paramsMap.get("mchtTrdNo"));
+                    Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, products.getRateSel(), decryptedAmount);
+
+                    //AdminNoti
+                    System.out.println("어드민 결제 노티 완료 targetUrl : " + profileSpecificAdminUrl + ", Data : " + encryptDataService.mapToJSONString(jsonData));
+                    notiService.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptDataService.mapToJSONString(jsonData));
+
+                    String targetUrl = makeTargetUrl(agencyId, "NotifyPaymentSiteInfo");
+                    //가맹점Noti
+                    System.out.println("가맹점 결제 노티 완료 targetUrl : " + targetUrl + ", Data : " + makeAgencyNotifyData(agencyId, notifyPaymentData));
+                    notiService.sendNotification(targetUrl, makeAgencyNotifyData(agencyId, notifyPaymentData));
+                } else {
+                    Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, paramsMap.get("mchtTrdNo"));
+                    jsonData.put("fail", "{\"outStatCd\":" + paramsMap.get("outStatCd") + ","
+                            + "\"outRsltCd\":" + paramsMap.get("outRsltCd") + ","
+                            + "\"outRsltMsg\":" + paramsMap.get("outRsltMsg") + "}");
+                    notiService.sendNotification(profileSpecificAdminUrl + "/clientManagement/agency/payment/noti", encryptDataService.mapToJSONString(jsonData));
+                }
             }
-
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-
     }
 
-    public static void main(String[] args) throws ParseException {
-        String trdDt = "20240226";
-        String trdTm = "090202";
-
-        LocalDateTime now = LocalDateTime.now();
-        DateTimeFormatter trdDtFormat = DateTimeFormatter.ofPattern("yyyyMMddHHmmss");
-        LocalDateTime dateTime = LocalDateTime.parse(trdDt + trdTm, trdDtFormat);
-        System.out.println(dateTime);
+    @Override
+    public String makeTargetUrl(String agencyId, String msgType) {
+        Optional<AgencyInfoKey> agencyInfoKey = loadEncryptDataPort.getAgencyInfoKey(agencyId);
+        if (agencyInfoKey.isPresent()) {
+            AgencyInfoKey info = agencyInfoKey.get();
+            ObjectMapper mapper = new ObjectMapper();
+            EnumAgency[] enumAgencies = EnumAgency.values();
+            for (EnumAgency enumAgency : enumAgencies) {
+                if (enumAgency.getCode().equals(agencyId)) {
+                    switch (msgType) {
+                        case "SiteStatus":
+                            return enumAgency.getSiteStatusMsg();
+                        case "RegAgencySiteInfo":
+                            return enumAgency.getRegMsg();
+                        case "CancelSiteInfo":
+                            return enumAgency.getCancelMsg();
+                        case "NotifyPaymentSiteInfo":
+                            return enumAgency.getPaymentMsg();
+                        case "NotifyStatusSite":
+                            return enumAgency.getStatusMsg();
+                        default:
+                            return "Error: the given message type does not match known types";
+                    }
+                }
+            }
+            throw new IllegalArgumentException("The given agencyId does not match any known agencies");
+        }
+        return "";
     }
 
-    private long getIncompleteCount(String billingBase, List<StatDay> statDays) {
+    private void updateExtraAmountStatus(String agencyId, String siteId, String paymentType) {
+        List<PaymentHistory> paymentHistoryList = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId))
+                .stream()
+                .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                .collect(Collectors.toList());
+        if (!paymentHistoryList.isEmpty() && paymentHistoryList.size() > 2) {
+            savePaymentDataPort.updatePaymentExtraAmountStatus(paymentHistoryList.get(2));
+        }
+    }
+
+    private long getUseCount(String billingBase, List<StatDay> statDays) {
         if (billingBase.equals(EnumBillingBase.INCOMPLETE.getCode())) {
             LongStream incompleteCounts = statDays.stream().mapToLong(StatDay::getIncompleteCnt);
             return incompleteCounts.sum();
-        } else if (billingBase.equals(EnumBillingBase.FINAL_SUCCESS.getCode())) {
-            LongStream successFinalCnt = statDays.stream().mapToLong(StatDay::getIncompleteCnt);
+        } else if (billingBase.equals(EnumBillingBase.SUCCESS_FINAL.getCode())) {
+            LongStream successFinalCnt = statDays.stream().mapToLong(StatDay::getSuccessFinalCnt);
             return successFinalCnt.sum();
         } else {
             return 0L;
@@ -394,6 +475,44 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
     @Override
     public List<StatDay> getUseCountBySiteId(String siteId, String startDate, String endDate) {
         return loadStatDataPort.findBySiteIdAndFromDate(siteId, startDate, endDate);
+    }
+
+
+    private Map<String, String> prepareJsonDataForNotification(String agencyId, String siteId, String trdNum) {
+        Map<String, String> jsonData = new HashMap<>();
+        jsonData.put("agencyId", agencyId);
+        jsonData.put("siteId", siteId);
+        jsonData.put("tradeNum", trdNum);
+        return jsonData;
+    }
+
+    private Map<String, String> prepareNotifyPaymentData(String agencyId, String siteId, Date startDate, Date endDate, String rateSel, String salesPrice) {
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+        Map<String, String> notifyPaymentData = new HashMap<>();
+        notifyPaymentData.put("agencyId", agencyId);
+        notifyPaymentData.put("siteId", siteId);
+        notifyPaymentData.put("startDate", sdf.format(startDate));
+        notifyPaymentData.put("endDate", sdf.format(endDate));
+        notifyPaymentData.put("rateSel", rateSel);
+        notifyPaymentData.put("salesPrice", salesPrice);
+        return notifyPaymentData;
+    }
+
+
+    private String makeAgencyNotifyData(String agencyId, Map<String, String> notifyPaymentData) throws GeneralSecurityException {
+        JSONObject json = new JSONObject();
+        json.put("agencyId", agencyId);
+        EnumAgency[] enumAgencies = EnumAgency.values();
+        for (EnumAgency enumAgency : enumAgencies) {
+            if (enumAgency.getCode().equals(agencyId)) {
+                json.put("msgType", enumAgency.getPaymentMsg());
+                break;
+            }
+        }
+        json.put("encryptData", encryptDataService.encryptData(agencyId, encryptDataService.mapToJSONString(notifyPaymentData)));
+        json.put("verifyInfo", encryptDataService.hmacSHA256(encryptDataService.mapToJSONString(notifyPaymentData), agencyId));
+
+        return json.toString();
     }
 
     //TODO
@@ -423,6 +542,7 @@ public class PaymentService implements PaymentUseCase, StatUseCase {
                 paymentHistory.getVbankExpireDate(),
                 paymentHistory.getRegDate(),
                 paymentHistory.getModDate(),
+                paymentHistory.getExtraAmountStatus(),
                 paymentHistory.getMemo()
         );
     }

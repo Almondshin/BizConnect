@@ -1,15 +1,13 @@
 package com.bizconnect.adapter.out.payment.service;
 
+import com.bizconnect.adapter.in.model.PaymentHistoryDataModel;
 import com.bizconnect.adapter.out.payment.config.hectofinancial.Constant;
 import com.bizconnect.adapter.out.payment.model.HFDataModel;
 import com.bizconnect.adapter.out.payment.model.HFResultDataModel;
 import com.bizconnect.adapter.out.payment.utils.EncryptUtil;
 import com.bizconnect.adapter.out.payment.utils.HttpClientUtil;
 import com.bizconnect.adapter.out.payment.utils.StringUtil;
-import com.bizconnect.application.domain.enums.EnumAgency;
-import com.bizconnect.application.domain.enums.EnumPaymentStatus;
-import com.bizconnect.application.domain.enums.EnumSiteStatus;
-import com.bizconnect.application.domain.enums.EnumTradeTrace;
+import com.bizconnect.application.domain.enums.*;
 import com.bizconnect.application.domain.model.Agency;
 import com.bizconnect.application.domain.model.AgencyInfoKey;
 import com.bizconnect.application.domain.model.Client;
@@ -34,6 +32,7 @@ import java.security.GeneralSecurityException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * The type Hf result service.
@@ -50,9 +49,6 @@ public class HFResultService {
 
     @Value("${external.admin.url}")
     private String profileSpecificAdminUrl;
-
-    @Value("${external.url}")
-    private String profileSpecificUrl;
 
     Logger logger = LoggerFactory.getLogger("HFResultController");
 
@@ -263,12 +259,12 @@ public class HFResultService {
 
 
                 //해당 거래번호
-                Optional<PaymentHistory> checkHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(mchtTrdNo);
+                Optional<PaymentHistory> checkHistory = loadPaymentDataPort.getPaymentHistoryByTradeNum(responseParam.get("trdNo"));
                 if ("0021".equals(outStatCd)) {
                     System.out.println("outStatCd equals 0021");
                     switch (responseParam.get("method")) {
                         case "CA": {
-                            if (checkHistory.isEmpty()) {
+                            if (checkHistory.isEmpty() && responseParam.get("bizType").equals("B0")) {
                                 resp = true;
                                 String billKey = responseParam.get("billKey");
                                 PaymentHistory paymentHistory;
@@ -286,6 +282,8 @@ public class HFResultService {
                                 savePaymentDataPort.insertPayment(paymentHistory);
                                 //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                                 saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate), EnumPaymentStatus.ACTIVE.getCode());
+
+                                updateExtraAmountStatus(agencyId, siteId, responseParam.get("method"));
 
                                 targetUrl = makeTargetUrl(agencyInfoKey, agencyId);
 
@@ -307,9 +305,12 @@ public class HFResultService {
                             Map<String, String> jsonData = prepareJsonDataForNotification(agencyId, siteId, responseParam.get("mchtTrdNo"));
                             Map<String, String> notifyPaymentData = prepareNotifyPaymentData(agencyId, siteId, startDate, endDate, rateSel, responseParam.get("trdAmt"));
 
+
                             savePaymentDataPort.updatePayment(paymentHistory);
                             //결제완료 후 Agency 상태 업데이트 (시작일, 종료일, 상품코드, 연장가능여부 N)
                             saveAgencyDataPort.updateAgency(new Agency(agencyId, siteId), new Client(rateSel, startDate, endDate), EnumPaymentStatus.ACTIVE.getCode());
+
+                            updateExtraAmountStatus(agencyId, siteId, responseParam.get("method"));
 
                             targetUrl = makeTargetUrl(agencyInfoKey, agencyId);
 
@@ -352,7 +353,7 @@ public class HFResultService {
                     resp = false;
                 }
             } catch (Exception e) {
-                System.out.println(e.toString());
+                e.printStackTrace();
             }
         } else {
             logger.info("[" + mchtTrdNo + "][SHA256 Hash Check] hashCipher[" + hashCipher + "] pktHash[" + pktHash + "] equals?[FALSE]");
@@ -487,7 +488,8 @@ public class HFResultService {
                 endDate,
                 responseParam.get("billKey"),
                 responseParam.get("billKeyExpireDt"),
-                regDate
+                regDate,
+                EnumExtraAmountStatus.PASS.getCode()
         );
     }
 
@@ -507,7 +509,8 @@ public class HFResultService {
                 originalFormat.parse(responseParam.get("trdDtm")),
                 startDate,
                 endDate,
-                regDate
+                regDate,
+                EnumExtraAmountStatus.PASS.getCode()
         );
     }
 
@@ -533,7 +536,8 @@ public class HFResultService {
                 startDate,
                 endDate,
                 regDate,
-                modDate
+                modDate,
+                EnumExtraAmountStatus.PASS.getCode()
         );
     }
 
@@ -621,6 +625,17 @@ public class HFResultService {
         plainDataMap.put("siteStatus", siteStatus);
         plainDataMap.put("detail", detail);
         return encryptUseCase.mapToJSONString(plainDataMap);
+    }
+
+
+    private void updateExtraAmountStatus(String agencyId, String siteId, String paymentType) {
+        List<PaymentHistory> paymentHistoryList = loadPaymentDataPort.getPaymentHistoryByAgency(new Agency(agencyId, siteId))
+                .stream()
+                .filter(e -> e.getExtraAmountStatus().equals(EnumExtraAmountStatus.PASS.getCode()))
+                .collect(Collectors.toList());
+        if (!paymentHistoryList.isEmpty() && paymentHistoryList.size() > 2) {
+            savePaymentDataPort.updatePaymentExtraAmountStatus(paymentHistoryList.get(2));
+        }
     }
 
 }
